@@ -1,0 +1,134 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.AdminListVM
+@{
+    var statuses = new[] { "Active", "Inactive" };
+    var accesses = new[] { "Full Access", "Limited Access", "Read Only" };
+    var depts = new[] { "IT", "HR", "Academic", "Finance", "Operations" };
+    int ps = Model.PageSize;
+    var page = Model.CurrentPage;
+    var paged = Model.Filtered.Skip((page - 1) * ps).Take(ps).ToList();
+}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-1"><p>Total Admins</p><h3>@Model.TotalAdmins</h3><i class="fas fa-user-cog stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-2"><p>Full Access</p><h3>@Model.FullAccess</h3><i class="fas fa-shield-alt stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-3"><p>Departments</p><h3>@(Model.Admins.Select(a => a.Department).Distinct().Count())</h3><i class="fas fa-building stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-4"><p>Active Admins</p><h3>@(Model.Admins.Count(a => a.Status == "Active"))</h3><i class="fas fa-check-circle stat-icon"></i></div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-user-cog me-2" style="color:var(--secondary);"></i>Admins
+        <span class="sa-badge" style="background:rgba(225,52,104,0.1);color:var(--accent-pink);margin-left:8px;">@Model.Filtered.Count</span>
+    </h5>
+    <button class="btn btn-sm btn-primary rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#createUserModal">
+        <i class="fas fa-plus me-1"></i> Add Admin
+    </button>
+</div>
+
+<form method="get" asp-action="Admins">
+    <div class="sa-filters mb-4">
+        <div class="search-wrap flex-grow-1">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search admins…" value="@Model.SearchTerm" />
+        </div>
+        <select name="status" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@s" selected="@(Model.SelectedStatus == s ? "selected" : null)">@s</option>
+            }
+        </select>
+        <select name="access" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Access Levels</option>
+            @foreach (var a in accesses)
+            {
+                <option value="@a" selected="@(Model.SelectedAccess == a ? "selected" : null)">@a</option>
+            }
+        </select>
+        <select name="dept" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Departments</option>
+            @foreach (var d in depts)
+            {
+                <option value="@d" selected="@(Model.SelectedDept == d ? "selected" : null)">@d</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-sm" style="background:var(--secondary);color:white;border-radius:10px;padding:0 1rem;"><i class="fas fa-filter"></i></button>
+        <a asp-action="Admins" class="btn btn-sm btn-secondary-sa"><i class="fas fa-times"></i></a>
+    </div>
+</form>
+
+<div class="sa-card">
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead>
+                <tr><th>Admin</th><th>Department</th><th>Email</th><th>Phone</th><th>Access Level</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var a in paged)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--orange));display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700;flex-shrink:0;">@a.Initials</div>
+                                <span style="font-weight:600;font-size:0.875rem;">@a.Name</span>
+                            </div>
+                        </td>
+                        <td><span class="sa-badge" style="background:rgba(47,50,125,0.1);color:var(--primary);">@a.Department</span></td>
+                        <td style="font-size:0.82rem;color:#6c757d;">@a.Email</td>
+                        <td style="font-size:0.82rem;">@a.Phone</td>
+                        <td>
+                            @{
+                                var (abg, afg) = a.AccessLevel == "Full Access"
+                                    ? ("rgba(51,239,160,0.12)", "#16a34a")
+                                    : a.AccessLevel == "Limited Access"
+                                        ? ("rgba(244,140,6,0.12)", "var(--orange)")
+                                        : ("rgba(0,0,0,0.06)", "#6c757d");
+                            }
+                            <span class="sa-badge" style="background:@abg;color:@afg;">@a.AccessLevel</span>
+                        </td>
+                        <td>
+                            @if (a.Status == "Active")
+                            {
+                                <span class="sa-badge sa-badge-active">Active</span>
+                            }
+                            else
+                            {
+
+                                <span class="sa-badge sa-badge-inactive">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile"
+                                   asp-route-id="@a.Id" asp-route-role="Admin"
+                                   class="sa-btn-icon sa-btn-view" title="View Profile"><i class="fas fa-eye"></i></a>
+                                <button class="sa-btn-icon sa-btn-edit" onclick="alert('Wire to Edit action')"><i class="fas fa-edit"></i></button>
+                                <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" style="display:inline;" onsubmit="return confirm('Delete @a.Name?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <input type="hidden" name="role" value="Admin" />
+                                    <button type="submit" class="sa-btn-icon sa-btn-delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!paged.Any())
+                {
+                    <tr><td colspan="7" class="text-center py-5" style="color:#aaa;"><i class="fas fa-search fa-2x mb-2 d-block opacity-25"></i>No admins found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@await Html.PartialAsync("_CreateUserModal", new LMSProject.Areas.SuperAdmin.ViewModels.CreateUserVM { Role = "Admin" })

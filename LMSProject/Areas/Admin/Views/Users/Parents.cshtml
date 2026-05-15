@@ -1,0 +1,84 @@
+﻿@model LMSProject.Areas.Admin.ViewModels.UserListVM<LMSProject.Areas.Admin.ViewModels.ParentListItemVM>
+@{
+    ViewData["Title"] = "Users — Parents";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-users me-2" style="color:var(--secondary);"></i>Parents
+        <span class="sa-badge sa-badge-info ms-2">@Model.TotalCount</span>
+    </h5>
+</div>
+
+<form method="get" asp-action="Parents">
+    <div class="sa-filters">
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search parents…" value="@Model.SearchTerm" />
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3"><i class="fas fa-filter me-1"></i>Search</button>
+        <a asp-action="Parents" class="btn-secondary-sa btn btn-sm"><i class="fas fa-times me-1"></i>Clear</a>
+    </div>
+</form>
+
+<div class="sa-card">
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead><tr><th>Parent</th><th>Email</th><th>Phone</th><th>Children</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var p in Model.Paged)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-green),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.75rem;flex-shrink:0;">@p.Initials</div>
+                                <span style="font-weight:600;font-size:0.875rem;">@p.FullName</span>
+                            </div>
+                        </td>
+                        <td style="font-size:0.82rem;color:#6c757d;">@p.Email</td>
+                        <td style="font-size:0.82rem;">@p.Phone</td>
+                        <td>
+                            @if (p.ChildNames.Any())
+                            {
+                                <div class="d-flex flex-column gap-1">
+                                    @foreach (var name in p.ChildNames.Take(2))
+                                    {
+                                        <span class="sa-badge sa-badge-info" style="font-size:0.7rem;">@name</span>
+                                    }
+                                    @if (p.ChildNames.Count > 2)
+                                    {
+                                        <span class="sa-badge sa-badge-pending" style="font-size:0.7rem;">+@(p.ChildNames.Count - 2) more</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+
+                                <span style="color:#aaa;font-size:0.82rem;">—</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="EditParent" asp-route-id="@p.Id" class="sa-btn-icon sa-btn-edit" title="Edit"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Paged.Any())
+                {
+                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-users fa-2x d-block mb-2 opacity-25"></i>No parents found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="sa-pagination">
+        <a asp-action="Parents" asp-route-page="@(Model.CurrentPage - 1)" class="sa-page-btn @(Model.CurrentPage == 1 ? "disabled" : "")"><i class="fas fa-chevron-left"></i></a>
+        @for (int p = 1; p <= Model.TotalPages; p++)
+        {
+            <a asp-action="Parents" asp-route-page="@p" class="sa-page-btn @(p == Model.CurrentPage ? "active" : "")">@p</a>
+        }
+        <a asp-action="Parents" asp-route-page="@(Model.CurrentPage + 1)" class="sa-page-btn @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")"><i class="fas fa-chevron-right"></i></a>
+    </div>
+}

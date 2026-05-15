@@ -1,0 +1,49 @@
+﻿/* smooth transition */
+.transition {
+    transition: all 0.4s ease;
+}
+
+/* transparent state */
+.navbar-transparent {
+    background: transparent;
+}
+
+    .navbar-transparent .nav-text {
+        color: var(--text-light) !important;
+    }
+
+/* solid state */
+.navbar-solid {
+    background: var(--bg-light);
+}
+
+    .navbar-solid .nav-text {
+        color: var(--text-dark) !important;
+    }
+
+/* login button */
+.login-btn {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+    .login-btn:hover {
+        background: var(--accent-purple);
+    }
+
+/* signup button */
+.signup-btn {
+    background: var(--secondary);
+    color: white;
+    font-weight: 600;
+}
+
+/* toggler fix */
+.navbar-transparent .navbar-toggler-icon {
+    filter: invert(1);
+}
+
+.navbar-solid .navbar-toggler-icon {
+    filter: invert(0);
+}

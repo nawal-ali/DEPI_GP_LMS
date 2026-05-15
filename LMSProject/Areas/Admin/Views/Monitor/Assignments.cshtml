@@ -1,0 +1,108 @@
+﻿@model List<LMSProject.Areas.Admin.ViewModels.AssignmentMonitorVM>
+@{
+    ViewData["Title"] = "Content Monitor — Assignments";
+    var courses = ViewBag.Courses as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-tasks me-2" style="color:var(--secondary);"></i>Assignments Monitor
+        <span class="sa-badge sa-badge-info ms-2">@Model.Count</span>
+    </h5>
+</div>
+
+<form method="get" asp-action="Assignments">
+    <div class="sa-filters">
+        <div class="search-wrap flex-grow-1">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search assignments…" value="@ViewBag.SearchTerm" />
+        </div>
+        <select name="courseId" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="0">All Courses</option>
+            @foreach (var c in courses)
+            {
+                <option value="@c.Id" selected="@((int)ViewBag.CourseId == (int)c.Id ? "selected" : null)">@c.Name</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3"><i class="fas fa-filter me-1"></i>Filter</button>
+        <a asp-action="Assignments" class="btn-secondary-sa btn btn-sm"><i class="fas fa-times me-1"></i>Clear</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="sa-card p-5 text-center" style="color:#aaa;">
+        <i class="fas fa-tasks fa-3x mb-3 d-block opacity-25"></i>No assignments found.
+    </div>
+}
+else
+{
+    <div class="sa-card">
+        <div class="table-responsive">
+            <table class="sa-table">
+                <thead>
+                    <tr><th>Assignment</th><th>Course</th><th>Deadline</th><th>Marks</th><th>Submissions</th><th>Graded</th><th>Late</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td style="font-weight:600;font-size:0.875rem;">@a.Title</td>
+                            <td><span class="sa-badge sa-badge-info">@a.CourseName</span></td>
+                            <td style="font-size:0.82rem;">
+                                @a.Deadline.ToString("MMM dd, yyyy")
+                                @if (a.IsExpired)
+                                {
+                                    <span class="sa-badge sa-badge-inactive ms-1" style="font-size:0.68rem;">Expired</span>
+                                }
+                            </td>
+                            <td><span style="font-weight:700;color:var(--primary);">@a.TotalMarks</span></td>
+                            <td><span class="sa-badge sa-badge-purple">@a.SubmissionCount</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (a.SubmissionCount > 0)
+                                    {
+                                        int pct = (int)((double)a.GradedCount / a.SubmissionCount * 100);
+                                        <div style="width:60px;height:6px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
+                                            <div style="height:100%;width:@pct%;background:var(--accent-green);border-radius:10px;"></div>
+                                        </div>
+                                    }
+                                    <small>@a.GradedCount / @a.SubmissionCount</small>
+                                </div>
+                            </td>
+                            <td>
+                                @if (a.LateCount > 0)
+                                {
+                                    <span class="sa-badge sa-badge-pending">@a.LateCount late</span>
+                                }
+                                else
+                                {
+
+                                    <span style="color:#aaa;font-size:0.82rem;">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (a.IsExpired)
+                                {
+                                    <span class="sa-badge sa-badge-inactive">Expired</span>
+                                }
+                                else
+                                {
+
+                                    <span class="sa-badge sa-badge-active">Active</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-area="Admin" asp-controller="Monitor" asp-action="AssignmentSubmissions"
+                                   asp-route-assignmentId="@a.Id"
+                                   class="sa-btn-icon sa-btn-view" title="View Submissions">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

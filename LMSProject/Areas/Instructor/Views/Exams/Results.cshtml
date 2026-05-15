@@ -1,0 +1,101 @@
+@model List<MLSCore.Models.TbStudentTest>
+@{
+    var exam = ViewBag.Exam as MLSCore.Models.TbTest;
+    ViewData["Title"] = $"Results: {exam?.Title}";
+}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a asp-action="Details" asp-route-id="@exam?.Id" class="sa-btn-icon sa-btn-view">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <div>
+        <h5 class="mb-0 fw-bold" style="color:var(--primary);">Exam Results</h5>
+        <small class="text-muted">@exam?.Title</small>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    var avg = Model.Average(r => r.Score);
+    var highest = Model.Max(r => r.Score);
+    var passing = Model.Count(r => exam != null && r.Score >= exam.TotalMarks * 0.5);
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="sa-card p-3 text-center">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--primary);">@Model.Count</div>
+                <small class="text-muted">Attempts</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="sa-card p-3 text-center">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--secondary);">@avg.ToString("0.0")</div>
+                <small class="text-muted">Average Score</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="sa-card p-3 text-center">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--accent-green);">@highest</div>
+                <small class="text-muted">Highest Score</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="sa-card p-3 text-center">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--accent-blue);">@passing</div>
+                <small class="text-muted">Passed (≥50%)</small>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="sa-card">
+    <div class="sa-card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-clipboard fa-3x mb-3 d-block" style="opacity:0.2;"></i>
+                <p style="font-size:0.9rem;">No students have attempted this exam yet.</p>
+            </div>
+        }
+        else
+        {
+            <table class="sa-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Duration</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Count; i++)
+                    {
+                        var r = Model[i];
+                        var pct = exam?.TotalMarks > 0 ? r.Score / exam.TotalMarks * 100 : 0;
+                        var passed = pct >= 50;
+                        <tr>
+                            <td style="font-weight:700;color:var(--primary);">@(i + 1)</td>
+                            <td>
+                                <div style="font-weight:600;font-size:0.85rem;">@r.Student?.FullName</div>
+                            </td>
+                            <td style="font-weight:700;">@r.Score / @exam?.TotalMarks</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="height:6px;width:80px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
+                                        <div style="height:100%;width:@(Math.Min(pct,100))%;background:@(passed?"#33EFA0":"#E13468");border-radius:10px;"></div>
+                                    </div>
+                                    <span style="font-size:0.78rem;font-weight:600;color:@(passed?"#16a34a":"var(--accent-pink)");">@pct.ToString("0")\%</span>
+                                </div>
+                            </td>
+                            <td style="font-size:0.8rem;">@r.TimeInMinutes min</td>
+                            <td style="font-size:0.78rem;color:#9ca3af;">@r.JoinDate.ToString("MMM d, yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

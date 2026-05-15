@@ -1,0 +1,194 @@
+@model LMSProject.Areas.Instructor.ViewModel.InstructorDashboardVM
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Stat Cards Row 1 -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-1">
+            <p>My Courses</p>
+            <h3>@Model.TotalCourses</h3>
+            <i class="fas fa-book-open stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-2">
+            <p>My Students</p>
+            <h3>@Model.TotalStudents</h3>
+            <i class="fas fa-user-graduate stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-3">
+            <p>Total Exams</p>
+            <h3>@Model.TotalExams</h3>
+            <i class="fas fa-clipboard-list stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-4">
+            <p>Assignments</p>
+            <h3>@Model.TotalAssignments</h3>
+            <i class="fas fa-tasks stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-5">
+            <p>Course Materials</p>
+            <h3>@Model.TotalMaterials</h3>
+            <i class="fas fa-file-alt stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-6">
+            <p>Pending Grading</p>
+            <h3>@Model.PendingSubmissions</h3>
+            <i class="fas fa-hourglass-half stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Main content row -->
+<div class="row g-4">
+
+    <!-- Recent Activity -->
+    <div class="col-lg-5">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-bolt me-2" style="color:var(--secondary);"></i>Recent Activity</h5>
+            </div>
+            <div class="sa-card-body p-0">
+                @if (!Model.RecentActivity.Any())
+                {
+                    <div class="p-4 text-center text-muted" style="font-size:0.85rem;">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:0.3;"></i>
+                        No recent activity yet.
+                    </div>
+                }
+                @foreach (var item in Model.RecentActivity)
+                {
+                    <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 20px;border-bottom:1px solid rgba(0,0,0,0.04);">
+                        <div style="width:36px;height:36px;border-radius:10px;background:@(item.Color)20;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas @item.Icon" style="color:@item.Color;font-size:0.85rem;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <p style="margin:0;font-size:0.83rem;font-weight:500;">@item.Message</p>
+                            <small style="color:#9ca3af;font-size:0.72rem;">@item.Time</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-rocket me-2" style="color:var(--accent-purple);"></i>Quick Actions</h5>
+            </div>
+            <div class="sa-card-body d-flex flex-column gap-2">
+
+                <a asp-area="Instructor" asp-controller="Course" asp-action="Index"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(41,185,231,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(41,185,231,0.14)'" onmouseout="this.style.background='rgba(41,185,231,0.07)'">
+                    <i class="fas fa-book-open" style="color:var(--accent-blue);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">View My Courses</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+
+                <a asp-area="Instructor" asp-controller="Materials" asp-action="Index"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(91,114,238,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(91,114,238,0.14)'" onmouseout="this.style.background='rgba(91,114,238,0.07)'">
+                    <i class="fas fa-file-upload" style="color:var(--accent-purple);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Upload Material</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+
+                <a asp-area="Instructor" asp-controller="Exams" asp-action="Index"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(0,203,184,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(0,203,184,0.14)'" onmouseout="this.style.background='rgba(0,203,184,0.07)'">
+                    <i class="fas fa-clipboard-list" style="color:var(--secondary);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Manage Exams</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+
+                <a asp-area="Instructor" asp-controller="Assignments" asp-action="Index"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(244,140,6,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(244,140,6,0.14)'" onmouseout="this.style.background='rgba(244,140,6,0.07)'">
+                    <i class="fas fa-tasks" style="color:var(--orange);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Manage Assignments</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+
+                <a asp-area="Instructor" asp-controller="Student" asp-action="Index"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(225,52,104,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(225,52,104,0.14)'" onmouseout="this.style.background='rgba(225,52,104,0.07)'">
+                    <i class="fas fa-user-graduate" style="color:var(--accent-pink);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">View Students</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Deadlines -->
+    <div class="col-lg-3">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-calendar-alt me-2" style="color:var(--orange);"></i>Upcoming Deadlines</h5>
+            </div>
+            <div class="sa-card-body">
+                @if (!Model.UpcomingDeadlines.Any())
+                {
+                    <div class="text-center text-muted" style="font-size:0.85rem;padding-top:1rem;">
+                        <i class="fas fa-calendar-check fa-2x mb-2 d-block" style="opacity:0.3;"></i>
+                        No upcoming deadlines.
+                    </div>
+                }
+                @foreach (var dl in Model.UpcomingDeadlines)
+                {
+                    var daysLeft = (dl.Deadline - DateTime.Now).Days;
+                    var urgency = daysLeft <= 1 ? "#E13468" : daysLeft <= 3 ? "#F48C06" : "#33EFA0";
+                    <div class="mb-3 p-3 rounded-3" style="background:rgba(0,0,0,0.02);border-left:3px solid @dl.BadgeColor;">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span style="font-size:0.8rem;font-weight:600;">@dl.Title</span>
+                            <span class="sa-badge" style="background:@(dl.BadgeColor)20;color:@dl.BadgeColor;">@dl.Type</span>
+                        </div>
+                        <small style="color:#9ca3af;font-size:0.72rem;display:block;">@dl.CourseName</small>
+                        <div class="d-flex align-items-center gap-1 mt-1">
+                            <i class="fas fa-clock" style="font-size:0.68rem;color:@urgency;"></i>
+                            <small style="color:@urgency;font-size:0.72rem;font-weight:600;">
+                                @if (daysLeft <= 0)
+                                {
+                                    <text>Due today!</text>
+                                }
+                                else if (daysLeft == 1)
+                                {
+
+                                    <text>Tomorrow</text>
+                                }
+                                else
+                                {
+
+                                    <text>@daysLeft days left</text>
+                                }
+                            </small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>

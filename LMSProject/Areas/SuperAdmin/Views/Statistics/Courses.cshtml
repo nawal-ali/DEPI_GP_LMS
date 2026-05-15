@@ -1,0 +1,214 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.StatisticsVM
+@{
+    var months = "[\"Jan\",\"Feb\",\"Mar\",\"Apr\",\"May\",\"Jun\",\"Jul\",\"Aug\",\"Sep\",\"Oct\",\"Nov\",\"Dec\"]";
+    var enrollData = "[" + string.Join(",", Model.CourseEnrollments) + "]";
+    int maxEnroll = Model.TopCourses.Any() ? Model.TopCourses.Max(c => c.Value) : 1;
+    var barColors = new[] { "var(--accent-purple)", "var(--accent-blue)", "var(--secondary)", "var(--accent-green)", "var(--orange)" };
+    int activeRate = Model.TotalCourses > 0 ? (int)Math.Round((double)Model.ActiveCourses / Model.TotalCourses * 100) : 0;
+}
+
+<!-- KPI row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-1"><p>Total Courses</p><h3>@Model.TotalCourses</h3><i class="fas fa-book stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-2"><p>Active Courses</p><h3>@Model.ActiveCourses</h3><i class="fas fa-book-open stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-3"><p>Activation Rate</p><h3>@activeRate%</h3><i class="fas fa-chart-pie stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-5"><p>Avg Enrolments</p><h3>@(Model.TopCourses.Any() ? Model.TopCourses.Average(c => c.Value).ToString("F0") : "0")</h3><i class="fas fa-users stat-icon"></i></div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+
+    <!-- Enrolment trend line -->
+    <div class="col-lg-8">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-chart-line me-2" style="color:var(--secondary);"></i>Monthly Enrolments</h5>
+                <span class="sa-badge" style="background:rgba(0,203,184,0.1);color:var(--secondary);">This Year</span>
+            </div>
+            <div class="sa-card-body">
+                <div class="sa-chart-wrap" style="height:260px;">
+                    <canvas id="enrolChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active vs Inactive gauge -->
+    <div class="col-lg-4">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-chart-pie me-2" style="color:var(--accent-purple);"></i>Course Status</h5>
+            </div>
+            <div class="sa-card-body d-flex flex-column align-items-center justify-content-center gap-3">
+                <div class="sa-chart-wrap" style="height:180px;width:100%;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="d-flex gap-4">
+                    <div class="text-center">
+                        <div style="width:12px;height:12px;border-radius:3px;background:var(--secondary);margin:0 auto 4px;"></div>
+                        <small style="font-size:0.75rem;font-weight:600;">Active (@Model.ActiveCourses)</small>
+                    </div>
+                    <div class="text-center">
+                        <div style="width:12px;height:12px;border-radius:3px;background:rgba(0,0,0,0.12);margin:0 auto 4px;"></div>
+                        <small style="font-size:0.75rem;font-weight:600;">Inactive (@(Model.TotalCourses - Model.ActiveCourses))</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Courses Horizontal Bar -->
+<div class="sa-card mb-4">
+    <div class="sa-card-header">
+        <h5><i class="fas fa-trophy me-2" style="color:var(--orange);"></i>Top 5 Courses by Enrolment</h5>
+    </div>
+    <div class="sa-card-body">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="sa-chart-wrap" style="height:240px;">
+                    <canvas id="topCoursesChart"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="d-flex flex-column gap-3">
+                    @for (int i = 0; i < Model.TopCourses.Count; i++)
+                    {
+                        var c = Model.TopCourses[i];
+                        var pct = (int)((double)c.Value / maxEnroll * 100);
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:8px;height:8px;border-radius:50%;background:@barColors[i % barColors.Length];flex-shrink:0;"></div>
+                                    <small style="font-weight:600;font-size:0.8rem;">@c.Label</small>
+                                </div>
+                                <small style="font-weight:700;color:@barColors[i % barColors.Length];">@c.Value</small>
+                            </div>
+                            <div style="height:7px;background:rgba(0,0,0,0.05);border-radius:10px;overflow:hidden;">
+                                <div style="height:100%;width:@pct%;background:@barColors[i % barColors.Length];border-radius:10px;transition:width 1s;"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Summary Table -->
+<div class="sa-card">
+    <div class="sa-card-header">
+        <h5><i class="fas fa-table me-2" style="color:var(--accent-blue);"></i>Course Summary</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead>
+                <tr><th>#</th><th>Course Name</th><th>Enrolled Students</th><th>Enrolment Rate</th><th>Trend</th></tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.TopCourses.Count; i++)
+                {
+                    var c = Model.TopCourses[i];
+                    var pct = (int)((double)c.Value / maxEnroll * 100);
+                    <tr>
+                        <td>
+                            <div style="width:28px;height:28px;border-radius:8px;background:@barColors[i % barColors.Length];color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.78rem;">
+                                @(i + 1)
+                            </div>
+                        </td>
+                        <td style="font-weight:600;">@c.Label</td>
+                        <td>
+                            <span style="font-size:1.1rem;font-weight:700;color:var(--primary);">@c.Value</span>
+                            <small style="color:#9ca3af;"> students</small>
+                        </td>
+                        <td>
+                            <span class="sa-badge" style="background:@barColors[i % barColors.Length];color:white;">@pct%</span>
+                        </td>
+                        <td>
+                            <div style="height:6px;width:120px;background:rgba(0,0,0,0.05);border-radius:10px;overflow:hidden;">
+                                <div style="height:100%;width:@pct%;background:@barColors[i % barColors.Length];border-radius:10px;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Enrolment trend
+        new Chart(document.getElementById('enrolChart'), {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(months),
+                datasets: [{
+                    label: 'Enrolments',
+                    data: @Html.Raw(enrollData),
+                    borderColor: '#00CBB8',
+                    backgroundColor: 'rgba(0,203,184,0.08)',
+                    fill: true, tension: 0.4, borderWidth: 3,
+                    pointBackgroundColor: '#00CBB8', pointRadius: 5, pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Status doughnut
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Inactive'],
+                datasets: [{
+                    data: [@Model.ActiveCourses, @(Model.TotalCourses - Model.ActiveCourses)],
+                    backgroundColor: ['#00CBB8', 'rgba(0,0,0,0.10)'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Top courses horizontal bar
+        new Chart(document.getElementById('topCoursesChart'), {
+            type: 'bar',
+            data: {
+                labels: [@Html.Raw(string.Join(",", Model.TopCourses.Select(c => $"\"{c.Label}\"")))],
+                datasets: [{
+                    label: 'Students',
+                    data: [@Html.Raw(string.Join(",", Model.TopCourses.Select(c => c.Value)))],
+                    backgroundColor: ['#5B72EE','#29B9E7','#00CBB8','#33EFA0','#F48C06'],
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+                    y: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 11 } } }
+                }
+            }
+        });
+    </script>
+}

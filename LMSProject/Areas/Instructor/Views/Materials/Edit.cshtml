@@ -1,0 +1,119 @@
+@model LMSProject.Areas.Instructor.ViewModel.EditMaterialVM
+@using MLSCore.Models
+@{
+    ViewData["Title"] = "Edit Material";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a asp-action="Index" class="sa-btn-icon sa-btn-view"><i class="fas fa-arrow-left"></i></a>
+            <div>
+                <h5 class="mb-0 fw-bold" style="color:var(--primary);">Edit Material</h5>
+                <small class="text-muted">Update material details</small>
+            </div>
+        </div>
+
+        <div class="sa-card">
+            <div class="sa-card-body">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="ExistingFileUrl" />
+                    <input type="hidden" asp-for="ExistingFileName" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="sa-form-control" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea asp-for="Description" class="sa-form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Course <span class="text-danger">*</span></label>
+                        <select asp-for="CourseId" class="sa-form-control">
+                            @foreach (var c in Model.Courses)
+                            {
+                                <option value="@c.Id" selected="@(c.Id == Model.CourseId)">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Material Type</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (MaterialType type in Enum.GetValues(typeof(MaterialType)))
+                            {
+                                var (icon, color) = type switch
+                                {
+                                    MaterialType.PDF   => ("fa-file-pdf",   "#E13468"),
+                                    MaterialType.DOC   => ("fa-file-word",  "#5B72EE"),
+                                    MaterialType.Image => ("fa-file-image", "#33EFA0"),
+                                    _                  => ("fa-link",       "#29B9E7")
+                                };
+                                <label class="d-flex align-items-center gap-2 px-3 py-2 rounded-3"
+                                       style="border:1.5px solid @(type == Model.MaterialType ? "var(--secondary)" : "rgba(47,50,125,0.12)");cursor:pointer;background:@(type == Model.MaterialType ? "rgba(0,203,184,0.06)" : "");">
+                                    <input type="radio" asp-for="MaterialType" value="@((int)type)"
+                                           id="type_@type" style="display:none;" onchange="handleTypeChange()">
+                                    <i class="fas @icon" style="color:@color;"></i>
+                                    <span style="font-size:0.83rem;font-weight:600;">@type</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.ExistingFileUrl) && Model.MaterialType != MaterialType.Link)
+                    {
+                        <div class="mb-3 p-3 rounded-3" style="background:rgba(0,203,184,0.06);border:1px solid rgba(0,203,184,0.2);">
+                            <small class="text-muted d-block mb-1">Current file:</small>
+                            <a href="/@Model.ExistingFileUrl" target="_blank" style="font-size:0.83rem;color:var(--secondary);">
+                                <i class="fas fa-paperclip me-1"></i>@(Model.ExistingFileName ?? "View File")
+                            </a>
+                        </div>
+                    }
+
+                    <div id="fileSection" class="mb-3" style="display:none;">
+                        <label class="form-label">Replace File <small class="text-muted">(leave blank to keep current)</small></label>
+                        <input asp-for="FileUpload" type="file" class="sa-form-control"
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                    </div>
+
+                    <div id="urlSection" class="mb-3" style="display:none;">
+                        <label class="form-label">External URL <span class="text-danger">*</span></label>
+                        <input asp-for="ExternalUrl" class="sa-form-control" placeholder="https://..." />
+                        <span asp-validation-for="ExternalUrl" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a asp-action="Index" class="btn-secondary-sa">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4" style="border-radius:10px;">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function handleTypeChange() {
+        const selected = document.querySelector('input[name="MaterialType"]:checked');
+        if (!selected) return;
+        const val = parseInt(selected.value);
+        const isLink = val === 3;
+        document.getElementById('fileSection').style.display = isLink ? 'none' : 'block';
+        document.getElementById('urlSection').style.display = isLink ? 'block' : 'none';
+        document.querySelectorAll('input[name="MaterialType"]').forEach(r => {
+            r.closest('label').style.borderColor = r.checked ? 'var(--secondary)' : 'rgba(47,50,125,0.12)';
+            r.closest('label').style.background = r.checked ? 'rgba(0,203,184,0.06)' : '';
+        });
+    }
+    document.addEventListener('DOMContentLoaded', () => { handleTypeChange(); });
+</script>
+}

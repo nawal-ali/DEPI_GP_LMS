@@ -1,0 +1,33 @@
+﻿.table th {
+    background-color: var(--primary);
+    color: white;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn {
+    border: none;
+    transition: 0.3s;
+}
+
+    .btn:hover {
+        opacity: 0.85;
+    }
+
+.parent-btn {
+    background-color: var(--accent-blue);
+    color: white;
+}
+
+.details-btn {
+    background-color: var(--secondary);
+    color: white;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 0.2rem rgba(41, 185, 231, 0.25);
+}

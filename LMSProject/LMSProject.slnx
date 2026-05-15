@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="../../MLS/MLSCore/MLSCore.csproj" />
+  <Project Path="../../MLS/MLSEF/MLSEF.csproj" />
+  <Project Path="LMSProject.csproj" />
+</Solution>

@@ -1,0 +1,99 @@
+@model LMSProject.Areas.Instructor.ViewModel.EditAssignmentVM
+@using MLSCore.Models
+@{
+    ViewData["Title"] = "Edit Assignment";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a asp-action="Index" class="sa-btn-icon sa-btn-view"><i class="fas fa-arrow-left"></i></a>
+            <div>
+                <h5 class="mb-0 fw-bold" style="color:var(--primary);">Edit Assignment</h5>
+                <small class="text-muted">Update assignment details</small>
+            </div>
+        </div>
+
+        <div class="sa-card">
+            <div class="sa-card-body">
+                <form asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="sa-form-control" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description / Instructions</label>
+                        <textarea asp-for="Description" class="sa-form-control" rows="4"></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Course <span class="text-danger">*</span></label>
+                            <select asp-for="CourseId" class="sa-form-control">
+                                @foreach (var c in Model.Courses)
+                                {
+                                    <option value="@c.Id" selected="@(c.Id == Model.CourseId)">@c.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Total Marks <span class="text-danger">*</span></label>
+                            <input asp-for="TotalMarks" type="number" min="1" step="0.5" class="sa-form-control" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Deadline <span class="text-danger">*</span></label>
+                        <input asp-for="Deadline" type="datetime-local" class="sa-form-control"
+                               value="@Model.Deadline.ToString("yyyy-MM-ddTHH:mm")" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Submission Type</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (SubmissionType type in Enum.GetValues(typeof(SubmissionType)))
+                            {
+                                var (icon, color) = type switch
+                                {
+                                    SubmissionType.TextOnly => ("fa-pen", "#5B72EE"),
+                                    SubmissionType.FileOnly => ("fa-paperclip", "#F48C06"),
+                                    _                       => ("fa-layer-group", "#29B9E7")
+                                };
+                                <label class="d-flex align-items-center gap-2 px-3 py-2 rounded-3"
+                                       style="border:1.5px solid @(type==Model.SubmissionType?"var(--secondary)":"rgba(47,50,125,0.12)");cursor:pointer;background:@(type==Model.SubmissionType?"rgba(0,203,184,0.06)":"");">
+                                    <input type="radio" asp-for="SubmissionType" value="@((int)type)"
+                                           style="display:none;" onchange="handleSubType()">
+                                    <i class="fas @icon" style="color:@color;"></i>
+                                    <span style="font-size:0.83rem;font-weight:600;">@type</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a asp-action="Index" class="btn-secondary-sa">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4" style="border-radius:10px;">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function handleSubType() {
+        document.querySelectorAll('input[name="SubmissionType"]').forEach(r => {
+            r.closest('label').style.borderColor = r.checked ? 'var(--secondary)' : 'rgba(47,50,125,0.12)';
+            r.closest('label').style.background = r.checked ? 'rgba(0,203,184,0.06)' : '';
+        });
+    }
+</script>
+}

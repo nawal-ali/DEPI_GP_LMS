@@ -1,0 +1,51 @@
+﻿/* Custom styles for assignments component */
+.table th {
+    background-color: var(--primary);
+    color: white;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn {
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+    .btn:hover {
+        opacity: 0.8;
+    }
+
+.badge {
+    color: white;
+    padding: 0.5em 0.75em;
+}
+
+.pagination .page-link {
+    color: var(--primary);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 0.2rem rgba(41, 185, 231, 0.25);
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(47, 50, 125, 0.05);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(47, 50, 125, 0.1);
+}

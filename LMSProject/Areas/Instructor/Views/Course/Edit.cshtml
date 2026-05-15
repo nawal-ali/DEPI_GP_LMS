@@ -1,0 +1,183 @@
+﻿@using MLSCore.Models
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "Course-Edit";
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.css">
+}
+@model CourseEditVM
+<div class="col-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Adding Course Data</h4>
+            <p class="card-description"> Insert Course Data </p>
+            <form asp-area="Instructor" class="forms-sample" method="post" enctype="multipart/form-data">
+                <input asp-for="ImageName" type="hidden" />
+                <input asp-for="Id" type="hidden" />
+                   
+                <div class="form-group row">
+                    
+                    <label asp-for="Name" class="col-sm-3 col-form-label"></label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" asp-for="Name">
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                </div>
+                
+                <div class="form-group row">
+                    
+                    <label asp-for="Price" class="col-sm-3 col-form-label"></label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" asp-for="Price">
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                    </div>
+
+                </div>
+                <div class="form-group row">
+                    
+                    <label asp-for="Status" class="col-sm-3 col-form-label">Select Satus</label>
+                    <div class="col-sm-9">
+                  
+                        <select asp-for="Status" asp-items="Html.GetEnumSelectList<CourseStatus>()" class="form-check form-control">
+                        </select>
+                        
+                    </div>
+
+                </div>
+            
+                <div class="form-group row">
+                    
+                    <label asp-for="Grades" class="col-sm-3 col-form-label">Select Grade</label>
+                    <div class="col-sm-9">
+                        <select id="GradeId" name="GradeId" class="form-check form-control">
+                            @foreach (var item in Model.Grades)
+                            {
+                             <option value="@item.Id" selected="@(Model.GradeId == item.Id)">@item.Name</option>}
+                                
+                             
+                            }
+                        </select>
+                        
+                    </div>
+
+                </div>
+                <div class="form-group row">
+                    
+                    <label asp-for="Terms" class="col-sm-3 col-form-label">Select Term</label>
+                    <div class="col-sm-9">
+                        <select id="TermId" name="TermId" class="form-check form-control">
+                            @foreach (var item in Model.Terms)
+                            {
+                             
+                                <option value="@item.Id" selected="@(Model.TermId == item.Id)">@item.Name</option>
+                            }
+                             
+                            }
+                        </select>
+                        
+                    </div>
+
+                </div>
+                <div class="form-group row">
+                    
+                    <label asp-for="Subjects" class="col-sm-3 col-form-label">Select Subject</label>
+                    <div class="col-sm-9">
+                        <select id="SubjectId" name="SubjectId" class="form-check form-control">
+                            @foreach (var item in Model.Subjects)
+                            {
+                             
+                                <option value="@item.Id" selected="@(Model.SubjId == item.Id)">@item.Name</option>
+                             
+                            }
+                        </select>
+                        
+                    </div>
+                </div>
+                <div class="form-group row">
+                    
+                    <label asp-for="SubSubjects" class="col-sm-3 col-form-label">Select Sub-Subject</label>
+                    <div class="col-sm-9">
+                        <select id="SubSubjId" name="SubSubjId" class="form-check form-control">
+                            @foreach (var item in Model.SubSubjects)
+                            {
+                             
+                                <option value="@item.Id" selected="@(Model.SubSubjId == item.Id)">@item.Name</option>
+                             
+                            }
+                        </select>
+                        
+                    </div>
+
+                </div>
+                <div class="form-group row">
+                    <label class=" col-sm-3 col-form-label">
+                        Show In Home Page
+                    </label>
+                    <div class="col-sm-9">
+                        <input type="checkbox" asp-for="ShowInHomePage" class="form-check-input"><i class="input-helper"></i>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class=" col-sm-3 col-form-label">
+                        Upload Image
+                    </label>
+                    <div class="col-sm-9">
+                        <input asp-for="Image" type="file"
+                               class="form-control" placeholder="Uplad Image"
+                               accept=".jpg, .jpeg, .png, ,.gif">
+
+                    </div>
+                </div> <button type="submit" onclick="" class="btn btn-gradient-primary me-2">Submit</button>
+               
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Custom js for this page -->
+@section Scripts {
+    @{
+        <script src="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.js"></script>
+        <script src="~/Admin/assets/js/toastDemo.js"></script>
+        await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
+        
+        @if (ViewBag.Messag != null)
+        {
+            <script type="text/javascript">
+                showSuccessToast();
+            </script>
+        }
+        <script>
+            $("#SubjectId").change(function () {
+         
+                var subjectId = $(this).val();
+
+                $("#SubSubjId").empty();
+               alert(subjectId);
+
+                $.ajax({
+                           url: '/Instructor/Course/GetBySubjectId',
+                    type: 'GET',
+                    data: { subjectId: subjectId },
+                    success: function (data) {
+                        console.log(data);
+                        $("#SubSubjId").empty();
+
+                   
+                        $.each(data, function (i, item) {
+                            $("#SubSubjId").append(
+                                `<option value="${item.id}">${item.name}</option>`
+                            );
+                        });
+                    }
+                });
+            });
+        </script>
+            
+    }
+    <!-- End custom js for this page -->
+}

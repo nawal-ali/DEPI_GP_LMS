@@ -1,0 +1,209 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.AnnouncementListVM
+@{
+    var priorities = new[] { "Urgent", "High", "Normal", "Low" };
+    var statuses = new[] { "Active", "Inactive", "Expired" };
+    var targets = new[] { "All", "Students", "Teachers", "Parents", "Admins" };
+    int ps = Model.PageSize;
+    var page = Model.CurrentPage;
+    var paged = Model.Filtered.Skip((page - 1) * ps).Take(ps).ToList();
+
+    string PriorityGrad(string p) => p switch
+    {
+        "Urgent" => "linear-gradient(135deg,var(--accent-pink),var(--orange))",
+        "High" => "linear-gradient(135deg,var(--orange),var(--yellow))",
+        "Normal" => "linear-gradient(135deg,var(--primary),var(--secondary))",
+        _ => "linear-gradient(135deg,var(--accent-green),var(--accent-blue))"
+    };
+    string PriorityBorder(string p) => p switch
+    {
+        "Urgent" => "var(--accent-pink)",
+        "High" => "var(--orange)",
+        "Normal" => "var(--primary)",
+        _ => "var(--accent-green)"
+    };
+}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-1"><p>Total</p><h3>@Model.TotalAnnouncements</h3><i class="fas fa-bullhorn stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-2"><p>Active</p><h3>@Model.ActiveAnnouncements</h3><i class="fas fa-eye stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-3"><p>Total Views</p><h3>@Model.TotalViews</h3><i class="fas fa-users stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-6"><p>Urgent</p><h3>@Model.UrgentAnnouncements</h3><i class="fas fa-exclamation-circle stat-icon"></i></div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-bullhorn me-2" style="color:var(--secondary);"></i>Announcements
+    </h5>
+    <button class="btn btn-sm btn-primary rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#createAnnouncementModal">
+        <i class="fas fa-plus me-1"></i> Create Announcement
+    </button>
+</div>
+
+<!-- Filters -->
+<form method="get" asp-action="Index">
+    <div class="sa-filters mb-4">
+        <div class="search-wrap flex-grow-1">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search announcements…" value="@Model.SearchTerm" />
+        </div>
+        <select name="priority" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Priorities</option>
+            @foreach (var p in priorities)
+            {
+                <option value="@p" selected="@(Model.SelectedPriority == p ? "selected" : null)">@p</option>
+            }
+        </select>
+        <select name="status" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@s" selected="@(Model.SelectedStatus == s ? "selected" : null)">@s</option>
+            }
+        </select>
+        <select name="target" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Audiences</option>
+            @foreach (var t in targets)
+            {
+                <option value="@t" selected="@(Model.SelectedTarget == t ? "selected" : null)">@t</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-sm" style="background:var(--secondary);color:white;border-radius:10px;padding:0 1rem;"><i class="fas fa-filter"></i></button>
+        <a asp-action="Index" class="btn btn-sm btn-secondary-sa"><i class="fas fa-times"></i></a>
+    </div>
+</form>
+
+<!-- Announcement cards -->
+@if (!paged.Any())
+{
+    <div class="sa-card p-5 text-center" style="color:#aaa;">
+        <i class="fas fa-bullhorn fa-3x mb-3 d-block opacity-25"></i>No announcements match your filters.
+    </div>
+}
+@foreach (var a in paged)
+{
+    <div class="sa-announce-card priority-@(a.Priority.ToLower())" style="border-left-color:@PriorityBorder(a.Priority);">
+        <!-- Header -->
+        <div style="background:@PriorityGrad(a.Priority);border-radius:10px;padding:12px 16px;margin:-1.1rem -1.25rem 1rem;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+                <h6 style="margin:0;color:white;font-weight:700;">@a.Title</h6>
+                <small style="color:rgba(255,255,255,0.75);font-size:0.73rem;">
+                    <i class="fas fa-calendar me-1"></i>@a.Date.ToString("MMM dd, yyyy")
+                    &nbsp;|&nbsp;<i class="fas fa-user me-1"></i>@a.Author
+                    &nbsp;|&nbsp;<i class="fas fa-eye me-1"></i>@a.Views views
+                </small>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <span class="sa-badge" style="background:rgba(255,255,255,0.2);color:white;">@a.Status</span>
+                <form asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Delete" method="post" onsubmit="return confirm('Delete this announcement?')">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@a.Id" />
+                    <button type="submit" class="sa-btn-icon" style="background:rgba(255,255,255,0.2);color:white;" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <!-- Body -->
+        <p style="margin:0 0 0.75rem;color:#555;font-size:0.875rem;line-height:1.7;">@a.Content</p>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex gap-2">
+                <span class="sa-badge" style="background:rgba(41,185,231,0.12);color:var(--accent-blue);">
+                    <i class="fas fa-users me-1"></i>@a.TargetAudience
+                </span>
+                <span class="sa-badge" style="background:@PriorityBorder(a.Priority)18;color:@PriorityBorder(a.Priority);">@a.Priority</span>
+            </div>
+            @if (a.ExpiryDate.HasValue)
+            {
+                <small style="color:#9ca3af;font-size:0.75rem;">
+                    <i class="fas fa-clock me-1"></i>Expires: @a.ExpiryDate.Value.ToString("MMM dd, yyyy")
+                </small>
+            }
+        </div>
+    </div>
+}
+
+<!-- Pagination -->
+@if (Model.TotalPages > 1)
+{
+    <div class="sa-pagination mt-4">
+        <a asp-action="Index" asp-route-page="@(page - 1)" class="sa-page-btn @(page == 1 ? "disabled" : "")"><i class="fas fa-chevron-left"></i></a>
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a asp-action="Index" asp-route-page="@i" class="sa-page-btn @(i == page ? "active" : "")">@i</a>
+        }
+        <a asp-action="Index" asp-route-page="@(page + 1)" class="sa-page-btn @(page == Model.TotalPages ? "disabled" : "")"><i class="fas fa-chevron-right"></i></a>
+    </div>
+}
+
+<!-- Create Announcement Modal -->
+<div class="modal fade" id="createAnnouncementModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="sa-modal-header d-flex align-items-center justify-content-between">
+                <h5 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Create New Announcement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Title <span class="text-danger">*</span></label>
+                            <input name="Title" class="form-control sa-form-control" placeholder="Announcement title" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Priority</label>
+                            <select name="Priority" class="form-select sa-form-control">
+                                @foreach (var p in priorities)
+                                {
+                                    <option value="@p">@p</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Content <span class="text-danger">*</span></label>
+                            <textarea name="Content" class="form-control sa-form-control" rows="5" placeholder="Write the announcement content here…" required></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Target Audience</label>
+                            <select name="TargetAudience" class="form-select sa-form-control">
+                                @foreach (var t in targets)
+                                {
+                                    <option value="@t">@t</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Status</label>
+                            <select name="Status" class="form-select sa-form-control">
+                                @foreach (var s in statuses)
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Expiry Date</label>
+                            <input name="ExpiryDate" type="date" class="form-control sa-form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4">
+                        <i class="fas fa-paper-plane me-2"></i>Publish Announcement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

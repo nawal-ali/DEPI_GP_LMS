@@ -1,0 +1,99 @@
+﻿@model LMSProject.Areas.Admin.ViewModels.EnrollStudentsVM
+@{
+    ViewData["Title"] = "Enroll Students — " + Model.CourseName;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 style="font-weight:700;color:var(--primary);margin:0;">@Model.CourseName</h5>
+        <small style="color:#9ca3af;"><i class="fas fa-user-tie me-1"></i>@Model.InstructorName</small>
+    </div>
+    <a asp-area="Admin" asp-controller="AdminCourse" asp-action="Index" class="btn-secondary-sa btn btn-sm">
+        ← Back to Courses
+    </a>
+</div>
+
+<!-- Search -->
+<form method="get" asp-action="Enroll">
+    <input type="hidden" name="courseId" value="@Model.CourseId" />
+    <div class="sa-filters mb-4">
+        <div class="search-wrap flex-grow-1">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search students…" value="@Model.SearchTerm" />
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3"><i class="fas fa-search me-1"></i>Search</button>
+        <a asp-action="Enroll" asp-route-courseId="@Model.CourseId" class="btn-secondary-sa btn btn-sm">Clear</a>
+    </div>
+</form>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-1"><p>Total Students</p><h3>@Model.Students.Count</h3><i class="fas fa-users stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-2"><p>Enrolled</p><h3>@Model.Students.Count(s => s.IsEnrolled)</h3><i class="fas fa-user-check stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-3"><p>Not Enrolled</p><h3>@Model.Students.Count(s => !s.IsEnrolled)</h3><i class="fas fa-user-times stat-icon"></i></div>
+    </div>
+</div>
+
+<!-- Student list -->
+<div class="sa-card">
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead><tr><th>Student</th><th>Grade</th><th>Enrollment Status</th><th>Action</th></tr></thead>
+            <tbody>
+                @foreach (var s in Model.Students)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.75rem;flex-shrink:0;">@s.Initials</div>
+                                <span style="font-weight:600;font-size:0.875rem;">@s.FullName</span>
+                            </div>
+                        </td>
+                        <td><span class="sa-badge sa-badge-info">@s.Grade</span></td>
+                        <td>
+                            @if (s.IsEnrolled)
+                            {
+                                <span class="sa-badge sa-badge-active"><i class="fas fa-check me-1"></i>Enrolled</span>
+                            }
+                            else
+                            {
+
+                                <span class="sa-badge sa-badge-inactive">Not Enrolled</span>
+                            }
+                        </td>
+                        <td>
+                            @if (s.IsEnrolled)
+                            {
+                                <form asp-area="Admin" asp-controller="AdminCourse" asp-action="UnenrollStudent" method="post" style="display:inline;"
+                                      onsubmit="return confirm('Unenroll @s.FullName from this course?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                    <input type="hidden" name="studentId" value="@s.StudentId" />
+                                    <button type="submit" class="sa-btn-icon sa-btn-delete" title="Unenroll"><i class="fas fa-user-minus"></i></button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-area="Admin" asp-controller="AdminCourse" asp-action="EnrollStudent" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                    <input type="hidden" name="studentId" value="@s.StudentId" />
+                                    <button type="submit" class="sa-btn-icon sa-btn-add" title="Enroll"><i class="fas fa-user-plus"></i></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Students.Any())
+                {
+                    <tr><td colspan="4" class="text-center py-5 text-muted"><i class="fas fa-search fa-2x d-block mb-2 opacity-25"></i>No students found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

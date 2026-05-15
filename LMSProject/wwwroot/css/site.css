@@ -1,0 +1,69 @@
+/*html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}*/
+
+
+:root {
+    --dark: #252641;
+    --primary: #2F327D;
+    --secondary: #00CBB8;
+    --accent-blue: #29B9E7;
+    --accent-purple: #5B72EE;
+    --accent-green: #33EFA0;
+    --accent-pink: #E13468;
+    --light-pink: #FFD4E1;
+    --orange: #F48C06;
+    --light-blue: #9DCCFF;
+    --yellow: #FDCB6E;
+    --extra-orange: #FF6F00;
+    --extra-salmon: #FF8374;
+    --extra-brown: #B45A1B;
+    --extra-gold: #FFB300;
+    --extra-purple-light: #C583FF;
+    --extra-teal: #6DB4A7;
+    --extra-sky: #00A8FF;
+    --text-dark: #2d2d2d;
+    --text-light: #ffffff;
+    --bg-light: #ffffff;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border: none;
+}
+
+.text-primary {
+    color: var(--primary) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary) !important;
+}

@@ -1,0 +1,134 @@
+@model LMSProject.Areas.Instructor.ViewModel.StudentProgressVM
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a asp-action="Index" class="sa-btn-icon sa-btn-view"><i class="fas fa-arrow-left"></i></a>
+    <div>
+        <h5 class="mb-0 fw-bold" style="color:var(--primary);">@Model.FullName</h5>
+        <small class="text-muted">@(Model.GradeName ?? "N/A") — @(Model.Email ?? "no email")</small>
+    </div>
+</div>
+
+<!-- Student Summary -->
+<div class="row g-3 mb-4">
+    @{
+        var totalExams = Model.CourseProgress.Sum(c => c.TotalExams);
+        var attempted = Model.CourseProgress.Sum(c => c.AttemptedExams);
+        var totalAssigns = Model.CourseProgress.Sum(c => c.TotalAssignments);
+        var submitted = Model.CourseProgress.Sum(c => c.SubmittedAssignments);
+        var lateCount = Model.CourseProgress.Sum(c => c.LateSubmissions);
+    }
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-1">
+            <p>Exams Taken</p>
+            <h3>@attempted / @totalExams</h3>
+            <i class="fas fa-clipboard-list stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-2">
+            <p>Assignments</p>
+            <h3>@submitted / @totalAssigns</h3>
+            <i class="fas fa-tasks stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-5">
+            <p>Late Submissions</p>
+            <h3>@lateCount</h3>
+            <i class="fas fa-clock stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-4">
+            <p>Courses</p>
+            <h3>@Model.CourseProgress.Count</h3>
+            <i class="fas fa-book-open stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Per-Course Breakdown -->
+@foreach (var cp in Model.CourseProgress)
+{
+    <div class="sa-card mb-4">
+        <div class="sa-card-header">
+            <h5><i class="fas fa-book-open me-2" style="color:var(--secondary);"></i>@cp.CourseName</h5>
+        </div>
+        <div class="sa-card-body">
+            <div class="row g-4">
+                <!-- Exams -->
+                <div class="col-md-6">
+                    <div class="mb-2" style="font-weight:700;font-size:0.85rem;color:var(--primary);">
+                        <i class="fas fa-clipboard-list me-2" style="color:var(--accent-purple);"></i>Exams
+                    </div>
+                    <div class="sa-info-row">
+                        <span class="sa-info-label">Attempted</span>
+                        <span>@cp.AttemptedExams / @cp.TotalExams</span>
+                    </div>
+                    <div class="sa-info-row" style="border-bottom:none;">
+                        <span class="sa-info-label">Avg Score</span>
+                        @if (cp.AvgExamScore.HasValue)
+                        {
+                            <span style="font-weight:700;color:var(--secondary);">@cp.AvgExamScore.Value.ToString("0.0") pts</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </div>
+                    @if (cp.TotalExams > 0)
+                    {
+                        var examPct = cp.TotalExams > 0 ? (double)cp.AttemptedExams / cp.TotalExams * 100 : 0;
+                        <div class="mt-2">
+                            <div style="height:6px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
+                                <div style="height:100%;width:@examPct.ToString("0")\%;background:var(--accent-purple);border-radius:10px;transition:width 1s ease;"></div>
+                            </div>
+                            <small class="text-muted">@examPct.ToString("0")% completion</small>
+                        </div>
+                    }
+                </div>
+
+                <!-- Assignments -->
+                <div class="col-md-6">
+                    <div class="mb-2" style="font-weight:700;font-size:0.85rem;color:var(--primary);">
+                        <i class="fas fa-tasks me-2" style="color:var(--orange);"></i>Assignments
+                    </div>
+                    <div class="sa-info-row">
+                        <span class="sa-info-label">Submitted</span>
+                        <span>@cp.SubmittedAssignments / @cp.TotalAssignments</span>
+                    </div>
+                    <div class="sa-info-row">
+                        <span class="sa-info-label">Late</span>
+                        <span style="color:@(cp.LateSubmissions > 0 ? "var(--accent-pink)" : "#16a34a");font-weight:600;">
+                            @cp.LateSubmissions
+                        </span>
+                    </div>
+                    <div class="sa-info-row" style="border-bottom:none;">
+                        <span class="sa-info-label">Avg Marks</span>
+                        @if (cp.AvgAssignmentMarks.HasValue)
+                        {
+                            <span style="font-weight:700;color:var(--secondary);">@cp.AvgAssignmentMarks.Value.ToString("0.0")</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </div>
+                    @if (cp.TotalAssignments > 0)
+                    {
+                        var assignPct = cp.TotalAssignments > 0 ? (double)cp.SubmittedAssignments / cp.TotalAssignments * 100 : 0;
+                        <div class="mt-2">
+                            <div style="height:6px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
+                                <div style="height:100%;width:@assignPct.ToString("0")\%;background:var(--orange);border-radius:10px;"></div>
+                            </div>
+                            <small class="text-muted">@assignPct.ToString("0")% submitted</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

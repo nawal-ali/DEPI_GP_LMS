@@ -1,0 +1,110 @@
+@model LMSProject.Areas.Instructor.ViewModel.GradeSubmissionVM
+@{
+    ViewData["Title"] = "Grade Submission";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a asp-action="Submissions" asp-route-id="@Model.AssignmentId" class="sa-btn-icon sa-btn-view">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h5 class="mb-0 fw-bold" style="color:var(--primary);">Grade Submission</h5>
+                <small class="text-muted">@Model.StudentName — @Model.AssignmentTitle</small>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Student's Submission -->
+            <div class="col-lg-7">
+                <div class="sa-card">
+                    <div class="sa-card-header">
+                        <h5><i class="fas fa-file-alt me-2" style="color:var(--accent-blue);"></i>Student's Submission</h5>
+                        <div class="d-flex gap-1 align-items-center">
+                            @if (Model.IsLate)
+                            {
+                                <span class="sa-badge sa-badge-inactive"><i class="fas fa-clock me-1"></i>Late</span>
+                            }
+                            @if (Model.SubmittedAt.HasValue)
+                            {
+                                <small class="text-muted" style="font-size:0.75rem;">@Model.SubmittedAt.Value.ToString("MMM d, h:mm tt")</small>
+                            }
+                        </div>
+                    </div>
+                    <div class="sa-card-body">
+                        @if (!string.IsNullOrWhiteSpace(Model.TextAnswer))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Text Answer</label>
+                                <div class="p-3 rounded-3" style="background:rgba(47,50,125,0.03);border:1px solid rgba(47,50,125,0.08);font-size:0.875rem;white-space:pre-wrap;line-height:1.7;">@Model.TextAnswer</div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.FileUrl))
+                        {
+                            <div>
+                                <label class="form-label text-muted">Uploaded File</label>
+                                <div class="p-3 rounded-3 d-flex align-items-center gap-3"
+                                     style="background:rgba(244,140,6,0.05);border:1px solid rgba(244,140,6,0.2);">
+                                    <i class="fas fa-paperclip" style="color:var(--orange);font-size:1.2rem;"></i>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-weight:600;font-size:0.85rem;">@(Model.FileName ?? "Attached file")</div>
+                                        <a href="/@Model.FileUrl" target="_blank"
+                                           style="font-size:0.78rem;color:var(--secondary);">
+                                            Download / View
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (string.IsNullOrWhiteSpace(Model.TextAnswer) && string.IsNullOrEmpty(Model.FileUrl))
+                        {
+                            <div class="text-center text-muted py-3" style="font-size:0.875rem;">
+                                <i class="fas fa-inbox d-block fa-2x mb-2" style="opacity:0.2;"></i>
+                                No submission content.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grading Panel -->
+            <div class="col-lg-5">
+                <div class="sa-card">
+                    <div class="sa-card-header">
+                        <h5><i class="fas fa-star me-2" style="color:var(--orange);"></i>Grading</h5>
+                    </div>
+                    <div class="sa-card-body">
+                        <form asp-action="Grade" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="SubmissionId" />
+                            <input type="hidden" asp-for="AssignmentId" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Marks <span class="text-danger">*</span></label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input asp-for="NewMarks" type="number" min="0" max="@Model.TotalMarks"
+                                           step="0.5" class="sa-form-control" style="max-width:120px;" />
+                                    <span class="text-muted" style="font-size:0.85rem;">/ @Model.TotalMarks</span>
+                                </div>
+                                <span asp-validation-for="NewMarks" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Feedback</label>
+                                <textarea asp-for="NewFeedback" class="sa-form-control" rows="4"
+                                          placeholder="Add feedback for the student (optional)"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100" style="border-radius:10px;">
+                                <i class="fas fa-check me-2"></i>Submit Grade
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

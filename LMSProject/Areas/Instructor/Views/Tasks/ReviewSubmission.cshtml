@@ -1,0 +1,268 @@
+@model LMSProject.ViewModel.ReviewSubmissionVM
+
+@{
+    ViewData["Title"] = "Review & Grade Submission";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var submission = (MLSCore.Models.TbTaskAnswers)ViewBag.Submission;
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="h2 fw-bold text-dark">
+                <i class="bi bi-clipboard-check me-2"></i> Review & Grade Submission
+            </h2>
+            <p class="text-muted">Review student work and provide a grade with feedback</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Submissions" asp-route-taskId="@Model.TaskId" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i> Back to Submissions
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column - Student Info & Submission -->
+        <div class="col-lg-7 mb-4">
+            <!-- Student Information Card -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light border-0 p-4">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="bi bi-person-circle me-2"></i> Student Information
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small fw-semibold">Student Name</label>
+                            <p class="fw-bold text-dark">@Model.StudentName</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small fw-semibold">Student ID</label>
+                            <p class="fw-bold text-dark">@Model.StudentId</p>
+                        </div>
+                    </div>
+                    @if (submission?.CreatedDate.HasValue ?? false)
+                    {
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small fw-semibold">Submission Date</label>
+                                <p class="fw-bold text-dark">@submission.CreatedDate.Value.ToString("MMM dd, yyyy HH:mm")</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small fw-semibold">Current Status</label>
+                                <p class="fw-bold">
+                                    <span class="badge bg-info">Submitted</span>
+                                </p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Student Answer/Submission Card -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light border-0 p-4">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="bi bi-file-earmark me-2"></i> Student Submission
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    @if (!string.IsNullOrEmpty(Model.AnswerURL))
+                    {
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            <strong>Answer URL:</strong>
+                            <a href="@Model.AnswerURL" target="_blank" class="text-decoration-none">
+                                @Model.AnswerURL <i class="bi bi-box-arrow-up-right ms-1"></i>
+                            </a>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            No submission URL available.
+                        </div>
+                    }
+
+                    <!-- Display Current Score if Exists -->
+                    @if (Model.CurrentScore > 0)
+                    {
+                        <div class="bg-light p-3 rounded mb-3">
+                            <label class="text-muted small fw-semibold">Previous Grade</label>
+                            <div class="mt-2">
+                                <span class="badge bg-success fs-6">Score: @Model.CurrentScore</span>
+                                @if (!string.IsNullOrEmpty(Model.CurrentComment))
+                                {
+                                    <div class="mt-3 p-3 bg-white border rounded">
+                                        <small class="text-muted fw-semibold">Previous Comment:</small>
+                                        <p class="text-dark mt-2">@Model.CurrentComment</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Grading Form -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white border-0 p-4">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i> Provide Grade & Feedback
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" asp-action="SubmitGrade" novalidate>
+                        <input type="hidden" name="SubmissionId" value="@Model.SubmissionId" />
+                        <input type="hidden" name="TaskId" value="@Model.TaskId" />
+
+                        <!-- Score Input -->
+                        <div class="mb-4">
+                            <label asp-for="NewScore" class="form-label fw-semibold">
+                                Score <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <input asp-for="NewScore" type="number" step="0.01" min="0" 
+                                       class="form-control" placeholder="Enter score" required />
+                                <span class="input-group-text bg-light border">points</span>
+                            </div>
+                            <span asp-validation-for="NewScore" class="text-danger small d-block mt-1"></span>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-info-circle me-1"></i> Enter the score (e.g., 85.5 out of 100)
+                            </small>
+                        </div>
+
+                        <!-- Comment/Feedback -->
+                        <div class="mb-4">
+                            <label asp-for="NewComment" class="form-label fw-semibold">
+                                Feedback & Comments
+                            </label>
+                            <textarea asp-for="NewComment" class="form-control" rows="5" 
+                                      placeholder="Provide detailed feedback for the student..."
+                                      maxlength="1000"></textarea>
+                            <span asp-validation-for="NewComment" class="text-danger small d-block mt-1"></span>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-chat-left-text me-1"></i> Maximum 1000 characters
+                            </small>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Characters: <span id="charCount">0</span>/1000
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Quick Feedback Buttons -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Quick Actions</label>
+                            <div class="btn-group-vertical d-grid gap-2" role="group">
+                                <button type="button" class="btn btn-outline-secondary text-start" 
+                                        onclick="addQuickFeedback('Great work! Your submission demonstrates excellent understanding.')">
+                                    <i class="bi bi-star-fill text-warning me-2"></i> Excellent
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary text-start" 
+                                        onclick="addQuickFeedback('Good effort. Consider reviewing the following areas for improvement...')">
+                                    <i class="bi bi-check-circle text-success me-2"></i> Good
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary text-start" 
+                                        onclick="addQuickFeedback('Needs improvement. Please review the course materials and try again.')">
+                                    <i class="bi bi-exclamation-circle text-warning me-2"></i> Needs Work
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-lightbulb me-1"></i> Click to add pre-written feedback
+                            </small>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg fw-semibold">
+                                <i class="bi bi-check-lg me-2"></i> Submit Grade
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Character Count Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const textarea = document.querySelector('textarea[name="NewComment"]');
+        const charCount = document.getElementById('charCount');
+
+        if (textarea) {
+            textarea.addEventListener('input', function () {
+                charCount.textContent = this.value.length;
+            });
+        }
+    });
+
+    function addQuickFeedback(text) {
+        const textarea = document.querySelector('textarea[name="NewComment"]');
+        if (textarea) {
+            if (textarea.value) {
+                textarea.value += '\n\n' + text;
+            } else {
+                textarea.value = text;
+            }
+            // Update character count
+            document.getElementById('charCount').textContent = textarea.value.length;
+            textarea.focus();
+        }
+    }
+</script>
+
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+    }
+
+    .form-label {
+        color: #333;
+        margin-bottom: 0.75rem;
+    }
+
+    .form-control:focus,
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .input-group-lg .form-control {
+        font-size: 1.1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .btn-group-vertical .btn {
+        border: 1px solid #ddd;
+        transition: all 0.2s ease;
+    }
+
+    .btn-group-vertical .btn:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+    }
+
+    .sticky-top {
+        z-index: 100;
+    }
+
+    @@media (max-width: 992px) {
+        .sticky-top {
+            position: static;
+            top: auto;
+        }
+    }
+</style>

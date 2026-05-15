@@ -1,0 +1,139 @@
+@model LMSProject.Areas.Instructor.ViewModel.CreateQuestionVM
+@using MLSCore.Models
+@{
+    ViewData["Title"] = "Add Question";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a asp-action="Details" asp-route-id="@Model.TestId" class="sa-btn-icon sa-btn-view">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h5 class="mb-0 fw-bold" style="color:var(--primary);">Add Question</h5>
+                <small class="text-muted">Exam: @ViewBag.ExamTitle</small>
+            </div>
+        </div>
+
+        <div class="sa-card">
+            <div class="sa-card-body">
+                <form asp-action="AddQuestion" method="post" id="questionForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="TestId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Question Type <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-2">
+                            <label class="d-flex align-items-center gap-2 px-3 py-2 rounded-3 type-btn"
+                                   style="border:1.5px solid rgba(47,50,125,0.12);cursor:pointer;flex:1;justify-content:center;">
+                                <input type="radio" asp-for="QuestionType" value="@((int)QuestionType.Choice)"
+                                       id="qt_choice" style="display:none;" onchange="handleQType()">
+                                <i class="fas fa-list-ul" style="color:var(--accent-blue);"></i>
+                                <span style="font-size:0.83rem;font-weight:600;">Multiple Choice</span>
+                            </label>
+                            <label class="d-flex align-items-center gap-2 px-3 py-2 rounded-3 type-btn"
+                                   style="border:1.5px solid rgba(47,50,125,0.12);cursor:pointer;flex:1;justify-content:center;">
+                                <input type="radio" asp-for="QuestionType" value="@((int)QuestionType.Text)"
+                                       id="qt_text" style="display:none;" onchange="handleQType()">
+                                <i class="fas fa-pen" style="color:var(--accent-purple);"></i>
+                                <span style="font-size:0.83rem;font-weight:600;">Text Answer</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Question Text <span class="text-danger">*</span></label>
+                        <textarea asp-for="Title" class="sa-form-control" rows="3"
+                                  placeholder="Enter the question here..."></textarea>
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Points <span class="text-danger">*</span></label>
+                        <input asp-for="Points" type="number" min="1" max="1000" class="sa-form-control" style="max-width:150px;" />
+                        <span asp-validation-for="Points" class="text-danger small"></span>
+                    </div>
+
+                    <!-- MCQ Section -->
+                    <div id="mcqSection">
+                        <div class="mb-2">
+                            <label class="form-label">Answer Choices <span class="text-danger">*</span></label>
+                            <small class="text-muted d-block mb-2">Enter at least 2 choices and mark the correct one</small>
+                        </div>
+
+                        @{
+                            var choices = new[] { ("A", "ChoiceA"), ("B", "ChoiceB"), ("C", "ChoiceC"), ("D", "ChoiceD") };
+                        }
+
+                        @foreach (var (letter, prop) in choices)
+                        {
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <label class="d-flex align-items-center gap-2 cursor-pointer"
+                                       style="flex-shrink:0;width:36px;height:36px;border-radius:50%;border:2px solid rgba(47,50,125,0.15);justify-content:center;cursor:pointer;">
+                                    <input type="radio" name="CorrectChoice" value="@letter"
+                                           style="display:none;" onchange="highlightChoice('@letter')" />
+                                    <span id="dot_@letter" style="font-size:0.75rem;font-weight:700;color:var(--primary);">@letter</span>
+                                </label>
+                                <input asp-for="@prop" id="choice_@letter" class="sa-form-control"
+                                       placeholder="Choice @letter @(letter is "A" or "B" ? "(required)" : "(optional)")" />
+                            </div>
+                        }
+
+                        <span asp-validation-for="ChoiceA" class="text-danger small"></span>
+                        <span asp-validation-for="CorrectChoice" class="text-danger small"></span>
+
+                        <small class="text-muted">Click the letter to mark the correct answer.</small>
+                    </div>
+
+                    <!-- Text section placeholder -->
+                    <div id="textSection" style="display:none;">
+                        <div class="p-3 rounded-3" style="background:rgba(91,114,238,0.06);border:1px dashed rgba(91,114,238,0.3);">
+                            <i class="fas fa-info-circle me-2" style="color:var(--accent-purple);"></i>
+                            <small>Students will type their answer. You can grade text answers manually in submissions.</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a asp-action="Details" asp-route-id="@Model.TestId" class="btn-secondary-sa">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4" style="border-radius:10px;">
+                            <i class="fas fa-plus me-2"></i>Add Question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function handleQType() {
+        const selected = document.querySelector('input[name="QuestionType"]:checked');
+        if (!selected) return;
+        const isText = parseInt(selected.value) === @((int)QuestionType.Text);
+        document.getElementById('mcqSection').style.display = isText ? 'none' : 'block';
+        document.getElementById('textSection').style.display = isText ? 'block' : 'none';
+        document.querySelectorAll('input[name="QuestionType"]').forEach(r => {
+            r.closest('label').style.borderColor = r.checked ? 'var(--secondary)' : 'rgba(47,50,125,0.12)';
+            r.closest('label').style.background = r.checked ? 'rgba(0,203,184,0.06)' : '';
+        });
+    }
+
+    function highlightChoice(letter) {
+        ['A','B','C','D'].forEach(l => {
+            const label = document.querySelector(`input[name="CorrectChoice"][value="${l}"]`)?.closest('label');
+            if (label) {
+                label.style.borderColor = l === letter ? '#16a34a' : 'rgba(47,50,125,0.15)';
+                label.style.background = l === letter ? 'rgba(51,239,160,0.12)' : '';
+                document.getElementById(`dot_${l}`).style.color = l === letter ? '#16a34a' : 'var(--primary)';
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const first = document.querySelector('input[name="QuestionType"]');
+        if (first) { first.checked = true; handleQType(); }
+    });
+</script>
+}

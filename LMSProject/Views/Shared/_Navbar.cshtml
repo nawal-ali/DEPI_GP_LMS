@@ -1,0 +1,45 @@
+﻿@{
+    var isHome = ViewContext.RouteData.Values["controller"]?.ToString() == "Home"
+                 && ViewContext.RouteData.Values["action"]?.ToString() == "Index";
+}
+
+<nav class="navbar navbar-expand-md p-4 fixed-top transition @(isHome ? "navbar-transparent" : "navbar-solid shadow-sm")"
+     id="mainNav">
+    <div class="container-fluid">
+
+        <!-- LOGO -->
+        <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+            <img id="navbarLogo"
+                 src="~/Images/images/@(isHome ? "logo_white.png" : "logo_black.png")"
+                 alt="Logo" style="height: 70px;">
+        </a>
+
+        <!-- TOGGLER -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- MENU -->
+        <div class="offcanvas offcanvas-end" id="offcanvasNavbar">
+            <div class="offcanvas-body">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    <li class="nav-item fs-4">
+                        <a class="nav-link nav-text" asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+                    <li class="nav-item fs-4">
+                        <a class="nav-link nav-text" href="#">Blog</a>
+                    </li>
+                    <li class="nav-item fs-4">
+                        <a class="nav-link nav-text" href="#">About</a>
+                    </li>
+
+                    <!-- LOGIN BUTTON -->
+                    <li class="nav-item fs-4 rounded-5 px-3 text-light" style="background-color:#2F327D; color:white !important;">
+                        <a class="nav-link nav-text" style="color:white !important;" asp-controller="Account" asp-action="Login">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+

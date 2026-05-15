@@ -1,0 +1,40 @@
+﻿@model LMSProject.Areas.Admin.ViewModels.EditParentVM
+@{
+    ViewData["Title"] = "Edit Parent";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="sa-card">
+            <div class="sa-modal-header" style="border-radius:16px 16px 0 0;">
+                <h5 class="mb-0" style="color:white;"><i class="fas fa-user-edit me-2"></i>Edit Parent — @Model.FullName</h5>
+            </div>
+            <div class="sa-card-body">
+                <form asp-area="Admin" asp-controller="Users" asp-action="EditParent" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input asp-for="FullName" class="sa-form-control" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input asp-for="Email" type="email" class="sa-form-control" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input asp-for="Phone" class="sa-form-control" />
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4"><i class="fas fa-save me-2"></i>Save Changes</button>
+                        <a asp-area="Admin" asp-controller="Users" asp-action="Parents" class="btn-secondary-sa">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

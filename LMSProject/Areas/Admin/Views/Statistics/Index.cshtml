@@ -1,0 +1,173 @@
+﻿@model LMSProject.Areas.Admin.ViewModels.AdminStatisticsVM
+@{
+    ViewData["Title"] = "Statistics & Analytics";
+    var months = System.Text.Json.JsonSerializer.Serialize(new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" });
+    var enrollData = System.Text.Json.JsonSerializer.Serialize(Model.MonthlyEnrollments);
+    var submData = System.Text.Json.JsonSerializer.Serialize(Model.MonthlySubmissions);
+    var breakLabels = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Label).ToArray());
+    var breakValues = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Value).ToArray());
+    var breakColors = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Color).ToArray());
+    var breakColorsAlpha = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Color + "99").ToArray());
+    int totalUsers = Model.TotalStudents + Model.TotalInstructors + Model.TotalParents;
+    int maxCourse = Model.TopCourses.Any() ? Model.TopCourses.Max(c => c.Students) : 1;
+    var courseColors = new[] { "var(--accent-purple)", "var(--accent-blue)", "var(--secondary)", "var(--accent-green)", "var(--orange)" };
+}
+
+<!-- KPI row 1 -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-1"><p>Students</p><h3>@Model.TotalStudents</h3><i class="fas fa-user-graduate stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-2"><p>Instructors</p><h3>@Model.TotalInstructors</h3><i class="fas fa-chalkboard-teacher stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-3"><p>Parents</p><h3>@Model.TotalParents</h3><i class="fas fa-users stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-4"><p>Courses</p><h3>@Model.TotalCourses</h3><i class="fas fa-book-open stat-icon"></i></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-5"><p>Exams</p><h3>@Model.TotalExams</h3><i class="fas fa-file-alt stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-6"><p>Assignments</p><h3>@Model.TotalAssignments</h3><i class="fas fa-tasks stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card" style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));"><p>Submissions</p><h3>@Model.TotalSubmissions</h3><i class="fas fa-inbox stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7);"><p>Materials</p><h3>@Model.TotalMaterials</h3><i class="fas fa-folder-open stat-icon"></i></div></div>
+</div>
+
+<!-- Charts row -->
+<div class="row g-4 mb-4">
+    <!-- Enrollment trend -->
+    <div class="col-lg-8">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-chart-line me-2" style="color:var(--secondary);"></i>Monthly Enrollments</h5>
+                <span class="sa-badge sa-badge-info">This Year</span>
+            </div>
+            <div class="sa-card-body">
+                <div class="sa-chart-wrap"><canvas id="enrollChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <!-- User breakdown doughnut -->
+    <div class="col-lg-4">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-chart-pie me-2" style="color:var(--accent-purple);"></i>User Distribution</h5>
+            </div>
+            <div class="sa-card-body">
+                <div class="sa-chart-wrap" style="height:200px;"><canvas id="breakdownChart"></canvas></div>
+                <div class="mt-3 d-flex flex-column gap-2">
+                    @foreach (var b in Model.UserBreakdown)
+                    {
+                        int pct = totalUsers > 0 ? (int)Math.Round((double)b.Value / totalUsers * 100) : 0;
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:10px;height:10px;border-radius:50%;background:@b.Color;flex-shrink:0;"></div>
+                                <small style="font-weight:600;">@b.Label</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <small style="color:#9ca3af;">@b.Value</small>
+                                <div style="width:70px;height:5px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
+                                    <div style="height:100%;width:@pct%;background:@b.Color;border-radius:10px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Submission trend bar -->
+    <div class="col-lg-6">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-chart-bar me-2" style="color:var(--accent-blue);"></i>Monthly Submissions</h5>
+            </div>
+            <div class="sa-card-body">
+                <div class="sa-chart-wrap"><canvas id="submChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top courses + grading rate -->
+    <div class="col-lg-6">
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="sa-card">
+                    <div class="sa-card-header">
+                        <h5><i class="fas fa-trophy me-2" style="color:var(--orange);"></i>Top Courses by Enrollment</h5>
+                    </div>
+                    <div class="sa-card-body">
+                        @if (!Model.TopCourses.Any())
+                        {
+                            <p class="text-muted text-center py-3 mb-0" style="font-size:0.85rem;">No enrollment data yet.</p>
+                        }
+                        @for (int i = 0; i < Model.TopCourses.Count; i++)
+                        {
+                            var (name, cnt) = Model.TopCourses[i];
+                            int pct = (int)((double)cnt / maxCourse * 100);
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small style="font-weight:600;font-size:0.8rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@name</small>
+                                    <small style="font-weight:700;color:@courseColors[i % courseColors.Length];">@cnt students</small>
+                                </div>
+                                <div class="sa-progress"><div class="sa-progress-bar" style="width:@pct%;background:@courseColors[i % courseColors.Length];"></div></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="sa-card">
+                    <div class="sa-card-header">
+                        <h5><i class="fas fa-check-circle me-2" style="color:var(--accent-green);"></i>Grading Rate</h5>
+                    </div>
+                    <div class="sa-card-body">
+                        @{
+                            int gradRate = Model.TotalSubmissions > 0
+                                ? (int)((double)Model.GradedSubmissions / Model.TotalSubmissions * 100) : 0;
+                        }
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span style="font-size:0.87rem;font-weight:600;">Assignments Graded</span>
+                            <span style="font-weight:800;color:var(--primary);font-size:1.1rem;">@gradRate%</span>
+                        </div>
+                        <div class="sa-progress" style="height:12px;">
+                            <div class="sa-progress-bar" style="width:@gradRate%;background:linear-gradient(90deg,var(--accent-green),var(--secondary));"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small style="color:#9ca3af;">@Model.GradedSubmissions graded</small>
+                            <small style="color:#9ca3af;">@(Model.TotalSubmissions - Model.GradedSubmissions) pending</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const months     = @Html.Raw(months);
+        const enrollData = @Html.Raw(enrollData);
+        const submData   = @Html.Raw(submData);
+        const bLabels    = @Html.Raw(breakLabels);
+        const bValues    = @Html.Raw(breakValues);
+        const bColors    = @Html.Raw(breakColors);
+        const bColorsAlpha = @Html.Raw(breakColorsAlpha);
+
+        new Chart(document.getElementById('enrollChart'), {
+            type: 'line',
+            data: { labels: months, datasets: [{ label: 'Enrollments', data: enrollData, borderColor: '#00CBB8', backgroundColor: 'rgba(0,203,184,0.08)', fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#00CBB8', pointRadius: 5 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } }, x: { grid: { display: false } } } }
+        });
+
+        new Chart(document.getElementById('breakdownChart'), {
+            type: 'doughnut',
+            data: { labels: bLabels, datasets: [{ data: bValues, backgroundColor: bColorsAlpha, borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+        });
+
+        new Chart(document.getElementById('submChart'), {
+            type: 'bar',
+            data: { labels: months, datasets: [{ label: 'Submissions', data: submData, backgroundColor: 'rgba(91,114,238,0.7)', borderRadius: 8, borderSkipped: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } }, x: { grid: { display: false } } } }
+        });
+    </script>
+}

@@ -1,0 +1,57 @@
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    bool Is(string c, string a = null) =>
+        string.Equals(ctrl, c, StringComparison.OrdinalIgnoreCase) &&
+        (a == null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase));
+}
+
+<div class="sa-group-label">Main</div>
+
+<a asp-area="Instructor" asp-controller="Home" asp-action="Index"
+   class="sa-nav-item @(Is("Home") ? "active" : "")">
+    <i class="fas fa-tachometer-alt"></i>
+    <span>Dashboard</span>
+</a>
+
+<div class="sa-group-label mt-3">Teaching</div>
+
+<a asp-area="Instructor" asp-controller="Course" asp-action="Index"
+   class="sa-nav-item @(Is("Course") ? "active" : "")">
+    <i class="fas fa-book-open"></i>
+    <span>My Courses</span>
+</a>
+
+<a asp-area="Instructor" asp-controller="Materials" asp-action="Index"
+   class="sa-nav-item @(Is("Materials") ? "active" : "")">
+    <i class="fas fa-file-alt"></i>
+    <span>Course Materials</span>
+</a>
+
+<a asp-area="Instructor" asp-controller="Exams" asp-action="Index"
+   class="sa-nav-item @(Is("Exams") ? "active" : "")">
+    <i class="fas fa-clipboard-list"></i>
+    <span>Exams</span>
+</a>
+
+<a asp-area="Instructor" asp-controller="Assignments" asp-action="Index"
+   class="sa-nav-item @(Is("Assignments") ? "active" : "")">
+    <i class="fas fa-tasks"></i>
+    <span>Assignments</span>
+</a>
+
+<div class="sa-group-label mt-3">Students</div>
+
+<a asp-area="Instructor" asp-controller="Student" asp-action="Index"
+   class="sa-nav-item @(Is("Student") ? "active" : "")">
+    <i class="fas fa-user-graduate"></i>
+    <span>My Students</span>
+</a>
+
+<div class="sa-group-label mt-3">Communication</div>
+
+<a asp-area="Instructor" asp-controller="Announcements" asp-action="Index"
+   class="sa-nav-item @(Is("Announcements") ? "active" : "")">
+    <i class="fas fa-bullhorn"></i>
+    <span>Announcements</span>
+</a>

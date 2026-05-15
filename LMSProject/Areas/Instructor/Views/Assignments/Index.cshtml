@@ -1,0 +1,107 @@
+@model List<LMSProject.Areas.Instructor.ViewModel.AssignmentListItemVM>
+@using MLSCore.Models
+@{
+    ViewData["Title"] = "Assignments";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold" style="color:var(--primary);">Assignments</h5>
+        <small class="text-muted">@Model.Count assignment(s) across your courses</small>
+    </div>
+    <a asp-action="Create" class="btn btn-primary btn-sm px-4 py-2" style="border-radius:10px;font-size:0.85rem;">
+        <i class="fas fa-plus me-2"></i>Create Assignment
+    </a>
+</div>
+
+<div class="sa-card">
+    <div class="sa-card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-tasks fa-3x mb-3 d-block" style="opacity:0.2;"></i>
+                <p class="mb-2" style="font-size:0.9rem;">No assignments yet.</p>
+                <a asp-action="Create" class="btn btn-primary btn-sm px-4" style="border-radius:10px;">Create your first assignment</a>
+            </div>
+        }
+        else
+        {
+            <table class="sa-table">
+                <thead>
+                    <tr>
+                        <th>Assignment</th>
+                        <th>Course</th>
+                        <th>Marks</th>
+                        <th>Submission Type</th>
+                        <th>Deadline</th>
+                        <th>Submissions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div style="font-weight:600;font-size:0.85rem;">@a.Title</div>
+                                @if (!string.IsNullOrEmpty(a.Description))
+                                {
+                                    <small class="text-muted" style="font-size:0.72rem;">
+                                        @(a.Description.Length > 55 ? a.Description[..55] + "…" : a.Description)
+                                    </small>
+                                }
+                            </td>
+                            <td style="font-size:0.83rem;">@a.CourseName</td>
+                            <td style="font-weight:700;font-size:0.83rem;">@a.TotalMarks pts</td>
+                            <td>
+                                @{
+                                    var (stIcon, stColor, stLabel) = a.SubmissionType switch
+                                    {
+                                        SubmissionType.TextOnly => ("fa-pen", "#5B72EE", "Text"),
+                                        SubmissionType.FileOnly => ("fa-paperclip", "#F48C06", "File"),
+                                        _                       => ("fa-layer-group", "#29B9E7", "Both")
+                                    };
+                                }
+                                <span class="sa-badge" style="background:@(stColor)18;color:@stColor;">
+                                    <i class="fas @stIcon me-1"></i>@stLabel
+                                </span>
+                            </td>
+                            <td>
+                                <span class="sa-badge @(a.IsOverdue ? "sa-badge-inactive" : "sa-badge-active")">
+                                    @a.Deadline.ToString("MMM d, yyyy")
+                                </span>
+                                @if (a.IsOverdue)
+                                {
+                                    <small class="d-block text-muted" style="font-size:0.68rem;">Closed</small>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Submissions" asp-route-id="@a.Id"
+                                   class="sa-badge" style="background:rgba(47,50,125,0.08);color:var(--primary);text-decoration:none;">
+                                    @a.SubmissionCount submitted
+                                </a>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a asp-action="Submissions" asp-route-id="@a.Id" class="sa-btn-icon sa-btn-view" title="View Submissions">
+                                        <i class="fas fa-inbox"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@a.Id" class="sa-btn-icon sa-btn-edit" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@a.Id" method="post" class="d-inline"
+                                          onsubmit="return confirm('Delete this assignment?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="sa-btn-icon sa-btn-delete" title="Delete">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

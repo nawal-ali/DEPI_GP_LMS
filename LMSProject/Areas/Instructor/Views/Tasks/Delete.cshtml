@@ -1,0 +1,121 @@
+@model MLSCore.Models.TbTask
+
+@{
+    ViewData["Title"] = "Delete Task";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="h2 fw-bold text-dark">
+                <i class="bi bi-exclamation-circle me-2 text-danger"></i> Delete Task
+            </h2>
+            <p class="text-muted">Confirm task deletion - this action cannot be undone</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i> Back to Tasks
+            </a>
+        </div>
+    </div>
+
+    <!-- Warning Alert -->
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Warning!</strong> Deleting this task will also remove all student submissions and grades associated with it.
+        This action cannot be undone.
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="card shadow-sm border-danger">
+        <div class="card-header bg-danger text-white border-0 p-4">
+            <h5 class="card-title mb-0 fw-bold">
+                <i class="bi bi-trash me-2"></i> Confirm Delete
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark mb-3">Task Details:</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Task Title</label>
+                        <p class="fw-bold text-dark">@Model.Title</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Sub-Content</label>
+                        <p class="fw-bold text-dark">@Model.SubContent?.Title</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Start Date</label>
+                        <p class="fw-bold text-dark">@Model.StartDate.ToString("MMM dd, yyyy HH:mm")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">End Date</label>
+                        <p class="fw-bold text-dark">@Model.EndDate.ToString("MMM dd, yyyy HH:mm")</p>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Note:</strong> All student submissions and grades for this task will be deleted permanently.
+                </div>
+            </div>
+
+            <!-- Confirmation Form -->
+            <form method="post" asp-action="Delete" asp-route-id="@Model.Id">
+                <div class="form-check mb-4 p-3 bg-light rounded">
+                    <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                    <label class="form-check-label" for="confirmDelete">
+                        I understand that this will permanently delete the task and all associated student submissions
+                    </label>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle me-2"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-trash me-2"></i> Delete Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function (e) {
+        if (!document.getElementById('confirmDelete').checked) {
+            e.preventDefault();
+            alert('Please confirm by checking the checkbox before deleting.');
+        }
+    });
+</script>
+
+<style>
+    .alert {
+        border-radius: 6px;
+    }
+
+    .card {
+        border-width: 2px;
+    }
+
+    .card-header {
+        border-radius: 6px 6px 0 0;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+    }
+</style>

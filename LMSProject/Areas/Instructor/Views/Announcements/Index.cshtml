@@ -1,0 +1,189 @@
+﻿@using MLSCore.Models
+@{
+    ViewData["Title"] = "Announcements";
+    var all = ViewBag.All as List<TbAnnouncement> ?? new();
+    var paged = ViewBag.Paged as List<TbAnnouncement> ?? new();
+    int totalPages = (int)(ViewBag.TotalPages ?? 1);
+    int page = (int)(ViewBag.Page ?? 1);
+    string search = ViewBag.Search as string ?? "";
+    string priority = ViewBag.Priority as string ?? "";
+    int urgent = (int)(ViewBag.Urgent ?? 0);
+    int pinned = (int)(ViewBag.Pinned ?? 0);
+
+    string PriorityBorder(string? p) => p switch
+    {
+        "Urgent" => "var(--accent-pink)",
+        "High" => "var(--orange)",
+        "Low" => "var(--accent-green)",
+        _ => "var(--primary)"
+    };
+    string PriorityGrad(string? p) => p switch
+    {
+        "Urgent" => "linear-gradient(135deg,var(--accent-pink),var(--orange))",
+        "High" => "linear-gradient(135deg,var(--orange),var(--yellow))",
+        "Low" => "linear-gradient(135deg,var(--accent-green),var(--accent-blue))",
+        _ => "linear-gradient(135deg,var(--primary),var(--secondary))"
+    };
+}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-1">
+            <p>Total</p><h3>@all.Count</h3>
+            <i class="fas fa-bullhorn stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-2">
+            <p>General</p><h3>@all.Count(a => a.Priority != "Urgent" && a.Priority != "High")</h3>
+            <i class="fas fa-info-circle stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-3">
+            <p>Pinned</p><h3>@pinned</h3>
+            <i class="fas fa-thumbtack stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-6">
+            <p>Urgent</p><h3>@urgent</h3>
+            <i class="fas fa-exclamation-circle stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Header + Filters -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-bullhorn me-2" style="color:var(--secondary);"></i>Announcements
+    </h5>
+    <span class="sa-badge sa-badge-info">View Only</span>
+</div>
+
+<form method="get" asp-action="Index">
+    <div class="sa-filters mb-4">
+        <div class="search-wrap flex-grow-1">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search announcements…" value="@search" />
+        </div>
+        <select name="priority" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Priorities</option>
+            @foreach (var p in new[] { "Urgent", "High", "Medium", "Low" })
+            {
+                <option value="@p" selected="@(priority == p ? "selected" : null)">@p</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3">
+            <i class="fas fa-filter me-1"></i>Filter
+        </button>
+        <a asp-area="Instructor" asp-controller="Announcements" asp-action="Index"
+           class="btn-secondary-sa btn btn-sm">
+            <i class="fas fa-times me-1"></i>Clear
+        </a>
+    </div>
+</form>
+
+<!-- Announcement Cards -->
+@if (!paged.Any())
+{
+    <div class="sa-card p-5 text-center" style="color:#aaa;">
+        <i class="fas fa-bullhorn fa-3x mb-3 d-block opacity-25"></i>
+        <p style="margin:0;">No announcements at the moment.</p>
+    </div>
+}
+
+@foreach (var a in paged)
+{
+    <div class="sa-card mb-3" style="border-left:5px solid @PriorityBorder(a.Priority);transition:transform .2s;"
+         onmouseover="this.style.transform='translateX(4px)'"
+         onmouseout="this.style.transform='translateX(0)'">
+        <!-- Card header strip -->
+        <div style="background:@PriorityGrad(a.Priority);border-radius:11px 11px 0 0;padding:12px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    @if (a.IsPinned)
+                    {
+                        <i class="fas fa-thumbtack" style="color:rgba(255,255,255,0.85);font-size:0.8rem;"></i>
+                    }
+                    <h6 style="margin:0;color:white;font-weight:700;font-size:0.95rem;">@a.Title</h6>
+                </div>
+                <small style="color:rgba(255,255,255,0.75);font-size:0.72rem;">
+                    <i class="fas fa-calendar me-1"></i>@a.PublishedDate.ToString("MMM dd, yyyy")
+                    @if (!string.IsNullOrEmpty(a.CreatedBy))
+                    {
+                        <span>&nbsp;|&nbsp;<i class="fas fa-user me-1"></i>@a.CreatedBy</span>
+                    }
+                    @if (!string.IsNullOrEmpty(a.Category))
+                    {
+                        <span>&nbsp;|&nbsp;@a.Category</span>
+                    }
+                </small>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <span class="sa-badge" style="background:rgba(255,255,255,0.2);color:white;font-size:0.7rem;">
+                    @(a.Priority ?? "Normal")
+                </span>
+                <span class="sa-badge" style="background:rgba(255,255,255,0.2);color:white;font-size:0.7rem;">
+                    @a.TargetAudience
+                </span>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div style="padding:1rem 1.25rem;">
+            <p style="margin:0 0 0.75rem;color:#444;font-size:0.875rem;line-height:1.75;">@a.Content</p>
+
+            @if (!string.IsNullOrEmpty(a.Description))
+            {
+                <p style="margin:0;color:#6c757d;font-size:0.82rem;font-style:italic;">@a.Description</p>
+            }
+
+            @if (a.ExpiryDate.HasValue)
+            {
+                var daysLeft = (a.ExpiryDate.Value - DateTime.Now).Days;
+                var color = daysLeft <= 2 ? "var(--accent-pink)" : daysLeft <= 7 ? "var(--orange)" : "#6c757d";
+                <div class="mt-2">
+                    <small style="color:@color;font-size:0.75rem;font-weight:600;">
+                        <i class="fas fa-clock me-1"></i>
+                        @if (daysLeft <= 0)
+                        {
+                            <text>Expires today</text>
+                        }
+                        else if (daysLeft == 1)
+                        {
+
+                            <text>Expires tomorrow</text>
+                        }
+                        else
+                        {
+
+                            <text>Expires in @daysLeft days (@a.ExpiryDate.Value.ToString("MMM dd"))</text>
+                        }
+                    </small>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <div class="sa-pagination mt-4">
+        <a asp-action="Index" asp-route-page="@(page - 1)" asp-route-search="@search" asp-route-priority="@priority"
+           class="sa-page-btn @(page == 1 ? "disabled" : "")">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <a asp-action="Index" asp-route-page="@i" asp-route-search="@search" asp-route-priority="@priority"
+               class="sa-page-btn @(i == page ? "active" : "")">@i</a>
+        }
+        <a asp-action="Index" asp-route-page="@(page + 1)" asp-route-search="@search" asp-route-priority="@priority"
+           class="sa-page-btn @(page == totalPages ? "disabled" : "")">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    </div>
+}

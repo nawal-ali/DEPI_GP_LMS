@@ -1,0 +1,52 @@
+﻿@using LMSProject.Areas.Admin.ViewModel
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "Role-Edit";
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.css">
+}
+@model RoleFormVM
+<div class="col-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Adding Role Data</h4>
+            <p class="card-description"> Insert Role Data </p>
+            <form class="forms-sample" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-asp-for="Id" />
+                <div class="form-group row">
+                    
+                    <label asp-for="Name" class="col-sm-3 col-form-label"></label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" asp-for="Name">
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                </div>
+                <button type="submit" onclick="" class="btn btn-gradient-primary me-2">Submit</button>
+               
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Custom js for this page -->
+@section Scripts {
+    @{
+        <script src="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.js"></script>
+        <script src="~/Admin/assets/js/toastDemo.js"></script>
+
+        await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
+        @if (ViewBag.Messag != null)
+        {
+            <script type="text/javascript">
+                showSuccessToast();
+            </script>
+        }
+
+            
+    }
+    <!-- End custom js for this page -->
+}

@@ -1,0 +1,97 @@
+﻿@using MLSCore.Models
+@model List<TbSubject>
+@{
+    ViewData["Title"] = "Subjects";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-book me-2" style="color:var(--secondary);"></i>Subjects
+        <span class="sa-badge sa-badge-info ms-2">@Model.Count</span>
+    </h5>
+    <a asp-area="Admin" asp-controller="Subject" asp-action="Create"
+       class="btn btn-primary btn-sm rounded-3 px-3">
+        <i class="fas fa-plus me-1"></i> Add Subject
+    </a>
+</div>
+
+<div class="sa-card">
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Subject Name</th>
+                    <th>Created By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var subject in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(subject.ImageName))
+                            {
+                                <img src="~/@subject.ImageName"
+                                     style="width:48px;height:48px;border-radius:10px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--orange),var(--yellow));display:flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-book" style="color:rgba(255,255,255,0.7);"></i>
+                                </div>
+                            }
+                        </td>
+                        <td style="font-weight:600;">@subject.Name</td>
+                        <td style="color:#6c757d;font-size:0.85rem;">@(subject.CreatedBy ?? "—")</td>
+                        <td>
+                            @if (subject.CurrentState == 1)
+                            {
+                                <span class="sa-badge sa-badge-active">Active</span>
+                            }
+                            else
+                            {
+
+                                <span class="sa-badge sa-badge-inactive">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a asp-area="Admin" asp-controller="Subject" asp-action="Edit"
+                                   asp-route-id="@subject.Id"
+                                   class="sa-btn-icon sa-btn-edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button"
+                                        class="sa-btn-icon sa-btn-delete" title="Delete"
+                                        onclick="confirmDelete('/Admin/Subject/Delete?Id=@subject.Id', '@subject.Name')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5" style="color:#aaa;">
+                            <i class="fas fa-book fa-2x d-block mb-2 opacity-25"></i>No subjects yet.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(url, name) {
+            if (confirm('Are you sure you want to delete "' + name + '"?\nThis action cannot be undone.')) {
+                window.location.href = url;
+            }
+        }
+    </script>
+}

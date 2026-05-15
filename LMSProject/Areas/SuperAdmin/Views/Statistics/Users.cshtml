@@ -1,0 +1,160 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.StatisticsVM
+@{
+    var months = System.Text.Json.JsonSerializer.Serialize(new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" });
+    var regData = System.Text.Json.JsonSerializer.Serialize(Model.MonthlyRegistrations);
+    var breakdownLabels = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Label).ToArray());
+    var breakdownValues = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Value).ToArray());
+    var breakdownColors = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Color).ToArray());
+    // Semi-transparent colours built server-side — no JS .split() / .map() needed
+    var breakdownColorsAlpha = System.Text.Json.JsonSerializer.Serialize(Model.UserBreakdown.Select(b => b.Color + "99").ToArray());
+
+    int totalUsers = Model.TotalStudents + Model.TotalTeachers + Model.TotalParents + Model.TotalAdmins;
+}
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="sa-stat-card grad-1"><p>Students</p><h3>@Model.TotalStudents</h3><i class="fas fa-user-graduate stat-icon"></i></div></div>
+    <div class="col-6 col-md-3"><div class="sa-stat-card grad-2"><p>Teachers</p><h3>@Model.TotalTeachers</h3><i class="fas fa-chalkboard-teacher stat-icon"></i></div></div>
+    <div class="col-6 col-md-3"><div class="sa-stat-card grad-3"><p>Parents</p><h3>@Model.TotalParents</h3><i class="fas fa-users stat-icon"></i></div></div>
+    <div class="col-6 col-md-3"><div class="sa-stat-card grad-4"><p>Admins</p><h3>@Model.TotalAdmins</h3><i class="fas fa-user-cog stat-icon"></i></div></div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Growth line chart -->
+    <div class="col-lg-7">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-chart-line me-2" style="color:var(--secondary);"></i>User Growth (Monthly)</h5>
+            </div>
+            <div class="sa-card-body">
+                <div class="sa-chart-wrap" style="height:280px;">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Polar area breakdown -->
+    <div class="col-lg-5">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-chart-pie me-2" style="color:var(--accent-purple);"></i>User Distribution</h5>
+            </div>
+            <div class="sa-card-body">
+                <div class="sa-chart-wrap" style="height:280px;">
+                    <canvas id="polarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Breakdown summary table -->
+<div class="sa-card">
+    <div class="sa-card-header">
+        <h5><i class="fas fa-table me-2" style="color:var(--accent-blue);"></i>User Role Summary</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead>
+                <tr><th>Role</th><th>Count</th><th>% of Total</th><th>Distribution</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.UserBreakdown)
+                {
+                    int pct = totalUsers > 0 ? (int)Math.Round((double)b.Value / totalUsers * 100) : 0;
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:10px;height:10px;border-radius:50%;background:@b.Color;"></div>
+                                <span style="font-weight:600;">@b.Label</span>
+                            </div>
+                        </td>
+                        <td style="font-weight:700;font-size:1rem;color:var(--primary);">@b.Value</td>
+                        <td><span class="sa-badge" style="background:@b.Color;color:white;">@pct%</span></td>
+                        <td style="min-width:160px;">
+                            <div style="height:8px;background:rgba(0,0,0,0.05);border-radius:10px;overflow:hidden;">
+                                <div style="height:100%;width:@pct%;background:@b.Color;border-radius:10px;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                <tr style="background:rgba(47,50,125,0.03);">
+                    <td style="font-weight:700;">Total</td>
+                    <td style="font-weight:700;font-size:1rem;color:var(--primary);">@totalUsers</td>
+                    <td><span class="sa-badge" style="background:var(--primary);color:white;">100%</span></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // All values are plain JSON serialised on the server — no JS transformation needed
+        const months         = @Html.Raw(months);
+        const regData        = @Html.Raw(regData);
+        const bLabels        = @Html.Raw(breakdownLabels);
+        const bValues        = @Html.Raw(breakdownValues);
+        const bColors        = @Html.Raw(breakdownColors);
+        const bColorsAlpha   = @Html.Raw(breakdownColorsAlpha);
+
+        // Line chart — monthly growth
+        new Chart(document.getElementById('growthChart'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'New Registrations',
+                    data: regData,
+                    borderColor: '#5B72EE',
+                    backgroundColor: 'rgba(91,114,238,0.08)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#5B72EE',
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { font: { family: 'Poppins' } }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Polar area — user breakdown
+        new Chart(document.getElementById('polarChart'), {
+            type: 'polarArea',
+            data: {
+                labels: bLabels,
+                datasets: [{
+                    data: bValues,
+                    backgroundColor: bColorsAlpha,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { font: { family: 'Poppins', size: 12 } }
+                    }
+                }
+            }
+        });
+    </script>
+}

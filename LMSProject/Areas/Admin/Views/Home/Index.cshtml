@@ -1,0 +1,117 @@
+﻿@model LMSProject.Areas.Admin.ViewModels.AdminDashboardVM
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<!-- Stat cards row 1 -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-1"><p>Students</p><h3>@Model.TotalStudents</h3><i class="fas fa-user-graduate stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-2"><p>Instructors</p><h3>@Model.TotalInstructors</h3><i class="fas fa-chalkboard-teacher stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-3"><p>Parents</p><h3>@Model.TotalParents</h3><i class="fas fa-users stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-4"><p>Total Courses</p><h3>@Model.TotalCourses</h3><i class="fas fa-book-open stat-icon"></i></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-5"><p>Exams</p><h3>@Model.TotalExams</h3><i class="fas fa-file-alt stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card grad-6"><p>Assignments</p><h3>@Model.TotalAssignments</h3><i class="fas fa-tasks stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card" style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));"><p>Submissions</p><h3>@Model.TotalSubmissions</h3><i class="fas fa-inbox stat-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sa-stat-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7);"><p>Pending Grading</p><h3>@Model.PendingGrading</h3><i class="fas fa-hourglass-half stat-icon"></i></div></div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Courses -->
+    <div class="col-lg-7">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-book-open me-2" style="color:var(--secondary);"></i>Recent Courses</h5>
+                <a asp-area="Admin" asp-controller="AdminCourse" asp-action="Index"
+                   class="sa-btn-icon sa-btn-view" title="View all"><i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="sa-card-body p-0">
+                @if (!Model.RecentCourses.Any())
+                {
+                    <p class="text-center text-muted py-4 mb-0" style="font-size:0.85rem;">No courses yet.</p>
+                }
+                @foreach (var c in Model.RecentCourses)
+                {
+                    <div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(0,0,0,0.04);">
+                        @if (!string.IsNullOrEmpty(c.ImageName))
+                        {
+                            <img src="~/@c.ImageName" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0;" />
+                        }
+                        else
+                        {
+                            <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent-purple),var(--secondary));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-book-open" style="color:rgba(255,255,255,0.7);"></i>
+                            </div>
+                        }
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@c.Name</div>
+                            <small style="color:#9ca3af;font-size:0.75rem;"><i class="fas fa-user-tie me-1"></i>@c.InstructorName &nbsp;|&nbsp; <i class="fas fa-users me-1"></i>@c.StudentCount students</small>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <a asp-area="Admin" asp-controller="AdminCourse" asp-action="Enroll"
+                               asp-route-courseId="@c.Id" class="sa-btn-icon sa-btn-add" title="Enroll students">
+                                <i class="fas fa-user-plus"></i>
+                            </a>
+                            <a asp-area="Admin" asp-controller="AdminCourse" asp-action="Edit"
+                               asp-route-id="@c.Id" class="sa-btn-icon sa-btn-edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions + Activity -->
+    <div class="col-lg-5">
+        <div class="sa-card mb-4">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-rocket me-2" style="color:var(--accent-purple);"></i>Quick Actions</h5>
+            </div>
+            <div class="sa-card-body d-flex flex-column gap-2">
+                @foreach (var (icon, color, label, ctrl, action) in new[]
+                {
+                    ("fa-book-open",        "var(--accent-blue)",   "Manage Courses",       "AdminCourse",         "Index"),
+                    ("fa-user-plus",        "var(--secondary)",     "Enroll Students",      "AdminCourse",         "Index"),
+                    ("fa-chalkboard-teacher","var(--accent-purple)","View Instructors",     "Users",               "Instructors"),
+                    ("fa-user-graduate",    "var(--accent-pink)",   "View Students",        "Users",               "Students"),
+                    ("fa-bullhorn",         "var(--orange)",        "Announcements",        "AdminAnnouncements",  "Index"),
+                    ("fa-chart-pie",        "var(--accent-green)",  "Statistics",           "AdminStatistics",     "Index"),
+                })
+                {
+                    <a asp-area="Admin" asp-controller="@ctrl" asp-action="@action"
+                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                       style="background:rgba(0,0,0,0.025);color:var(--dark);transition:background .15s;"
+                       onmouseover="this.style.background='rgba(47,50,125,0.07)'"
+                       onmouseout="this.style.background='rgba(0,0,0,0.025)'">
+                        <i class="fas @icon" style="color:@color;width:20px;"></i>
+                        <span style="font-size:0.86rem;font-weight:500;">@label</span>
+                        <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.35;"></i>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="sa-card">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-bolt me-2" style="color:var(--secondary);"></i>Recent Activity</h5>
+            </div>
+            <div class="sa-card-body p-0">
+                @foreach (var item in Model.RecentActivity)
+                {
+                    <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(0,0,0,0.04);">
+                        <div style="width:34px;height:34px;border-radius:9px;background:@(item.Color)20;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas @item.Icon" style="color:@item.Color;font-size:0.82rem;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <p style="margin:0;font-size:0.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@item.Message</p>
+                            <small style="color:#9ca3af;font-size:0.72rem;">@item.Time</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

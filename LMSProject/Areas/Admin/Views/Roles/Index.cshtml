@@ -1,0 +1,103 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model IEnumerable<IdentityRole>
+@{
+    ViewData["Title"] = "Roles";
+}
+@section Styles
+    {
+        <style type="text/css">
+.disabled-link {
+pointer-events: none !important;
+opacity: 0.6 !important;
+cursor: not-allowed !important;
+        }</style>
+    }
+<div class="col-lg-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Role List</h4>
+            <p class="card-description">
+                Add Stage <code><a asp-controller="Roles" asp-action="Create">.Add New</a></code>
+            </p>
+            <table class="table table-striped">
+                <tr>
+      
+                    <th>Role ID</th>
+                    <th>Role Name</th>
+                    <th>Action</th>
+                </tr>
+                @foreach (var role in Model)
+                {
+                    <tr>
+                        <td>@role.Id</td>
+                        <td>@role.Name</td>
+                        <td>
+                            @{
+                                    var isAllowed = role.Name == "Admin" || role.Name == "Instructor" || role.Name == "Student";
+                            
+                            <a class="badge badge-info @(isAllowed ? "disabled-link" : "")" asp-action="Edit" asp-route-id="@role.Name">Edit</a>
+                                    <button class="badge badge-danger @(isAllowed ? "disabled-link" : "")" onclick="showSwal('@role.Id','Roles');">Delete</button>
+                        }
+                           
+                            
+                        </td>
+                    </tr>
+                }
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        <script src="~/Admin/assets/vendors/sweetalert/sweetalert.min.js"></script>
+        <script src="~/Admin/assets/vendors/jquery.avgrund/jquery.avgrund.min.js"></script>
+        <script src="~/Admin/assets/js/alerts.js"></script>
+        <script src="~/Admin/assets/js/avgrund.js"></script>
+        <script>
+            (function ($) {
+                showSwal = function (type,url) {
+                    alert(type);
+                    'use strict';
+                    swal({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3f51b5',
+                        cancelButtonColor: '#ff4081',
+                        confirmButtonText: 'Great ',
+                        buttons: {
+                            cancel: {
+                                text: "Cancel",
+                                value: null,
+                                visible: true,
+                                className: "btn btn-danger",
+                                closeModal: true,
+                            },
+                            confirm: {
+                                text: "OK",
+                                value: true,
+                                visible: true,
+                                className: "btn btn-primary",
+                                closeModal: true
+                            }
+                        }
+                    }).then(function (isConfirm) {
+                                if (isConfirm) {alert('?Id=' + type);
+                             window.location.href = '@Url.Action("Delete", "Stage")?Id=' + type;
+                        
+                        } else {
+                            swal("Cancelled", "Your imaginary file is safe :)", "error");
+                        }
+                    })
+
+
+                }
+
+            })(jQuery);
+        </script>
+    }
+
+    <!-- End custom js for this page -->
+}

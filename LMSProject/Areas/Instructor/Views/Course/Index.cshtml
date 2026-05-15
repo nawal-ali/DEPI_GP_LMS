@@ -1,0 +1,98 @@
+﻿@using MLSCore.Models
+@model List<TbCourse>
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-book-open me-2" style="color:var(--secondary);"></i>My Courses
+        <span class="sa-badge ms-2" style="background:rgba(47,50,125,0.1);color:var(--primary);">@Model.Count course(s)</span>
+    </h5>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="sa-card p-5 text-center" style="color:#aaa;">
+        <i class="fas fa-book-open fa-3x mb-3 d-block" style="opacity:0.2;"></i>
+        <p style="font-size:0.95rem;margin:0;">No courses have been assigned to you yet.</p>
+        <small style="color:#bbb;">Contact your Admin to get courses assigned.</small>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var course in Model)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="sa-card h-100" style="transition:transform 0.2s;"
+                     onmouseover="this.style.transform='translateY(-4px)'"
+                     onmouseout="this.style.transform='translateY(0)'">
+
+                    <!-- Course image -->
+                    @if (!string.IsNullOrEmpty(course.ImageName))
+                    {
+                        <img src="~/@course.ImageName"
+                             style="width:100%;height:160px;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div style="height:160px;background:linear-gradient(135deg,var(--accent-purple),var(--secondary));display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-book-open" style="font-size:3rem;color:rgba(255,255,255,0.4);"></i>
+                        </div>
+                    }
+
+                    <div style="padding:1.25rem;">
+                        <h6 style="font-weight:700;margin:0 0 0.5rem;">@course.Name</h6>
+
+                        <div class="d-flex gap-2 flex-wrap mb-3">
+                            <span class="sa-badge" style="background:rgba(91,114,238,0.1);color:var(--accent-purple);">
+                                @course.status
+                            </span>
+                            @if (course.CurrentState == 1)
+                            {
+                                <span class="sa-badge sa-badge-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="sa-badge sa-badge-inactive">Inactive</span>
+                            }
+                        </div>
+
+                        <!-- Action links — view/manage only, no create/edit/delete -->
+                        <div class="d-flex flex-column gap-2">
+                            <a asp-area="Instructor" asp-controller="Materials" asp-action="Index"
+                               asp-route-courseId="@course.Id"
+                               class="d-flex align-items-center gap-2 p-2 rounded-3 text-decoration-none"
+                               style="background:rgba(91,114,238,0.06);color:var(--accent-purple);font-size:0.83rem;font-weight:600;">
+                                <i class="fas fa-folder-open" style="width:16px;"></i>
+                                Manage Materials
+                            </a>
+                            <a asp-area="Instructor" asp-controller="Exams" asp-action="Index"
+                               asp-route-courseId="@course.Id"
+                               class="d-flex align-items-center gap-2 p-2 rounded-3 text-decoration-none"
+                               style="background:rgba(41,185,231,0.06);color:var(--accent-blue);font-size:0.83rem;font-weight:600;">
+                                <i class="fas fa-clipboard-list" style="width:16px;"></i>
+                                Manage Exams
+                            </a>
+                            <a asp-area="Instructor" asp-controller="Assignments" asp-action="Index"
+                               asp-route-courseId="@course.Id"
+                               class="d-flex align-items-center gap-2 p-2 rounded-3 text-decoration-none"
+                               style="background:rgba(244,140,6,0.06);color:var(--orange);font-size:0.83rem;font-weight:600;">
+                                <i class="fas fa-tasks" style="width:16px;"></i>
+                                Manage Assignments
+                            </a>
+                            <a asp-area="Instructor" asp-controller="Student" asp-action="Index"
+                               asp-route-courseId="@course.Id"
+                               class="d-flex align-items-center gap-2 p-2 rounded-3 text-decoration-none"
+                               style="background:rgba(51,239,160,0.06);color:#16a34a;font-size:0.83rem;font-weight:600;">
+                                <i class="fas fa-user-graduate" style="width:16px;"></i>
+                                View Students
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

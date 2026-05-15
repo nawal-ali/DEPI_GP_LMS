@@ -1,0 +1,176 @@
+@model LMSProject.ViewModel.CreateTaskVM
+
+@{
+    ViewData["Title"] = "Create Task";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isEdit = ViewBag.SubContents != null && Model?.Title != null;
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="h2 fw-bold text-dark">
+                <i class="bi bi-plus-circle me-2"></i> 
+                @(isEdit ? "Edit Task" : "Create New Task")
+            </h2>
+            <p class="text-muted">@(isEdit ? "Modify task details" : "Add a new task to your course content")</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i> Back to Tasks
+            </a>
+        </div>
+    </div>
+
+    <!-- Error Messages -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach (var modelState in ViewData.ModelState.Values)
+                {
+                    @foreach (var error in modelState.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Form Card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <form method="post" asp-action="@(isEdit ? "Update" : "Create")" asp-route-id="@(isEdit ? ViewBag.TaskId : "")" novalidate>
+
+                <!-- Task Title -->
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-semibold">Task Title <span class="text-danger">*</span></label>
+                    <input asp-for="Title" type="text" class="form-control form-control-lg" 
+                           placeholder="Enter task title (e.g., Essay Assignment 1)" required
+                           maxlength="200" />
+                    <span asp-validation-for="Title" class="text-danger small d-block mt-1"></span>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-info-circle me-1"></i> Between 3 and 200 characters
+                    </small>
+                </div>
+
+                <!-- Task URL -->
+                <div class="mb-3">
+                    <label asp-for="URL" class="form-label fw-semibold">Task Instructions URL <span class="text-danger">*</span></label>
+                    <input asp-for="URL" type="url" class="form-control form-control-lg" 
+                           placeholder="https://example.com/task-instructions" required />
+                    <span asp-validation-for="URL" class="text-danger small d-block mt-1"></span>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-link-45deg me-1"></i> Provide a link to task instructions or resources
+                    </small>
+                </div>
+
+                <!-- Sub-Content Selection -->
+                <div class="mb-3">
+                    <label asp-for="SubContentId" class="form-label fw-semibold">Select Sub-Content <span class="text-danger">*</span></label>
+                    <select asp-for="SubContentId" class="form-select form-select-lg" required>
+                        <option value="">-- Choose a Sub-Content --</option>
+                        @if (ViewBag.SubContents != null)
+                        {
+                            @foreach (var subContent in ViewBag.SubContents)
+                            {
+                                <option value="@subContent.Id" selected="@(Model?.SubContentId == subContent.Id)">
+                                    @subContent.Title 
+                                    @if (subContent.CourseContent?.Course != null)
+                                    {
+                                        <text> - @subContent.CourseContent.Course.Title</text>
+                                    }
+                                </option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="SubContentId" class="text-danger small d-block mt-1"></span>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-book me-1"></i> Select the course content/lesson this task belongs to
+                    </small>
+                </div>
+
+                <!-- Dates Section -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StartDate" class="form-label fw-semibold">Start Date & Time <span class="text-danger">*</span></label>
+                        <input asp-for="StartDate" type="datetime-local" class="form-control form-control-lg" required />
+                        <span asp-validation-for="StartDate" class="text-danger small d-block mt-1"></span>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-calendar-event me-1"></i> When students can begin the task
+                        </small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EndDate" class="form-label fw-semibold">End Date & Time <span class="text-danger">*</span></label>
+                        <input asp-for="EndDate" type="datetime-local" class="form-control form-control-lg" required />
+                        <span asp-validation-for="EndDate" class="text-danger small d-block mt-1"></span>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-calendar-x me-1"></i> Deadline for task submission
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="row mt-4 pt-3 border-top">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i> @(isEdit ? "Update Task" : "Create Task")
+                        </button>
+                        <a asp-action="Index" class="btn btn-light btn-lg ms-2">
+                            <i class="bi bi-x-circle me-2"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Validation -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const startDate = new Date(document.querySelector('[name="StartDate"]').value);
+                const endDate = new Date(document.querySelector('[name="EndDate"]').value);
+
+                if (endDate <= startDate) {
+                    e.preventDefault();
+                    alert('End date must be after start date!');
+                    return false;
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .form-label {
+        color: #333;
+        margin-bottom: 0.75rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+</style>

@@ -1,0 +1,170 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.UserProfileVM
+
+<div class="row g-4">
+
+    <!-- Left: Profile card -->
+    <div class="col-lg-4">
+        <div class="sa-card overflow-visible" style="padding-bottom:1.5rem;">
+            <!-- Cover -->
+            <div class="sa-profile-cover" style="border-radius:16px 16px 0 0;">
+                <div class="sa-profile-avatar-wrap">
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <img src="@Model.ImageUrl" class="sa-profile-avatar" alt="@Model.Name" />
+                    }
+                    else
+                    {
+                        <div class="sa-profile-avatar-initials">@Model.Initials</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Name + role -->
+            <div style="padding: 60px 1.5rem 0;">
+                <h4 style="font-weight:700;margin:0;">@Model.Name</h4>
+                <span class="sa-badge mt-1 d-inline-block" style="background:@Model.RoleColor;color:white;padding:4px 14px;font-size:0.78rem;">
+                    <i class="fas fa-user-tag me-1"></i>@Model.Role
+                </span>
+                <div class="mt-3 d-flex flex-column gap-2">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:0.83rem;color:#6c757d;">
+                        <i class="fas fa-envelope" style="width:16px;color:var(--secondary);"></i>@Model.Email
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Phone))
+                    {
+                        <div style="display:flex;align-items:center;gap:8px;font-size:0.83rem;color:#6c757d;">
+                            <i class="fas fa-phone" style="width:16px;color:var(--secondary);"></i>@Model.Phone
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Address))
+                    {
+                        <div style="display:flex;align-items:center;gap:8px;font-size:0.83rem;color:#6c757d;">
+                            <i class="fas fa-map-marker-alt" style="width:16px;color:var(--secondary);"></i>@Model.Address
+                        </div>
+                    }
+                </div>
+
+                <!-- Status badge -->
+                <div class="mt-3 pt-3" style="border-top:1px solid rgba(0,0,0,0.05);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small style="color:#9ca3af;font-size:0.75rem;">Account Status</small>
+                        @if (Model.Status == "Active")
+                        {
+                            <span class="sa-badge sa-badge-active">Active</span>
+                        }
+                        else
+                        {
+
+                            <span class="sa-badge sa-badge-inactive">@Model.Status</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back button -->
+        <div class="mt-3">
+            <a href="javascript:history.back()" class="d-flex align-items-center gap-2 text-decoration-none"
+                   style="color:var(--primary);font-size:0.85rem;font-weight:600;">
+                <i class="fas fa-arrow-left" style="color:var(--secondary);"></i> Back to @Model.Role List
+            </a>
+        </div>
+    </div>
+
+    <!-- Right: Details -->
+    <div class="col-lg-8">
+
+        <!-- About / Bio -->
+        @if (!string.IsNullOrEmpty(Model.Bio))
+        {
+            <div class="sa-card mb-4">
+                <div class="sa-card-header">
+                    <h5><i class="fas fa-id-card me-2" style="color:var(--secondary);"></i>About</h5>
+                </div>
+                <div class="sa-card-body">
+                    <p style="line-height:1.8;color:#555;margin:0;">@Model.Bio</p>
+                </div>
+            </div>
+        }
+
+        <!-- Basic Information -->
+        <div class="sa-card mb-4">
+            <div class="sa-card-header" style="background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:16px 16px 0 0;">
+                <h5 style="color:white;"><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+            </div>
+            <div class="sa-card-body">
+                <div class="sa-info-row">
+                    <span class="sa-info-label">Full Name</span>
+                    <span style="font-weight:600;">@Model.Name</span>
+                </div>
+                <div class="sa-info-row">
+                    <span class="sa-info-label">Email</span>
+                    <span>@Model.Email</span>
+                </div>
+                <div class="sa-info-row">
+                    <span class="sa-info-label">Phone</span>
+                    <span>@(Model.Phone ?? "—")</span>
+                </div>
+                <div class="sa-info-row">
+                    <span class="sa-info-label">Role</span>
+                    <span class="sa-badge" style="background:@Model.RoleColor;color:white;">@Model.Role</span>
+                </div>
+                @if (Model.JoinDate.HasValue)
+                {
+                    <div class="sa-info-row">
+                        <span class="sa-info-label">Join Date</span>
+                        <span>@Model.JoinDate.Value.ToString("MMMM dd, yyyy")</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Gender))
+                {
+                    <div class="sa-info-row">
+                        <span class="sa-info-label">Gender</span>
+                        <span>@Model.Gender</span>
+                    </div>
+                }
+                @if (Model.DateOfBirth.HasValue)
+                {
+                    <div class="sa-info-row">
+                        <span class="sa-info-label">Date of Birth</span>
+                        <span>@Model.DateOfBirth.Value.ToString("MMMM dd, yyyy")</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Role-specific Information -->
+        <div class="sa-card">
+            <div class="sa-card-header" style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));border-radius:16px 16px 0 0;">
+                <h5 style="color:white;"><i class="fas fa-cogs me-2"></i>@Model.Role Information</h5>
+            </div>
+            <div class="sa-card-body">
+                @if (Model.Role == "Student")
+                {
+                    <div class="sa-info-row"><span class="sa-info-label">Grade</span><span>@(Model.Grade ?? "—")</span></div>
+                    <div class="sa-info-row"><span class="sa-info-label">Address</span><span>@(Model.Address ?? "—")</span></div>
+                }
+                @if (Model.Role == "Teacher")
+                {
+                    <div class="sa-info-row"><span class="sa-info-label">Subject</span><span class="sa-badge" style="background:rgba(91,114,238,0.1);color:var(--accent-purple);">@(Model.Subject ?? "—")</span></div>
+                    <div class="sa-info-row"><span class="sa-info-label">Grade Level</span><span>@(Model.Grade ?? "—")</span></div>
+                    <div class="sa-info-row"><span class="sa-info-label">Department</span><span>@(Model.Department ?? "—")</span></div>
+                }
+                @if (Model.Role == "Parent")
+                {
+                    <div class="sa-info-row"><span class="sa-info-label">Occupation</span><span class="sa-badge" style="background:rgba(244,140,6,0.1);color:var(--orange);">@(Model.Occupation ?? "—")</span></div>
+                    <div class="sa-info-row"><span class="sa-info-label">Address</span><span>@(Model.Address ?? "—")</span></div>
+                }
+                @if (Model.Role == "Admin")
+                {
+                    <div class="sa-info-row"><span class="sa-info-label">Department</span><span class="sa-badge" style="background:rgba(47,50,125,0.1);color:var(--primary);">@(Model.Department ?? "—")</span></div>
+                    <div class="sa-info-row"><span class="sa-info-label">Access Level</span><span>Full System Access</span></div>
+                }
+                <div class="sa-info-row">
+                    <span class="sa-info-label">Account ID</span>
+                    <code style="background:rgba(0,0,0,0.04);padding:2px 8px;border-radius:6px;font-size:0.8rem;">@Model.Id</code>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

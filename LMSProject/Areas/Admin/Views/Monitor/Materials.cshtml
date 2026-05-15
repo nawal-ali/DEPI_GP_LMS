@@ -1,0 +1,99 @@
+﻿@model List<LMSProject.Areas.Admin.ViewModels.MaterialMonitorVM>
+@using MLSCore.Models
+@{
+    ViewData["Title"] = "Content Monitor — Materials";
+    var courses = ViewBag.Courses as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var types = Enum.GetValues(typeof(MaterialType)).Cast<MaterialType>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-folder-open me-2" style="color:var(--secondary);"></i>Course Materials
+        <span class="sa-badge sa-badge-info ms-2">@Model.Count</span>
+    </h5>
+</div>
+
+<form method="get" asp-action="Materials">
+    <div class="sa-filters">
+        <div class="search-wrap flex-grow-1">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search materials or course…" value="@ViewBag.SearchTerm" />
+        </div>
+        <select name="type" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Types</option>
+            @foreach (var t in types)
+            {
+                <option value="@t" selected="@(ViewBag.TypeFilter?.ToString() == t.ToString() ? "selected" : null)">@t</option>
+            }
+        </select>
+        <select name="courseId" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="0">All Courses</option>
+            @foreach (var c in courses)
+            {
+                <option value="@c.Id" selected="@((int)ViewBag.CourseId == (int)c.Id ? "selected" : null)">@c.Name</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3"><i class="fas fa-filter me-1"></i>Filter</button>
+        <a asp-action="Materials" class="btn-secondary-sa btn btn-sm"><i class="fas fa-times me-1"></i>Clear</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="sa-card p-5 text-center" style="color:#aaa;">
+        <i class="fas fa-folder-open fa-3x mb-3 d-block opacity-25"></i>No materials found.
+    </div>
+}
+else
+{
+    <div class="sa-card">
+        <div class="table-responsive">
+            <table class="sa-table">
+                <thead>
+                    <tr><th>Material</th><th>Course</th><th>Type</th><th>File</th><th>Uploaded</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px;height:36px;border-radius:9px;background:@(m.TypeColor)18;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fas @m.TypeIcon" style="color:@m.TypeColor;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600;font-size:0.875rem;">@m.Title</div>
+                                        @if (!string.IsNullOrEmpty(m.Description))
+                                        {
+                                            <small style="color:#9ca3af;font-size:0.75rem;">@m.Description</small>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="sa-badge sa-badge-info">@m.CourseName</span></td>
+                            <td><span class="sa-badge" style="background:@(m.TypeColor)18;color:@m.TypeColor;">@m.MaterialType</span></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(m.FileUrl))
+                                {
+                                    <a href="~/@m.FileUrl" target="_blank"
+                                       class="d-inline-flex align-items-center gap-1 text-decoration-none"
+                                       style="color:var(--accent-blue);font-size:0.82rem;font-weight:600;">
+                                        <i class="fas fa-download"></i>@(m.FileName ?? "Download")
+                                    </a>
+                                }
+                                else
+                                {
+
+                                    <span style="color:#aaa;font-size:0.82rem;">—</span>
+                                }
+                            </td>
+                            <td style="font-size:0.8rem;color:#9ca3af;">
+                                @(m.CreatedDate?.ToString("MMM dd, yyyy") ?? "—")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

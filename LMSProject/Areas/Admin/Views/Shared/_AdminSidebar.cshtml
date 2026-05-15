@@ -1,0 +1,81 @@
+﻿@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    bool Is(string c, string? a = null) =>
+        string.Equals(ctrl, c, StringComparison.OrdinalIgnoreCase) &&
+        (a == null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase));
+}
+
+<p class="sa-group-label mt-2">Overview</p>
+<a asp-area="Admin" asp-controller="Home" asp-action="Index"
+   class="sa-nav-item @(Is("Home") ? "active" : "")">
+    <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+</a>
+
+<p class="sa-group-label mt-3">User Management</p>
+<a asp-area="Admin" asp-controller="Users" asp-action="Instructors"
+   class="sa-nav-item @(Is("Users", "Instructors") ? "active" : "")">
+    <i class="fas fa-chalkboard-teacher"></i><span>Instructors</span>
+</a>
+<a asp-area="Admin" asp-controller="Users" asp-action="Students"
+   class="sa-nav-item @(Is("Users", "Students") ? "active" : "")">
+    <i class="fas fa-user-graduate"></i><span>Students</span>
+</a>
+<a asp-area="Admin" asp-controller="Users" asp-action="Parents"
+   class="sa-nav-item @(Is("Users", "Parents") ? "active" : "")">
+    <i class="fas fa-users"></i><span>Parents</span>
+</a>
+
+<p class="sa-group-label mt-3">Course Management</p>
+<a asp-area="Admin" asp-controller="AdminCourse" asp-action="Index"
+   class="sa-nav-item @(Is("AdminCourse") ? "active" : "")">
+    <i class="fas fa-book-open"></i><span>Courses</span>
+</a>
+
+<p class="sa-group-label mt-3">Content Monitoring</p>
+<a asp-area="Admin" asp-controller="Monitor" asp-action="Materials"
+   class="sa-nav-item @(Is("Monitor", "Materials") ? "active" : "")">
+    <i class="fas fa-folder-open"></i><span>Materials</span>
+</a>
+<a asp-area="Admin" asp-controller="Monitor" asp-action="Exams"
+   class="sa-nav-item @(Is("Monitor", "Exams") ? "active" : "")">
+    <i class="fas fa-file-alt"></i><span>Exams</span>
+</a>
+<a asp-area="Admin" asp-controller="Monitor" asp-action="Assignments"
+   class="sa-nav-item @(Is("Monitor", "Assignments") ? "active" : "")">
+    <i class="fas fa-tasks"></i><span>Assignments</span>
+</a>
+
+<p class="sa-group-label mt-3">Communication</p>
+<a asp-area="Admin" asp-controller="AdminAnnouncements" asp-action="Index"
+   class="sa-nav-item @(Is("AdminAnnouncements") ? "active" : "")">
+    <i class="fas fa-bullhorn"></i><span>Announcements</span>
+</a>
+
+<p class="sa-group-label mt-3">Analytics</p>
+<a asp-area="Admin" asp-controller="AdminStatistics" asp-action="Index"
+   class="sa-nav-item @(Is("AdminStatistics") ? "active" : "")">
+    <i class="fas fa-chart-pie"></i><span>Statistics</span>
+</a>
+
+<p class="sa-group-label mt-3">Configuration</p>
+<a asp-area="Admin" asp-controller="Stage" asp-action="Index"
+   class="sa-nav-item @(Is("Stage") ? "active" : "")">
+    <i class="fas fa-layer-group"></i><span>Stages</span>
+</a>
+<a asp-area="Admin" asp-controller="Grade" asp-action="Index"
+   class="sa-nav-item @(Is("Grade") ? "active" : "")">
+    <i class="fas fa-graduation-cap"></i><span>Grades</span>
+</a>
+<a asp-area="Admin" asp-controller="Subject" asp-action="Index"
+   class="sa-nav-item @(Is("Subject") ? "active" : "")">
+    <i class="fas fa-book"></i><span>Subjects</span>
+</a>
+<a asp-area="Admin" asp-controller="SubSubject" asp-action="Index"
+   class="sa-nav-item @(Is("SubSubject") ? "active" : "")">
+    <i class="fas fa-bookmark"></i><span>Sub-Subjects</span>
+</a>
+<a asp-area="Admin" asp-controller="Term" asp-action="Index"
+   class="sa-nav-item @(Is("Term") ? "active" : "")">
+    <i class="fas fa-calendar-alt"></i><span>Terms</span>
+</a>

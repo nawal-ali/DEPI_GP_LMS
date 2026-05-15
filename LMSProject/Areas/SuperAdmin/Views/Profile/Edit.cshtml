@@ -1,0 +1,105 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.EditProfileVM
+
+<div class="row g-4">
+
+    <!-- Edit Profile Form -->
+    <div class="col-lg-7">
+        <div class="sa-card">
+            <div class="sa-card-header" style="background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:16px 16px 0 0;">
+                <h5 style="color:white;"><i class="fas fa-user-edit me-2"></i>Edit Profile Information</h5>
+            </div>
+            <div class="sa-card-body">
+                <form asp-area="SuperAdmin" asp-controller="Profile" asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input asp-for="FullName" class="form-control sa-form-control" placeholder="Your full name" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input asp-for="Email" type="email" class="form-control sa-form-control" placeholder="your@email.com" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input asp-for="Phone" class="form-control sa-form-control" placeholder="+20 100 000 0000" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input asp-for="Address" class="form-control sa-form-control" placeholder="City, Country" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Bio / About</label>
+                        <textarea asp-for="Bio" class="form-control sa-form-control" rows="4"
+                                  placeholder="Write a short bio about yourself…"></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a asp-area="SuperAdmin" asp-controller="Profile" asp-action="Index"
+                           class="btn btn-secondary-sa rounded-3 px-4">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="col-lg-5">
+        <div class="sa-card mb-4">
+            <div class="sa-card-header" style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));border-radius:16px 16px 0 0;">
+                <h5 style="color:white;"><i class="fas fa-lock me-2"></i>Change Password</h5>
+            </div>
+            <div class="sa-card-body">
+                <form asp-area="SuperAdmin" asp-controller="Profile" asp-action="ChangePassword" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Current Password</label>
+                        <input name="CurrentPassword" type="password" class="form-control sa-form-control"
+                               placeholder="Enter current password" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input name="NewPassword" type="password" class="form-control sa-form-control"
+                               placeholder="Min. 6 characters" minlength="6" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Confirm New Password</label>
+                        <input name="ConfirmPassword" type="password" class="form-control sa-form-control"
+                               placeholder="Repeat new password" />
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-3 w-100">
+                        <i class="fas fa-key me-2"></i>Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security tips -->
+        <div class="sa-card">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-shield-alt me-2" style="color:var(--secondary);"></i>Security Tips</h5>
+            </div>
+            <div class="sa-card-body p-0">
+                @{
+                    var tips = new[]
+                    {
+                        ("fa-lock",        "Use a strong password with uppercase, lowercase, numbers & symbols."),
+                        ("fa-clock",       "Change your password every 90 days for best security."),
+                        ("fa-eye-slash",   "Never share your SuperAdmin credentials with anyone."),
+                        ("fa-sign-out-alt","Always log out when using a shared device."),
+                    };
+                }
+                @foreach (var (icon, tip) in tips)
+                {
+                    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(0,0,0,0.04);">
+                        <i class="fas @icon" style="color:var(--secondary);margin-top:2px;flex-shrink:0;"></i>
+                        <small style="color:#555;line-height:1.5;font-size:0.8rem;">@tip</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

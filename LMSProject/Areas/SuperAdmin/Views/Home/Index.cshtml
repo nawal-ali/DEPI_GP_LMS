@@ -1,0 +1,188 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.DashboardVM
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-1">
+            <p>Total Students</p>
+            <h3>@Model.TotalStudents</h3>
+            <i class="fas fa-user-graduate stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-2">
+            <p>Total Teachers</p>
+            <h3>@Model.TotalTeachers</h3>
+            <i class="fas fa-chalkboard-teacher stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-3">
+            <p>Total Parents</p>
+            <h3>@Model.TotalParents</h3>
+            <i class="fas fa-users stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-4">
+            <p>All Users</p>
+            <h3>@Model.TotalUsers</h3>
+            <i class="fas fa-globe stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-5">
+            <p>Active Courses</p>
+            <h3>@Model.ActiveCourses</h3>
+            <i class="fas fa-book-open stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card grad-6">
+            <p>Open Tickets</p>
+            <h3>@Model.OpenTickets</h3>
+            <i class="fas fa-headset stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card" style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));">
+            <p>Announcements</p>
+            <h3>@Model.TotalAnnouncements</h3>
+            <i class="fas fa-bullhorn stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="sa-stat-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">
+            <p>System Uptime</p>
+            <h3>@Model.SystemUptime%</h3>
+            <i class="fas fa-server stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Main content row -->
+<div class="row g-4">
+
+    <!-- Recent Activity -->
+    <div class="col-lg-5">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-bolt me-2" style="color:var(--secondary);"></i>Recent Activity</h5>
+            </div>
+            <div class="sa-card-body p-0">
+                @foreach (var item in Model.RecentActivity)
+                {
+                    <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 20px;border-bottom:1px solid rgba(0,0,0,0.04);">
+                        <div style="width:36px;height:36px;border-radius:10px;background:@(item.Color)20;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas @item.Icon" style="color:@item.Color;font-size:0.85rem;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <p style="margin:0;font-size:0.83rem;font-weight:500;">@item.Message</p>
+                            <small style="color:#9ca3af;font-size:0.72rem;">@item.Time</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-rocket me-2" style="color:var(--accent-purple);"></i>Quick Actions</h5>
+            </div>
+            <div class="sa-card-body d-flex flex-column gap-2">
+                <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Students"
+                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                       style="background:rgba(91,114,238,0.07);color:var(--dark);transition:background .15s;"
+                       onmouseover="this.style.background='rgba(91,114,238,0.14)'" onmouseout="this.style.background='rgba(91,114,238,0.07)'">
+                    <i class="fas fa-user-graduate" style="color:var(--accent-purple);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Manage Students</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+                <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Teachers"
+                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                       style="background:rgba(41,185,231,0.07);color:var(--dark);transition:background .15s;"
+                       onmouseover="this.style.background='rgba(41,185,231,0.14)'" onmouseout="this.style.background='rgba(41,185,231,0.07)'">
+                    <i class="fas fa-chalkboard-teacher" style="color:var(--accent-blue);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Manage Teachers</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+                <a asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Index"
+                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                       style="background:rgba(0,203,184,0.07);color:var(--dark);transition:background .15s;"
+                       onmouseover="this.style.background='rgba(0,203,184,0.14)'" onmouseout="this.style.background='rgba(0,203,184,0.07)'">
+                    <i class="fas fa-bullhorn" style="color:var(--secondary);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Send Announcement</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+                <a asp-area="SuperAdmin" asp-controller="Tickets" asp-action="Index"
+                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                       style="background:rgba(225,52,104,0.07);color:var(--dark);transition:background .15s;"
+                       onmouseover="this.style.background='rgba(225,52,104,0.14)'" onmouseout="this.style.background='rgba(225,52,104,0.07)'">
+                    <i class="fas fa-headset" style="color:var(--accent-pink);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">View Tickets</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+                <a asp-area="SuperAdmin" asp-controller="Statistics" asp-action="Index"
+                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                       style="background:rgba(244,140,6,0.07);color:var(--dark);transition:background .15s;"
+                       onmouseover="this.style.background='rgba(244,140,6,0.14)'" onmouseout="this.style.background='rgba(244,140,6,0.07)'">
+                    <i class="fas fa-chart-pie" style="color:var(--orange);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">View Statistics</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+                <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Admins"
+                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                       style="background:rgba(47,50,125,0.07);color:var(--dark);transition:background .15s;"
+                       onmouseover="this.style.background='rgba(47,50,125,0.14)'" onmouseout="this.style.background='rgba(47,50,125,0.07)'">
+                    <i class="fas fa-user-cog" style="color:var(--primary);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Manage Admins</span>
+                    <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health -->
+    <div class="col-lg-3">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h5><i class="fas fa-heartbeat me-2" style="color:var(--accent-pink);"></i>System Health</h5>
+            </div>
+            <div class="sa-card-body">
+                @{
+                    var metrics = new[]
+                    {
+                        ("Database",    98, "#5B72EE"),
+                        ("API Server",  100,"#33EFA0"),
+                        ("File Storage",87, "#F48C06"),
+                        ("Email Svc",   95, "#29B9E7"),
+                        ("Auth Svc",    100,"#33EFA0"),
+                    };
+                }
+                @foreach (var (label, pct, color) in metrics)
+                {
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small style="font-weight:600;font-size:0.78rem;">@label</small>
+                            <small style="font-weight:700;color:@color;font-size:0.78rem;">@pct%</small>
+                        </div>
+                        <div style="height:6px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
+                            <div style="height:100%;width:@(pct)%;background:@color;border-radius:10px;transition:width 1s ease;"></div>
+                        </div>
+                    </div>
+                }
+                <div class="mt-4 p-3 rounded-3 text-center" style="background:rgba(51,239,160,0.1);">
+                    <i class="fas fa-check-circle fa-2x mb-2" style="color:#16a34a;"></i>
+                    <p class="mb-0" style="font-size:0.8rem;font-weight:600;color:#16a34a;">All Systems Operational</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

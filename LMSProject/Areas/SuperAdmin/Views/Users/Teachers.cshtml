@@ -1,0 +1,152 @@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.TeacherListVM
+@{
+    var subjects = new[] { "Mathematics", "Physics", "Chemistry", "Biology", "English", "History", "Geography", "Arabic" };
+    var statuses = new[] { "Active", "Inactive" };
+    var grades = new[] { "Grade 10", "Grade 11", "Grade 12" };
+    int ps = Model.PageSize;
+    var page = Model.CurrentPage;
+    var paged = Model.Filtered.Skip((page - 1) * ps).Take(ps).ToList();
+}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-1"><p>Total Teachers</p><h3>@Model.TotalTeachers</h3><i class="fas fa-chalkboard-teacher stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-2"><p>Active</p><h3>@Model.ActiveTeachers</h3><i class="fas fa-check-circle stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-3"><p>Subjects Covered</p><h3>@Model.SubjectsTaught</h3><i class="fas fa-book stat-icon"></i></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-stat-card grad-4"><p>Avg Experience</p><h3>@Model.AvgExperience yrs</h3><i class="fas fa-award stat-icon"></i></div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-chalkboard-teacher me-2" style="color:var(--secondary);"></i>Teachers
+        <span class="sa-badge" style="background:rgba(41,185,231,0.1);color:var(--accent-blue);margin-left:8px;">@Model.Filtered.Count</span>
+    </h5>
+    <button class="btn btn-sm btn-primary rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#createUserModal">
+        <i class="fas fa-plus me-1"></i> Add Teacher
+    </button>
+</div>
+
+<!-- Filters -->
+<form method="get" asp-action="Teachers">
+    <div class="sa-filters mb-4">
+        <div class="search-wrap flex-grow-1">
+            <i class="fas fa-search"></i>
+            <input name="search" class="form-control" placeholder="Search teachers…" value="@Model.SearchTerm" />
+        </div>
+        <select name="subject" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Subjects</option>
+            @foreach (var s in subjects)
+            {
+                <option value="@s" selected="@(Model.SelectedSubject == s ? "selected" : null)">@s</option>
+            }
+        </select>
+        <select name="status" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@s" selected="@(Model.SelectedStatus == s ? "selected" : null)">@s</option>
+            }
+        </select>
+        <select name="grade" class="form-select" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Grades</option>
+            @foreach (var g in grades)
+            {
+                <option value="@g" selected="@(Model.SelectedGrade == g ? "selected" : null)">@g</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-sm" style="background:var(--secondary);color:white;border-radius:10px;padding:0 1rem;">
+            <i class="fas fa-filter"></i>
+        </button>
+        <a asp-action="Teachers" class="btn btn-sm btn-secondary-sa"><i class="fas fa-times"></i></a>
+    </div>
+</form>
+
+<div class="sa-card">
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead>
+                <tr>
+                    <th>Teacher</th>
+                    <th>Subject</th>
+                    <th>Grade</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Experience</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in paged)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-blue),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700;flex-shrink:0;">
+                                    @t.Initials
+                                </div>
+                                <span style="font-weight:600;font-size:0.875rem;">@t.Name</span>
+                            </div>
+                        </td>
+                        <td><span class="sa-badge" style="background:rgba(91,114,238,0.1);color:var(--accent-purple);">@t.Subject</span></td>
+                        <td>@t.Grade</td>
+                        <td style="font-size:0.82rem;color:#6c757d;">@t.Email</td>
+                        <td style="font-size:0.82rem;">@t.Phone</td>
+                        <td><span style="font-weight:600;color:var(--primary);">@t.Experience</span> <small style="color:#9ca3af;">yrs</small></td>
+                        <td>
+                            @if (t.Status == "Active")
+                            {
+                                <span class="sa-badge sa-badge-active">Active</span>
+                            }
+                            else
+                            {
+
+                                <span class="sa-badge sa-badge-inactive">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile"
+                                   asp-route-id="@t.Id" asp-route-role="Teacher"
+                                   class="sa-btn-icon sa-btn-view" title="View Profile"><i class="fas fa-eye"></i></a>
+                                <button class="sa-btn-icon sa-btn-edit" title="Edit" onclick="alert('Wire to Edit action')"><i class="fas fa-edit"></i></button>
+                                <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" style="display:inline;" onsubmit="return confirm('Delete @t.Name?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@t.Id" />
+                                    <input type="hidden" name="role" value="Teacher" />
+                                    <button type="submit" class="sa-btn-icon sa-btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!paged.Any())
+                {
+                    <tr><td colspan="8" class="text-center py-5" style="color:#aaa;"><i class="fas fa-search fa-2x mb-2 d-block opacity-25"></i>No teachers found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="sa-pagination">
+        <a asp-action="Teachers" asp-route-page="@(page - 1)" class="sa-page-btn @(page == 1 ? "disabled" : "")"><i class="fas fa-chevron-left"></i></a>
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a asp-action="Teachers" asp-route-page="@i" class="sa-page-btn @(i == page ? "active" : "")">@i</a>
+        }
+        <a asp-action="Teachers" asp-route-page="@(page + 1)" class="sa-page-btn @(page == Model.TotalPages ? "disabled" : "")"><i class="fas fa-chevron-right"></i></a>
+    </div>
+}
+
+@await Html.PartialAsync("_CreateUserModal", new LMSProject.Areas.SuperAdmin.ViewModels.CreateUserVM { Role = "Teacher" })

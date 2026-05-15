@@ -1,0 +1,145 @@
+@model LMSProject.Areas.Instructor.ViewModel.AssignmentSubmissionsVM
+@using MLSCore.Models
+@{
+    ViewData["Title"] = $"Submissions: {Model.AssignmentTitle}";
+}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a asp-action="Index" class="sa-btn-icon sa-btn-view"><i class="fas fa-arrow-left"></i></a>
+    <div>
+        <h5 class="mb-0 fw-bold" style="color:var(--primary);">@Model.AssignmentTitle</h5>
+        <small class="text-muted">@Model.CourseName — @Model.Submissions.Count(s => s.HasSubmission) of @Model.TotalEnrolled students submitted</small>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="sa-card p-3 text-center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--primary);">@Model.Submissions.Count(s => s.HasSubmission)</div>
+            <small class="text-muted">Submitted</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-card p-3 text-center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent-pink);">@Model.Submissions.Count(s => s.IsLate)</div>
+            <small class="text-muted">Late</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-card p-3 text-center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent-green);">@Model.Submissions.Count(s => s.Marks.HasValue)</div>
+            <small class="text-muted">Graded</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="sa-card p-3 text-center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--orange);">@Model.TotalMarks</div>
+            <small class="text-muted">Max Marks</small>
+        </div>
+    </div>
+</div>
+
+<div class="sa-card">
+    <div class="sa-card-header">
+        <h5>
+            <i class="fas fa-inbox me-2" style="color:var(--secondary);"></i>Submissions
+        </h5>
+        <span class="sa-badge" style="background:rgba(47,50,125,0.08);color:var(--primary);">
+            Deadline: @Model.Deadline.ToString("MMM d, yyyy h:mm tt")
+        </span>
+    </div>
+    <div class="sa-card-body p-0">
+        @if (!Model.Submissions.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-inbox fa-3x mb-3 d-block" style="opacity:0.2;"></i>
+                <p style="font-size:0.9rem;">No submissions yet.</p>
+            </div>
+        }
+        else
+        {
+            <table class="sa-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Answer</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Marks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Submissions)
+                    {
+                        <tr>
+                            <td style="font-weight:600;font-size:0.85rem;">@s.StudentName</td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    @if (!string.IsNullOrEmpty(s.TextAnswer))
+                                    {
+                                        <span class="sa-badge" style="background:rgba(91,114,238,0.12);color:var(--accent-purple);">
+                                            <i class="fas fa-pen me-1"></i>Text
+                                        </span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(s.FileUrl))
+                                    {
+                                        <a href="/@s.FileUrl" target="_blank"
+                                           class="sa-badge text-decoration-none"
+                                           style="background:rgba(244,140,6,0.12);color:var(--orange);">
+                                            <i class="fas fa-paperclip me-1"></i>@(s.FileName ?? "File")
+                                        </a>
+                                    }
+                                    @if (string.IsNullOrEmpty(s.TextAnswer) && string.IsNullOrEmpty(s.FileUrl))
+                                    {
+                                        <span class="sa-badge sa-badge-inactive">No submission</span>
+                                    }
+                                </div>
+                            </td>
+                            <td style="font-size:0.78rem;color:#9ca3af;">
+                                @s.SubmittedAt?.ToString("MMM d, h:mm tt")
+                            </td>
+                            <td>
+                                @if (s.IsLate)
+                                {
+                                    <span class="sa-badge sa-badge-inactive"><i class="fas fa-clock me-1"></i>Late</span>
+                                }
+                                else if (s.HasSubmission)
+                                {
+                                    <span class="sa-badge sa-badge-active">On time</span>
+                                }
+                                else
+                                {
+                                    <span class="sa-badge sa-badge-pending">Pending</span>
+                                }
+                            </td>
+                            <td>
+                                @if (s.Marks.HasValue)
+                                {
+                                    <span style="font-weight:700;font-size:0.85rem;color:var(--primary);">
+                                        @s.Marks / @Model.TotalMarks
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" style="font-size:0.8rem;">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (s.HasSubmission)
+                                {
+                                    <a asp-action="Grade" asp-route-id="@s.Id"
+                                       class="sa-btn-icon @(s.Marks.HasValue ? "sa-btn-view" : "sa-btn-add")"
+                                       title="@(s.Marks.HasValue ? "Update Grade" : "Grade")">
+                                        <i class="fas fa-@(s.Marks.HasValue ? "edit" : "check-circle")"></i>
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

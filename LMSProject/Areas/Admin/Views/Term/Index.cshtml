@@ -1,0 +1,97 @@
+﻿@using MLSCore.Models
+@model List<TbTerm>
+@{
+    ViewData["Title"] = "Terms";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-calendar-alt me-2" style="color:var(--secondary);"></i>Academic Terms
+        <span class="sa-badge sa-badge-info ms-2">@Model.Count</span>
+    </h5>
+    <a asp-area="Admin" asp-controller="Term" asp-action="Create"
+       class="btn btn-primary btn-sm rounded-3 px-3">
+        <i class="fas fa-plus me-1"></i> Add Term
+    </a>
+</div>
+
+<div class="sa-card">
+    <div class="table-responsive">
+        <table class="sa-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Term Name</th>
+                    <th>Created By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var term in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(term.ImageName))
+                            {
+                                <img src="~/@term.ImageName"
+                                     style="width:48px;height:48px;border-radius:10px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--secondary),var(--accent-green));display:flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-calendar-alt" style="color:rgba(255,255,255,0.7);"></i>
+                                </div>
+                            }
+                        </td>
+                        <td style="font-weight:600;">@term.Name</td>
+                        <td style="color:#6c757d;font-size:0.85rem;">@(term.CreatedBy ?? "—")</td>
+                        <td>
+                            @if (term.CurrentState == 1)
+                            {
+                                <span class="sa-badge sa-badge-active">Active</span>
+                            }
+                            else
+                            {
+
+                                <span class="sa-badge sa-badge-inactive">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a asp-area="Admin" asp-controller="Term" asp-action="Edit"
+                                   asp-route-id="@term.Id"
+                                   class="sa-btn-icon sa-btn-edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button"
+                                        class="sa-btn-icon sa-btn-delete" title="Delete"
+                                        onclick="confirmDelete('/Admin/Term/Delete?Id=@term.Id', '@term.Name')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5" style="color:#aaa;">
+                            <i class="fas fa-calendar-alt fa-2x d-block mb-2 opacity-25"></i>No terms yet.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(url, name) {
+            if (confirm('Are you sure you want to delete "' + name + '"?\nThis action cannot be undone.')) {
+                window.location.href = url;
+            }
+        }
+    </script>
+}
