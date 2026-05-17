@@ -311,7 +311,7 @@
                 <div class="d-flex align-items-center">
                     <p class="text-muted mb-0 me-3">Explore more tools</p>
                     <a href="#" class="btn rounded-circle shadow-sm"
-                           style="background: white; color: var(--secondary); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                       style="background: white; color: var(--secondary); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
@@ -597,3 +597,205 @@
         </div>
     </div>
 </section>
+
+
+<!-- ===== FAQ Section ===== -->
+<section class="faq-section py-5" id="faq">
+    <div class="container">
+        <div class="text-center mb-5 scroll-reveal">
+            <span class="badge rounded-pill px-4 py-2 mb-3"
+                  style="background:rgba(47,50,125,.08);color:var(--primary);font-size:.85rem;font-weight:600;letter-spacing:.5px;">
+                FAQ
+            </span>
+            <h2 class="fw-bold" style="color:var(--primary);">Frequently Asked Questions</h2>
+            <p class="text-muted mx-auto" style="max-width:500px;">
+                Everything you need to know about TOTC. Can't find the answer you're looking for?
+                Reach out to our support team.
+            </p>
+        </div>
+
+        <div class="row g-4 align-items-start">
+            <!-- Illustration -->
+            <div class="col-lg-4 d-none d-lg-flex justify-content-center align-items-center scroll-reveal">
+                <div style="background:linear-gradient(135deg,var(--primary),var(--accent-blue));border-radius:24px;padding:3rem 2rem;text-align:center;color:white;width:100%;">
+                    <i class="fas fa-question-circle" style="font-size:4rem;opacity:.5;display:block;margin-bottom:1.5rem;"></i>
+                    <h4 style="font-weight:700;margin-bottom:.75rem;">Still have questions?</h4>
+                    <p style="opacity:.8;font-size:.9rem;margin-bottom:1.5rem;">
+                        Our support team is available 24/7 to help you with anything you need.
+                    </p>
+                    <a href="#" class="btn btn-light rounded-pill px-4 fw-semibold"
+                       style="color:var(--primary);">Contact Support</a>
+                </div>
+            </div>
+
+            <!-- Accordion -->
+            <div class="col-lg-8">
+                <div class="accordion accordion-flush faq-accordion" id="faqAccordion">
+
+                    @{
+                        var faqs = new[]
+                        {
+                            new {
+                                Q = "What is TOTC and who is it for?",
+                                A = "TOTC (The Online Teaching Community) is a comprehensive learning management system designed for students, instructors, parents, and administrators. Whether you're a student looking to track your progress, a parent wanting to monitor your child's academic journey, or an instructor managing courses — TOTC has you covered."
+                            },
+                            new {
+                                Q = "How do I enroll in a course?",
+                                A = "Course enrollment is managed by your school administrator. Once enrolled, you will automatically see the course appear in your student dashboard. Contact your admin or institution if you believe you should be enrolled in a course."
+                            },
+                            new {
+                                Q = "Can parents monitor their children's progress?",
+                                A = "Yes! TOTC offers a dedicated Parent Portal where parents can view their children's enrolled courses, exam scores, assignment submissions, upcoming deadlines, and even download a weekly academic progress report in PDF format."
+                            },
+                            new {
+                                Q = "What types of exams does TOTC support?",
+                                A = "TOTC supports multiple-choice question (MCQ) exams with a built-in question bank. Exams are timed, auto-scored, and display results immediately. Questions and answer choices are randomized for each student to maintain integrity."
+                            },
+                            new {
+                                Q = "How are assignments submitted?",
+                                A = "Students can submit assignments as text answers, file uploads (PDF, Word, images), or both — depending on how the instructor configured the assignment. Submissions are tracked, and late submissions are flagged automatically."
+                            },
+                            new {
+                                Q = "Is TOTC accessible on mobile devices?",
+                                A = "Absolutely. TOTC is fully responsive and works seamlessly on smartphones, tablets, and desktops. All dashboards adapt to your screen size for the best experience on any device."
+                            },
+                        };
+                    }
+
+                    @for (int i = 0; i < faqs.Length; i++)
+                    {
+                        var faq = faqs[i];
+                        var fid = $"faq{i}";
+                        var open = i == 0 ? "show" : "";
+                        var coll = i == 0 ? "" : "collapsed";
+                        <div class="accordion-item faq-item scroll-reveal" style="animation-delay:@(i * 0.08)s;">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button @coll faq-btn" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@fid">
+                                    <i class="fas fa-circle-dot me-3" style="color:var(--secondary);font-size:.65rem;flex-shrink:0;"></i>
+                                    @faq.Q
+                                </button>
+                            </h2>
+                            <div id="@fid" class="accordion-collapse collapse @open"
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body faq-body">@faq.A</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+@section Styles {
+    <style>
+        /* ── FAQ ───────────────────────────────────────── */
+        .faq-section {
+            background: #f8f9ff;
+        }
+
+        .faq-accordion {
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .faq-item {
+            background: white;
+            border: 1px solid rgba(47,50,125,.08) !important;
+            border-radius: 12px !important;
+            margin-bottom: .6rem;
+            overflow: hidden;
+            transition: box-shadow .2s;
+        }
+
+            .faq-item:hover {
+                box-shadow: 0 4px 20px rgba(47,50,125,.1);
+            }
+
+        .faq-btn {
+            font-weight: 600;
+            font-size: .9rem;
+            color: var(--primary) !important;
+            background: white !important;
+            border: none;
+            padding: 1.1rem 1.3rem;
+        }
+
+            .faq-btn:not(.collapsed) {
+                background: rgba(47,50,125,.04) !important;
+                color: var(--primary) !important;
+                box-shadow: none !important;
+            }
+
+            .faq-btn::after {
+                filter: hue-rotate(200deg);
+            }
+
+        .faq-body {
+            color: #555;
+            font-size: .9rem;
+            line-height: 1.8;
+            padding: .25rem 1.3rem 1.1rem;
+            border-top: 1px solid rgba(47,50,125,.06);
+        }
+
+        /* ── Scroll reveal ─────────────────────────────── */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity .65s ease, transform .65s ease;
+        }
+
+            .scroll-reveal.revealed {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .scroll-reveal:nth-child(2) {
+                transition-delay: .1s;
+            }
+
+            .scroll-reveal:nth-child(3) {
+                transition-delay: .18s;
+            }
+
+            .scroll-reveal:nth-child(4) {
+                transition-delay: .26s;
+            }
+    </style>
+}
+
+
+@section Scripts {
+    <script>
+        // ── Scroll-triggered reveal ───────────────────────────────────────────────────
+        (function () {
+            var els = document.querySelectorAll('.scroll-reveal, .fade-up, .fade-left');
+            if (!els.length) return;
+
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                        // Also trigger original fade-up animation classes
+                        if (entry.target.classList.contains('fade-up') || entry.target.classList.contains('fade-left')) {
+                            entry.target.style.animationPlayState = 'running';
+                        }
+                        io.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+            els.forEach(function (el) {
+                // Pause existing CSS animations until visible
+                if (el.classList.contains('fade-up') || el.classList.contains('fade-left')) {
+                    el.style.animationPlayState = 'paused';
+                }
+                io.observe(el);
+            });
+        })();
+    </script>
+}

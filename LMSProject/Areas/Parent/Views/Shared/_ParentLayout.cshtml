@@ -1,0 +1,660 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Parent Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+        --primary: #2F327D;
+        --secondary: #00CBB8;
+        --accent-blue: #29B9E7;
+        --accent-purple: #5B72EE;
+        --accent-green: #33EFA0;
+        --accent-pink: #E13468;
+        --orange: #F48C06;
+        --yellow: #FDCB6E;
+        --text-dark: #2d2d2d;
+        --bg-content: #f4f6fb;
+        --sidebar-border: rgba(47,50,125,0.08);
+        --sidebar-width: 280px;
+        }
+
+        *, *::before, *::after {
+        box-sizing: border-box;
+        }
+
+        html, body {
+        height: 100%;
+        margin: 0;
+        }
+
+        body {
+        font-family: 'Poppins', sans-serif;
+        background: var(--bg-content);
+        color: var(--text-dark);
+        }
+
+        /* ── Shell ── */
+        .pa-shell {
+        display: flex;
+        min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .pa-sidebar {
+        width: var(--sidebar-width);
+        min-width: var(--sidebar-width);
+        background: white;
+        border-right: 1px solid var(--sidebar-border);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--secondary) transparent;
+        }
+
+        .pa-sidebar::-webkit-scrollbar {
+        width: 4px;
+        }
+
+        .pa-sidebar::-webkit-scrollbar-thumb {
+        background: var(--secondary);
+        border-radius: 4px;
+        }
+
+        .pa-brand {
+        padding: 1.4rem 1.4rem 1rem;
+        border-bottom: 1px solid var(--sidebar-border);
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+        }
+
+        .pa-brand-icon {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, var(--accent-green), var(--secondary));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        }
+
+        .pa-brand-text strong {
+        display: block;
+        font-size: .9rem;
+        color: var(--primary);
+        }
+
+        .pa-brand-text small {
+        font-size: .68rem;
+        color: var(--secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        }
+
+        .pa-sidebar-body {
+        flex: 1;
+        padding: 1.1rem .85rem;
+        }
+
+        .pa-group-label {
+        font-size: .67rem;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--primary);
+        font-weight: 800;
+        opacity: .5;
+        margin: 1rem .5rem .4rem;
+        }
+
+        .pa-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 13px;
+        border-radius: 11px;
+        color: var(--text-dark);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: .86rem;
+        margin-bottom: 2px;
+        transition: background .16s, color .16s;
+        }
+
+        .pa-nav-item i {
+        font-size: .95rem;
+        width: 20px;
+        text-align: center;
+        color: var(--secondary);
+        transition: color .16s;
+        }
+
+        .pa-nav-item:hover {
+        background: rgba(0,203,184,.07);
+        color: var(--primary);
+        }
+
+        .pa-nav-item.active {
+        background: linear-gradient(135deg, var(--accent-green), var(--secondary));
+        color: white;
+        }
+
+        .pa-nav-item.active i {
+        color: white;
+        }
+
+        .pa-sidebar-footer {
+        padding: 1rem;
+        border-top: 1px solid var(--sidebar-border);
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+        }
+
+        .pa-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-green), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: .82rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        }
+
+        .pa-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        }
+
+        .pa-footer-info {
+        flex: 1;
+        min-width: 0;
+        }
+
+        .pa-footer-info strong {
+        display: block;
+        font-size: .78rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        }
+
+        .pa-footer-info small {
+        font-size: .67rem;
+        color: var(--secondary);
+        }
+
+        .pa-logout {
+        color: var(--accent-pink);
+        font-size: .85rem;
+        text-decoration: none;
+        padding: 5px;
+        border-radius: 8px;
+        transition: background .15s;
+        }
+
+        .pa-logout:hover {
+        background: rgba(225,52,104,.08);
+        color: var(--accent-pink);
+        }
+
+        /* ── Main ── */
+        .pa-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        }
+
+        .pa-topbar {
+        background: white;
+        border-bottom: 1px solid var(--sidebar-border);
+        padding: .8rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        }
+
+        .pa-topbar h6 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--primary);
+        }
+
+        .pa-page {
+        padding: 1.75rem;
+        flex: 1;
+        }
+
+        /* ── Cards ── */
+        .pa-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,.05);
+        box-shadow: 0 2px 12px rgba(47,50,125,.06);
+        overflow: hidden;
+        }
+
+        .pa-card-header {
+        padding: 1rem 1.4rem;
+        border-bottom: 1px solid rgba(0,0,0,.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        }
+
+        .pa-card-header h5 {
+        margin: 0;
+        font-size: .92rem;
+        font-weight: 700;
+        }
+
+        .pa-card-body {
+        padding: 1.4rem;
+        }
+
+        /* Stat cards */
+        .pa-stat {
+        border-radius: 16px;
+        padding: 1.2rem 1.4rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,.12);
+        transition: transform .2s;
+        }
+
+        .pa-stat:hover {
+        transform: translateY(-3px);
+        }
+
+        .pa-stat .si {
+        position: absolute;
+        right: 1.1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2.8rem;
+        opacity: .18;
+        }
+
+        .pa-stat h3 {
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin: .2rem 0;
+        }
+
+        .pa-stat p {
+        margin: 0;
+        font-size: .8rem;
+        opacity: .9;
+        }
+
+        .g1 {
+        background: linear-gradient(135deg, var(--accent-green), var(--secondary));
+        }
+
+        .g2 {
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        }
+
+        .g3 {
+        background: linear-gradient(135deg, var(--orange), var(--yellow));
+        }
+
+        .g4 {
+        background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+        }
+
+        .g5 {
+        background: linear-gradient(135deg, var(--accent-pink), var(--orange));
+        }
+
+        .g6 {
+        background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+        }
+
+        /* ── Table ── */
+        .pa-table {
+        width: 100%;
+        border-collapse: collapse;
+        }
+
+        .pa-table thead th {
+        background: var(--primary);
+        color: white;
+        padding: .8rem 1rem;
+        font-size: .76rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        }
+
+        .pa-table thead th:first-child {
+        border-radius: 10px 0 0 10px;
+        }
+
+        .pa-table thead th:last-child {
+        border-radius: 0 10px 10px 0;
+        }
+
+        .pa-table tbody tr {
+        border-bottom: 1px solid rgba(0,0,0,.04);
+        transition: background .15s;
+        }
+
+        .pa-table tbody tr:hover {
+        background: rgba(0,203,184,.025);
+        }
+
+        .pa-table tbody td {
+        padding: .8rem 1rem;
+        font-size: .86rem;
+        vertical-align: middle;
+        }
+
+        /* ── Badges ── */
+        .pbadge {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: .72rem;
+        font-weight: 600;
+        display: inline-block;
+        }
+
+        .pb-green {
+        background: rgba(51,239,160,.15);
+        color: #16a34a;
+        }
+
+        .pb-red {
+        background: rgba(225,52,104,.12);
+        color: var(--accent-pink);
+        }
+
+        .pb-orange {
+        background: rgba(244,140,6,.15);
+        color: var(--orange);
+        }
+
+        .pb-blue {
+        background: rgba(41,185,231,.12);
+        color: var(--accent-blue);
+        }
+
+        .pb-purple {
+        background: rgba(91,114,238,.12);
+        color: var(--accent-purple);
+        }
+
+        .pb-gray {
+        background: rgba(0,0,0,.06);
+        color: #6c757d;
+        }
+
+        /* ── Progress bar ── */
+        .pa-progress {
+        height: 8px;
+        border-radius: 10px;
+        background: rgba(0,0,0,.06);
+        overflow: hidden;
+        }
+
+        .pa-progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        transition: width .8s ease;
+        }
+
+        /* ── Alerts ── */
+        .pa-alert {
+        border-radius: 12px;
+        border: none;
+        padding: .8rem 1.2rem;
+        font-size: .87rem;
+        font-weight: 500;
+        }
+
+        /* ── Form ── */
+        .pa-control {
+        border-radius: 10px;
+        border: 1.5px solid rgba(47,50,125,.14);
+        font-size: .875rem;
+        padding: .58rem .9rem;
+        font-family: 'Poppins', sans-serif;
+        transition: border-color .15s, box-shadow .15s;
+        width: 100%;
+        }
+
+        .pa-control:focus {
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(0,203,184,.15);
+        outline: none;
+        }
+
+        /* ── Pagination ── */
+        .pa-pages {
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+        margin-top: 1.5rem;
+        }
+
+        .pa-page-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        border: 1.5px solid rgba(47,50,125,.15);
+        background: white;
+        color: var(--primary);
+        font-size: .8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all .15s;
+        }
+
+        .pa-page-btn:hover, .pa-page-btn.active {
+        background: var(--secondary);
+        border-color: var(--secondary);
+        color: white;
+        }
+
+        .pa-page-btn.disabled {
+        opacity: .35;
+        pointer-events: none;
+        }
+
+        /* ── Utility ── */
+        .btn-primary {
+        background: var(--secondary);
+        border-color: var(--secondary);
+        font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary:hover {
+        background: #00b3a0;
+        border-color: #00b3a0;
+        }
+
+        /* ── Mobile ── */
+        .pa-mobile-bar {
+        display: none;
+        background: white;
+        padding: .8rem 1.2rem;
+        border-bottom: 1px solid var(--sidebar-border);
+        align-items: center;
+        justify-content: space-between;
+        }
+
+        @@media (max-width: 991.98px) {
+        .pa-sidebar {
+        display: none;
+        }
+
+        .pa-mobile-bar {
+        display: flex;
+        }
+
+        .pa-page {
+        padding: 1.2rem;
+        }
+        }
+
+        .topbar-nav-link {
+        color: var(--primary);
+        font-size: .78rem;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 4px 9px;
+        border-radius: 8px;
+        transition: background .15s;
+        }
+
+        .topbar-nav-link:hover {
+        background: rgba(0,203,184,.1);
+        color: var(--primary);
+        }
+
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Mobile bar -->
+    <div class="pa-mobile-bar">
+        <div class="d-flex align-items-center gap-2">
+            <div class="pa-brand-icon" style="width:36px;height:36px;border-radius:9px;font-size:.9rem;"><i class="fas fa-user-friends"></i></div>
+            <strong style="color:var(--primary);font-size:.9rem;">Parent Portal</strong>
+        </div>
+        <button class="btn btn-sm" style="background:var(--secondary);color:white;border-radius:9px;"
+                data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Offcanvas -->
+    <div class="offcanvas offcanvas-start" id="mobileSidebar" style="width:280px;">
+        <div class="offcanvas-header border-bottom">
+            <div class="d-flex align-items-center gap-2">
+                <div class="pa-brand-icon"><i class="fas fa-user-friends"></i></div>
+                <div class="pa-brand-text"><strong>TOTC LMS</strong><small>Parent Portal</small></div>
+            </div>
+            <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-3">@await Html.PartialAsync("_ParentSidebar")</div>
+    </div>
+
+    <div class="pa-shell">
+        <!-- Desktop Sidebar -->
+        <aside class="pa-sidebar d-none d-lg-flex flex-column">
+            <div class="pa-brand">
+                <div class="pa-brand-icon"><i class="fas fa-user-friends"></i></div>
+                <div class="pa-brand-text"><strong>TOTC LMS</strong><small>Parent Portal</small></div>
+            </div>
+            <div class="pa-sidebar-body flex-grow-1">@await Html.PartialAsync("_ParentSidebar")</div>
+            <div class="pa-sidebar-footer">
+                <div class="pa-avatar">
+                    @{
+                        var initials2 = (User.Identity?.Name ?? "PA").Length >= 2
+                            ? (User.Identity?.Name ?? "PA")[..2].ToUpper() : "PA";
+                    }
+                    @initials2
+                </div>
+                <div class="pa-footer-info flex-grow-1">
+                    <strong>@(User.Identity?.Name ?? "Parent")</strong>
+                    <small>Parent</small>
+                </div>
+                <a asp-area="" asp-controller="Account" asp-action="Logout"
+                   class="pa-logout" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="pa-main">
+            <div class="pa-topbar">
+                <h6>@ViewData["Title"]</h6>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Website nav links -->
+                    <div class="d-none d-xl-flex align-items-center gap-1">
+                        <a href="/" class="topbar-nav-link"><i class="fas fa-home me-1"></i>Home</a>
+                        <a href="#" class="topbar-nav-link">Blog</a>
+                        <a href="#" class="topbar-nav-link">About</a>
+                    </div>
+                    <!-- Notification bell -->
+                    <a asp-area="Parent" asp-controller="Announcements" asp-action="Index"
+                       class="text-decoration-none" id="bell-link" title="Announcements"
+                       style="position:relative;color:var(--primary);font-size:1rem;">
+                        <i class="fas fa-bell"></i>
+                        <span id="bell-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--accent-pink);border-radius:50%;border:2px solid white;"></span>
+                    </a>
+                    <a asp-area="Parent" asp-controller="Report" asp-action="Download"
+                       class="btn btn-sm rounded-3 px-3"
+                       style="background:rgba(0,203,184,.1);color:var(--secondary);font-weight:600;font-size:.8rem;">
+                        <i class="fas fa-file-pdf me-1"></i>Weekly Report
+                    </a>
+                    <div class="pa-avatar" style="width:32px;height:32px;font-size:.75rem;">@initials2</div>
+                </div>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div style="padding:0 1.75rem;margin-top:.9rem;">
+                    <div class="alert pa-alert alert-success alert-dismissible fade show">
+                        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div style="padding:0 1.75rem;margin-top:.9rem;">
+                    <div class="alert pa-alert alert-danger alert-dismissible fade show">
+                        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+
+            <div class="pa-page">@RenderBody()</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        (function(){
+        fetch('/api/announcements/count').then(r=>r.json()).then(function(d){
+        if(d>0){var dot=document.getElementById('bell-dot');if(dot)dot.style.display='block';}
+        }).catch(function(){});
+        })();
+    </script>
+</body>
+</html>

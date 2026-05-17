@@ -29,6 +29,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IInstructorRepository, InstructorRepository>();
 builder.Services.AddScoped<SuperAdminDataService>();
+builder.Services.AddScoped<LMSProject.Services.TicketService>();
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
 builder.Services.ConfigureApplicationCookie(options =>

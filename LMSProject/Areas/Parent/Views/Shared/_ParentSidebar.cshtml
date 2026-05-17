@@ -1,0 +1,54 @@
+﻿@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    bool Is(string c) => string.Equals(ctrl, c, StringComparison.OrdinalIgnoreCase);
+}
+
+<p class="pa-group-label mt-2">Overview</p>
+<a asp-area="Parent" asp-controller="Home" asp-action="Index"
+   class="pa-nav-item @(Is("Home") ? "active" : "")">
+    <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+</a>
+
+<p class="pa-group-label mt-3">Academic</p>
+<a asp-area="Parent" asp-controller="Children" asp-action="Index"
+   class="pa-nav-item @(Is("Children") ? "active" : "")">
+    <i class="fas fa-child"></i><span>My Children</span>
+</a>
+
+<p class="pa-group-label mt-3">Communication</p>
+
+<a asp-area="Parent"
+   asp-controller="Tickets"
+   asp-action="Index"
+   class="pa-nav-item @(Is("Tickets") ? "active" : "")">
+    <i class="fas fa-headset"></i>
+    <span>Support Tickets</span>
+</a>
+
+<a asp-area="Parent"
+   asp-controller="Announcements"
+   asp-action="Index"
+   class="pa-nav-item @(Is("Announcements") ? "active" : "")">
+    <i class="fas fa-bullhorn"></i>
+    <span>Announcements</span>
+</a>
+
+<p class="pa-group-label mt-3">Reports</p>
+<a asp-area="Parent" asp-controller="Report" asp-action="Index"
+   class="pa-nav-item @(Is("Report") ? "active" : "")">
+    <i class="fas fa-chart-bar"></i><span>Progress Report</span>
+</a>
+<a asp-area="Parent" asp-controller="Report" asp-action="Download"
+   class="pa-nav-item" target="_blank">
+    <i class="fas fa-file-pdf"></i><span>Download PDF</span>
+</a>
+
+<p class="pa-group-label mt-3">Account</p>
+<a asp-area="Parent" asp-controller="Profile" asp-action="Index"
+   class="pa-nav-item @(Is("Profile") ? "active" : "")">
+    <i class="fas fa-user-circle"></i><span>My Profile</span>
+</a>
+<a asp-area="" asp-controller="Account" asp-action="Logout"
+   class="pa-nav-item" style="color:var(--accent-pink);">
+    <i class="fas fa-sign-out-alt" style="color:var(--accent-pink);"></i><span>Sign Out</span>
+</a>

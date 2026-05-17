@@ -103,7 +103,7 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div style="flex:1;min-width:0;">
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <span style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:white;font-size:0.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;">@(i+1)</span>
+                                    <span style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:white;font-size:0.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;">@(i + 1)</span>
                                     <span class="sa-badge sa-badge-info">@q.QuestionType</span>
                                     <span class="sa-badge" style="background:rgba(244,140,6,0.12);color:var(--orange);">@q.Points pts</span>
                                 </div>
@@ -126,12 +126,11 @@
                                     </div>
                                 }
                             </div>
-                            <form asp-action="DeleteQuestion" method="post" class="d-inline ms-2"
-                                  onsubmit="return confirm('Remove this question?')">
+                            <form asp-action="DeleteQuestion" method="post" class="d-inline ms-2">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="questionId" value="@q.Id" />
                                 <input type="hidden" name="examId" value="@Model.Id" />
-                                <button type="submit" class="sa-btn-icon sa-btn-delete" title="Remove">
+                                <button type="button" class="sa-btn-icon sa-btn-delete" title="Remove" onclick="triggerDeleteModal(this)">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
@@ -142,3 +141,21 @@
         }
     </div>
 </div>
+
+@await Html.PartialAsync("_DeleteModal")
+
+@section Scripts {
+    <script>
+        function triggerDeleteModal(btn) {
+            var form  = btn.closest('form');
+            var row   = btn.closest('tr');
+            var title = row ? (row.querySelector('[style*="font-weight:600"]') || row.querySelector('td:nth-child(1)')) : null;
+            var name  = title ? title.textContent.trim().substring(0, 60) : 'this item';
+            document.getElementById('deleteItemName').textContent = name;
+            var confirmBtn = document.getElementById('deleteConfirmBtn');
+            confirmBtn.onclick = function(e) { e.preventDefault(); form.submit(); };
+            confirmBtn.href = '#';
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

@@ -1,0 +1,106 @@
+﻿@model LMSProject.Areas.Parent.ViewModels.ParentProfileVM
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Profile header -->
+        <div class="pa-card mb-4">
+            <div style="background:linear-gradient(135deg,var(--accent-green),var(--secondary));padding:2rem;display:flex;align-items:center;gap:1.5rem;border-radius:16px 16px 0 0;flex-wrap:wrap;">
+                <div style="position:relative;">
+                    @if (!string.IsNullOrEmpty(Model.ImageName))
+                    {
+                        <img src="~/@Model.ImageName" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);" />
+                    }
+                    else
+                    {
+
+                        <div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;color:white;">@Model.Initials</div>
+                    }
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;">@Model.FullName</h5>
+                    <p style="color:rgba(255,255,255,.8);margin:.3rem 0 0;font-size:.85rem;">Parent / Guardian</p>
+                    <span style="background:rgba(255,255,255,.2);color:white;border-radius:20px;padding:2px 12px;font-size:.75rem;">@Model.ChildrenCount children linked</span>
+                </div>
+            </div>
+
+            <div class="pa-card-body">
+                <div class="row g-3">
+                    @foreach (var (ico, col, label, val) in new[]
+                    {
+                        ("fa-envelope",    "var(--accent-blue)",   "Email",        Model.Email ?? "—"),
+                        ("fa-phone",       "var(--secondary)",     "Phone",        Model.Phone ?? "—"),
+                        ("fa-phone-alt",   "var(--accent-purple)", "Alt Phone",    Model.AltPhone ?? "—"),
+                        ("fa-briefcase",   "var(--orange)",        "Occupation",   Model.Occupation ?? "—"),
+                        ("fa-map-marker",  "var(--accent-pink)",   "Address",      string.IsNullOrEmpty(Model.Address) ? "—" : $"{Model.Address}, {Model.City}"),
+                        ("fa-heart",       "var(--accent-green)",  "Relationship", Model.Relationship ?? "—"),
+                    })
+                    {
+                        <div class="col-md-6">
+                            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.04);">
+                                <div style="width:32px;height:32px;border-radius:8px;background:@(col)15;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="fas @ico" style="color:@col;font-size:.82rem;"></i>
+                                </div>
+                                <div>
+                                    <small style="color:#9ca3af;font-size:.7rem;display:block;">@label</small>
+                                    <span style="font-weight:600;font-size:.85rem;">@val</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit form -->
+        <div class="pa-card">
+            <div class="pa-card-header">
+                <h5><i class="fas fa-edit me-2" style="color:var(--secondary);"></i>Edit Profile</h5>
+            </div>
+            <div class="pa-card-body">
+                <form asp-area="Parent" asp-controller="Profile" asp-action="Edit"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">Full Name</label>
+                            <input asp-for="FullName" class="pa-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">Phone</label>
+                            <input asp-for="Phone" class="pa-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">Alternative Phone</label>
+                            <input asp-for="AltPhone" class="pa-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">Occupation</label>
+                            <input asp-for="Occupation" class="pa-control" />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">Address</label>
+                            <input asp-for="Address" class="pa-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">City</label>
+                            <input asp-for="City" class="pa-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">Profile Photo</label>
+                            <input asp-for="Image" type="file" class="pa-control" accept="image/*" />
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

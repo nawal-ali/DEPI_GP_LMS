@@ -1,0 +1,9 @@
+﻿@using LMSProject.ViewModels.Tickets
+@model CreateTicketVM
+@{
+    ViewData["Title"] = "New Ticket";
+    ViewData["PostArea"] = "Parent";
+    ViewData["BackUrl"] = Url.Action("Index", "Tickets", new { area = "Parent" });
+}
+
+@await Html.PartialAsync("_CreateTicket", Model)

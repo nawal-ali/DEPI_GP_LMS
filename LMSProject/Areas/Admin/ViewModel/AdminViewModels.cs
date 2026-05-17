@@ -100,9 +100,11 @@ namespace LMSProject.Areas.Admin.ViewModels
         [Required, EmailAddress] public string Email { get; set; } = "";
         public string? Phone { get; set; }
         public int GradeId { get; set; }
+        public int? ParentId { get; set; }
         public string? ImageName { get; set; }
         public IFormFile? Image { get; set; }
         public List<LMSProject.Areas.Admin.Helpers.SelectDropList> Grades { get; set; } = new();
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> Parents { get; set; } = new();
     }
 
     public class EditParentVM
@@ -111,6 +113,9 @@ namespace LMSProject.Areas.Admin.ViewModels
         [Required] public string FullName { get; set; } = "";
         [Required, EmailAddress] public string Email { get; set; } = "";
         public string? Phone { get; set; }
+        public List<int> ChildIds { get; set; } = new();
+        public List<string> ExistingChildNames { get; set; } = new();
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> AllStudents { get; set; } = new();
     }
 
     // ── Course Management ─────────────────────────────────────────────────────

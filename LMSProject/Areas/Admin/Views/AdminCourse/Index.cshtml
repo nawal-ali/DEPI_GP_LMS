@@ -90,11 +90,13 @@
                                    class="sa-btn-icon sa-btn-add" title="Enroll Students"><i class="fas fa-user-plus"></i></a>
                                 <a asp-area="Admin" asp-controller="Monitor" asp-action="Materials" asp-route-courseId="@c.Id"
                                    class="sa-btn-icon sa-btn-view" title="Materials"><i class="fas fa-folder"></i></a>
-                                <form asp-area="Admin" asp-controller="AdminCourse" asp-action="Delete" method="post" style="display:inline;"
-                                      onsubmit="return confirm('Deactivate course @c.Name?')">
+                                <form asp-area="Admin" asp-controller="AdminCourse" asp-action="Delete" method="post" style="display:inline;" id="delCourse_@c.Id">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@c.Id" />
-                                    <button type="submit" class="sa-btn-icon sa-btn-delete" title="Deactivate"><i class="fas fa-ban"></i></button>
+                                    <button type="button" class="sa-btn-icon sa-btn-delete" title="Deactivate"
+                                            onclick="triggerDeleteModal(this)">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
                                 </form>
                             </div>
                         </td>
@@ -117,4 +119,21 @@
             <a asp-action="Index" asp-route-page="@p" class="sa-page-btn @(p == (int)ViewBag.Page ? "active" : "")">@p</a>
         }
     </div>
+}
+
+@await Html.PartialAsync("_DeleteModal")
+
+@section Scripts {
+    <script>
+        function triggerDeleteModal(btn) {
+            var form  = btn.closest('form');
+            var row   = btn.closest('tr');
+            var name  = row ? row.querySelector('[style*="font-weight:600"]')?.textContent?.trim() : 'this course';
+            document.getElementById('deleteItemName').textContent = name || 'this course';
+            var confirmBtn = document.getElementById('deleteConfirmBtn');
+            confirmBtn.onclick = function(e) { e.preventDefault(); form.submit(); };
+            confirmBtn.href = '#';
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
 }

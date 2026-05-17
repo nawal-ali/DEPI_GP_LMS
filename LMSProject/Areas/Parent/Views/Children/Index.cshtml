@@ -1,0 +1,84 @@
+﻿@model List<LMSProject.Areas.Parent.ViewModels.ChildSummaryVM>
+@{
+    ViewData["Title"] = "My Children";
+}
+
+<h5 style="font-weight:700;color:var(--primary);margin:0 0 1.5rem;">
+    <i class="fas fa-child me-2" style="color:var(--secondary);"></i>My Children
+    <span class="pbadge pb-blue ms-2">@Model.Count</span>
+</h5>
+
+@if (!Model.Any())
+{
+    <div class="pa-card p-5 text-center" style="color:#aaa;">
+        <i class="fas fa-child fa-3x mb-3 d-block opacity-25"></i>
+        No children linked to your account yet. Contact the Admin to link your children.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var child in Model)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="pa-card h-100">
+                    <!-- Header gradient -->
+                    <div style="background:linear-gradient(135deg,var(--accent-green),var(--secondary));padding:1.4rem;text-align:center;">
+                        @if (!string.IsNullOrEmpty(child.ImageName))
+                        {
+                            <img src="~/@child.ImageName" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);" />
+                        }
+                        else
+                        {
+                            <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.25);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:800;color:white;">@child.Initials</div>
+                        }
+                        <h6 style="color:white;font-weight:700;margin:.75rem 0 .2rem;">@child.FullName</h6>
+                        <span style="background:rgba(255,255,255,.2);color:white;border-radius:20px;padding:2px 12px;font-size:.75rem;font-weight:600;">@child.Grade</span>
+                    </div>
+
+                    <div class="pa-card-body">
+                        <!-- Stats grid -->
+                        <div class="row g-2 text-center mb-3">
+                            <div class="col-4">
+                                <div style="background:rgba(41,185,231,.08);border-radius:10px;padding:.6rem;">
+                                    <div style="font-size:1.2rem;font-weight:800;color:var(--accent-blue);">@child.CourseCount</div>
+                                    <small style="color:#9ca3af;font-size:.68rem;">Courses</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div style="background:rgba(91,114,238,.08);border-radius:10px;padding:.6rem;">
+                                    <div style="font-size:1.2rem;font-weight:800;color:var(--accent-purple);">@child.ExamsTaken</div>
+                                    <small style="color:#9ca3af;font-size:.68rem;">Exams</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div style="background:rgba(0,203,184,.08);border-radius:10px;padding:.6rem;">
+                                    <div style="font-size:1.2rem;font-weight:800;color:var(--secondary);">@child.AssignmentsSubmitted</div>
+                                    <small style="color:#9ca3af;font-size:.68rem;">Submitted</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exam average -->
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.78rem;">
+                            <span style="font-weight:600;color:#555;">Exam Average</span>
+                            <span style="font-weight:800;color:@child.PerformanceColor;">@child.AverageExamScore%</span>
+                        </div>
+                        <div class="pa-progress mb-3">
+                            <div class="pa-progress-bar" style="width:@((int)child.AverageExamScore)%;background:@child.PerformanceColor;"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pbadge" style="background:@(child.PerformanceColor)18;color:@child.PerformanceColor;">@child.PerformanceLabel</span>
+                            <a asp-area="Parent" asp-controller="Children" asp-action="Detail"
+                               asp-route-studentId="@child.StudentId"
+                               class="btn btn-primary btn-sm rounded-3 px-3" style="font-size:.8rem;">
+                                <i class="fas fa-chart-bar me-1"></i>Full Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

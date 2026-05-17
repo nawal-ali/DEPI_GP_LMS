@@ -1,0 +1,182 @@
+﻿@using LMSProject.ViewModels.Tickets
+@model CreateTicketVM
+@* This view is used by both Parent and Instructor areas. The form posts to the area's own TicketsController. *@
+@{
+    // caller sets ViewData["PostArea"] and ViewData["BackUrl"]
+    var postArea = ViewData["PostArea"] as string ?? "Parent";
+    var backUrl = ViewData["BackUrl"] as string ?? "#";
+}
+
+<style>
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(18px)
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    }
+
+    .create-ticket-card {
+        animation: fadeIn .4s ease;
+    }
+
+    .sa-form-control {
+        border-radius: 10px;
+        border: 1.5px solid rgba(47,50,125,.14);
+        padding: .6rem .9rem;
+        font-size: .875rem;
+        width: 100%;
+        transition: border-color .15s,box-shadow .15s;
+        outline: none;
+        font-family: Poppins,sans-serif;
+    }
+
+        .sa-form-control:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(0,203,184,.15);
+        }
+
+    .type-btn {
+        border: 2px solid rgba(47,50,125,.14);
+        border-radius: 12px;
+        padding: .65rem 1.2rem;
+        cursor: pointer;
+        transition: all .15s;
+        background: white;
+        font-family: Poppins,sans-serif;
+        font-size: .84rem;
+        font-weight: 600;
+        color: var(--primary);
+        text-align: center;
+    }
+
+        .type-btn:hover {
+            border-color: var(--secondary);
+            background: rgba(0,203,184,.05);
+        }
+
+        .type-btn.selected {
+            border-color: var(--secondary);
+            background: rgba(0,203,184,.1);
+            color: var(--secondary);
+        }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="sa-card create-ticket-card">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));border-radius:16px 16px 0 0;padding:1.5rem 2rem;display:flex;align-items:center;gap:1rem;">
+                <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-headset" style="color:white;font-size:1.2rem;"></i>
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;">Submit a Support Ticket</h5>
+                    <small style="color:rgba(255,255,255,.7);font-size:.78rem;">
+                        Your ticket will be received by an Admin and they'll respond as soon as possible.
+                    </small>
+                </div>
+            </div>
+
+            <div class="sa-card-body">
+                <form asp-area="@postArea" asp-controller="Tickets" asp-action="Create"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Ticket Type -->
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:700;font-size:.85rem;color:var(--primary);">
+                            Ticket Type <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-2" id="typeButtons">
+                            @foreach (var t in new[] { ("Inquiry", "fa-question-circle"), ("Complaint", "fa-exclamation-circle"), ("Suggestion", "fa-lightbulb"), ("Other", "fa-ellipsis-h") })
+                            {
+                                <div class="col-6 col-md-3">
+                                    <div class="type-btn @(Model.Type == t.Item1 ? "selected" : "")"
+                                         onclick="selectType('@t.Item1', this)">
+                                        <i class="fas @t.Item2 d-block mb-1" style="font-size:1.2rem;"></i>@t.Item1
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <input type="hidden" name="Type" id="typeInput" value="@Model.Type" />
+                    </div>
+
+                    <!-- Custom type (shown only when Other is selected) -->
+                    <div class="mb-3" id="customTypeArea" style="display:@(Model.Type == "Other" ? "block" : "none");">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Specify Type <span class="text-danger">*</span>
+                        </label>
+                        <input name="CustomType" id="customTypeInput" value="@Model.CustomType"
+                               class="sa-form-control" placeholder="e.g. Technical Issue, Schedule Request…" />
+                    </div>
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Subject / Title <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title" class="sa-form-control"
+                               placeholder="Brief description of your issue…" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Description <span class="text-danger">*</span>
+                        </label>
+                        <textarea asp-for="Description" rows="5" class="sa-form-control"
+                                  placeholder="Provide as much detail as possible…" style="resize:vertical;"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Attachment -->
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Attachment <small class="text-muted fw-normal">(optional — PDF, Word, or image)</small>
+                        </label>
+                        <input asp-for="Attachment" type="file" class="sa-form-control"
+                               accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 flex-grow-1"
+                                style="font-family:Poppins,sans-serif;">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Ticket
+                        </button>
+                        <a href="@backUrl" class="btn rounded-3 px-4"
+                           style="background:rgba(47,50,125,.07);color:var(--primary);font-weight:600;font-family:Poppins,sans-serif;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function selectType(type, btn) {
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('typeInput').value = type;
+            var ca = document.getElementById('customTypeArea');
+            var ci = document.getElementById('customTypeInput');
+            if (type === 'Other') {
+                ca.style.display = 'block';
+                ci.setAttribute('required', 'required');
+            } else {
+                ca.style.display = 'none';
+                ci.removeAttribute('required');
+                ci.value = '';
+            }
+        }
+    </script>
+}

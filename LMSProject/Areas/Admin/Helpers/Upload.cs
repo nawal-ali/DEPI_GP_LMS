@@ -4,25 +4,37 @@
     {
         public static string UploadImage(string folder, IFormFile file)
         {
-
             folder += DateTime.Now.ToBinary() + "_" + file.FileName;
-            string fullpath = Path.Combine("wwwroot", folder);
-            var stream = new FileStream(fullpath, FileMode.Create);
-            file.CopyTo(stream);
-            return folder;
-        }
-        public static bool DeletImage(string ImageName)
-        {
+            string fullPath = Path.Combine("wwwroot", folder);
 
-           
-            string fullpath = Path.Combine("wwwroot", ImageName);
-            if (File.Exists(fullpath))
+            // using statement ensures the stream is always disposed,
+            // which closes the file handle and prevents the "file in use" IOException
+            using (var stream = new FileStream(fullPath, FileMode.Create))
             {
-                File.Delete(fullpath);
-                return true;
+                file.CopyTo(stream);
             }
 
-            return false;
+            return folder;
+        }
+
+        public static bool DeletImage(string? imageName)
+        {
+            if (string.IsNullOrWhiteSpace(imageName)) return false;
+
+            string fullPath = Path.Combine("wwwroot", imageName);
+
+            if (!File.Exists(fullPath)) return false;
+
+            try
+            {
+                File.Delete(fullPath);
+                return true;
+            }
+            catch (IOException)
+            {
+                // File still in use — skip silently rather than crashing
+                return false;
+            }
         }
     }
 }

@@ -88,7 +88,7 @@ namespace LMSProject.Areas.Admin.Controllers
             ViewBag.Grades = await _db.Grades.Where(g => g.CurrentState == 1).Select(g => g.Name).ToListAsync();
 
             var paged = vmList.Skip((page - 1) * ps).Take(ps).ToList();
-            return View(paged);
+            return View("~/Areas/Admin/Views/AdminCourse/Index.cshtml", paged);
         }
 
         // ── Create GET ─────────────────────────────────────────────────────
@@ -96,13 +96,13 @@ namespace LMSProject.Areas.Admin.Controllers
         public async Task<IActionResult> Create()
         {
             ViewData["Title"] = "Create Course";
-            return View(await BuildCreateVM(new CreateCourseVM()));
+            return View("~/Areas/Admin/Views/AdminCourse/Create.cshtml", await BuildCreateVM(new CreateCourseVM()));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateCourseVM vm)
         {
-            if (!ModelState.IsValid) return View(await BuildCreateVM(vm));
+            if (!ModelState.IsValid) return View("~/Areas/Admin/Views/AdminCourse/Create.cshtml", await BuildCreateVM(vm));
 
             string? imgName = null;
             if (vm.Image != null) imgName = Upload.UploadImage("Images/images/", vm.Image);
@@ -152,13 +152,13 @@ namespace LMSProject.Areas.Admin.Controllers
                 ImageName = c.ImageName
             };
 
-            return View(await BuildEditVM(vm));
+            return View("~/Areas/Admin/Views/AdminCourse/Edit.cshtml", await BuildEditVM(vm));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditCourseVM vm)
         {
-            if (!ModelState.IsValid) return View(await BuildEditVM(vm));
+            if (!ModelState.IsValid) return View("~/Areas/Admin/Views/AdminCourse/Edit.cshtml", await BuildEditVM(vm));
 
             var c = await _db.Courses.FindAsync(vm.Id);
             if (c == null) return NotFound();
@@ -230,7 +230,7 @@ namespace LMSProject.Areas.Admin.Controllers
             };
 
             ViewData["Title"] = $"Enroll Students — {course.Name}";
-            return View(vm);
+            return View("~/Areas/Admin/Views/AdminCourse/Enroll.cshtml", vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]

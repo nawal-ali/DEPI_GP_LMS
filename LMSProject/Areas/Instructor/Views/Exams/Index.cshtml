@@ -86,10 +86,9 @@
                                     <a asp-action="Edit" asp-route-id="@e.Id" class="sa-btn-icon sa-btn-edit" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline"
-                                          onsubmit="return confirm('Delete this exam and all its questions?')">
+                                    <form id="delForm1" asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="sa-btn-icon sa-btn-delete" title="Delete">
+                                        <button type="button" class="sa-btn-icon sa-btn-delete" title="Delete" onclick="triggerDeleteModal(this)">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </form>
@@ -102,3 +101,21 @@
         }
     </div>
 </div>
+
+@await Html.PartialAsync("_DeleteModal")
+
+@section Scripts {
+    <script>
+        function triggerDeleteModal(btn) {
+            var form  = btn.closest('form');
+            var row   = btn.closest('tr');
+            var title = row ? (row.querySelector('[style*="font-weight:600"]') || row.querySelector('td:nth-child(1)')) : null;
+            var name  = title ? title.textContent.trim().substring(0, 60) : 'this item';
+            document.getElementById('deleteItemName').textContent = name;
+            var confirmBtn = document.getElementById('deleteConfirmBtn');
+            confirmBtn.onclick = function(e) { e.preventDefault(); form.submit(); };
+            confirmBtn.href = '#';
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

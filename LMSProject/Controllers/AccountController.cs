@@ -78,8 +78,12 @@ namespace LMSProject.Controllers
             if (await _usermanager.IsInRoleAsync(user, "Instructor"))
                 return RedirectToAction("Index", "Home", new { area = "Instructor" });
 
+            if (await _usermanager.IsInRoleAsync(user, "Parent"))
+                return RedirectToAction("Index", "Home", new { area = "Parent" });
+
             // Student / Parent — public home
             return RedirectToAction("Index", "Home", new { area = "" });
+
         }
 
         // ── Logout ──────────────────────────────────────────────────────────

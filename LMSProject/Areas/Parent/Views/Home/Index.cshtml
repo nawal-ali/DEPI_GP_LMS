@@ -1,0 +1,172 @@
+﻿@model LMSProject.Areas.Parent.ViewModels.ParentDashboardVM
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="pa-stat g1"><p>Children</p><h3>@Model.ChildrenCount</h3><i class="fas fa-child si"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="pa-stat g2"><p>Enrolled Courses</p><h3>@Model.TotalCourses</h3><i class="fas fa-book-open si"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="pa-stat g3"><p>Pending Exams</p><h3>@Model.PendingExams</h3><i class="fas fa-file-alt si"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="pa-stat g4"><p>Pending Tasks</p><h3>@Model.PendingAssignments</h3><i class="fas fa-tasks si"></i></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="pa-stat g5"><p>Submissions</p><h3>@Model.TotalSubmissions</h3><i class="fas fa-inbox si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="pa-stat g6"><p>Graded</p><h3>@Model.GradedSubmissions</h3><i class="fas fa-check-circle si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="pa-stat" style="background:linear-gradient(135deg,var(--accent-green),var(--primary));"><p>Announcements</p><h3>@Model.Announcements</h3><i class="fas fa-bullhorn si"></i></div></div>
+</div>
+
+<!-- Children cards -->
+@if (Model.Children.Any())
+{
+    <div class="pa-card mb-4">
+        <div class="pa-card-header">
+            <h5><i class="fas fa-child me-2" style="color:var(--secondary);"></i>Children Overview</h5>
+            <a asp-area="Parent" asp-controller="Children" asp-action="Index"
+               style="font-size:.82rem;color:var(--secondary);text-decoration:none;font-weight:600;">
+                View Details <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="pa-card-body">
+            <div class="row g-3">
+                @foreach (var child in Model.Children)
+                {
+                    <div class="col-md-6 col-xl-4">
+                        <div style="border:1.5px solid rgba(0,0,0,.06);border-radius:14px;padding:1.25rem;transition:transform .2s,box-shadow .2s;"
+                             onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
+                             onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                @if (!string.IsNullOrEmpty(child.ImageName))
+                                {
+                                    <img src="~/@child.ImageName" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;" />
+                                }
+                                else
+                                {
+                                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent-green),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">@child.Initials</div>
+                                }
+                                <div>
+                                    <div style="font-weight:700;font-size:.9rem;">@child.FullName</div>
+                                    <small style="color:#9ca3af;font-size:.75rem;"><span class="pbadge pb-blue">@child.Grade</span></small>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3 text-center">
+                                <div class="col-4">
+                                    <div style="font-size:1.1rem;font-weight:800;color:var(--primary);">@child.CourseCount</div>
+                                    <small style="color:#9ca3af;font-size:.7rem;">Courses</small>
+                                </div>
+                                <div class="col-4">
+                                    <div style="font-size:1.1rem;font-weight:800;color:var(--accent-blue);">@child.ExamsTaken</div>
+                                    <small style="color:#9ca3af;font-size:.7rem;">Exams</small>
+                                </div>
+                                <div class="col-4">
+                                    <div style="font-size:1.1rem;font-weight:800;color:var(--secondary);">@child.AssignmentsSubmitted</div>
+                                    <small style="color:#9ca3af;font-size:.7rem;">Submitted</small>
+                                </div>
+                            </div>
+                            <!-- Performance bar -->
+                            <div class="mb-1 d-flex justify-content-between" style="font-size:.75rem;">
+                                <span style="font-weight:600;">Exam Average</span>
+                                <span style="font-weight:700;color:@child.PerformanceColor;">@child.AverageExamScore%</span>
+                            </div>
+                            <div class="pa-progress mb-3">
+                                <div class="pa-progress-bar" style="width:@((int)child.AverageExamScore)%;background:@child.PerformanceColor;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="pbadge" style="background:@(child.PerformanceColor)20;color:@child.PerformanceColor;font-size:.72rem;">@child.PerformanceLabel</span>
+                                <a asp-area="Parent" asp-controller="Children" asp-action="Detail"
+                                   asp-route-studentId="@child.StudentId"
+                                   style="font-size:.78rem;color:var(--secondary);text-decoration:none;font-weight:600;">
+                                    Full Report <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Upcoming deadlines -->
+    <div class="col-lg-6">
+        <div class="pa-card h-100">
+            <div class="pa-card-header">
+                <h5><i class="fas fa-calendar-alt me-2" style="color:var(--orange);"></i>Upcoming Deadlines</h5>
+            </div>
+            <div class="pa-card-body p-0">
+                @if (!Model.UpcomingDeadlines.Any())
+                {
+                    <div class="p-4 text-center" style="color:#aaa;font-size:.85rem;">
+                        <i class="fas fa-calendar-check fa-2x d-block mb-2 opacity-25"></i>No upcoming deadlines!
+                    </div>
+                }
+                @foreach (var dl in Model.UpcomingDeadlines)
+                {
+                    var urgColor = dl.DaysLeft <= 1 ? "var(--accent-pink)" : dl.DaysLeft <= 3 ? "var(--orange)" : dl.Color;
+                    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div style="width:36px;height:36px;border-radius:9px;background:@(dl.Color)18;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas @(dl.Type == "Exam" ? "fa-file-alt" : "fa-tasks")" style="color:@dl.Color;font-size:.85rem;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@dl.Title</div>
+                            <small style="color:#9ca3af;font-size:.72rem;">@dl.ChildName — @dl.CourseName</small>
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <span style="font-size:.72rem;font-weight:700;color:@urgColor;display:block;">
+                                @if (dl.DaysLeft <= 0)
+                                {
+                                    <text>Today!</text>
+                                }
+                                else if (dl.DaysLeft == 1)
+                                {
+
+                                    <text>Tomorrow</text>
+                                }
+                                else
+                                {
+
+                                    <text>@dl.DaysLeft days</text>
+                                }
+                            </span>
+                            <span class="pbadge pb-@(dl.Type == "Exam" ? "purple" : "orange")" style="font-size:.66rem;">@dl.Type</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent results -->
+    <div class="col-lg-6">
+        <div class="pa-card h-100">
+            <div class="pa-card-header">
+                <h5><i class="fas fa-trophy me-2" style="color:var(--yellow);"></i>Recent Results</h5>
+            </div>
+            <div class="pa-card-body p-0">
+                @if (!Model.RecentResults.Any())
+                {
+                    <div class="p-4 text-center" style="color:#aaa;font-size:.85rem;">
+                        <i class="fas fa-chart-bar fa-2x d-block mb-2 opacity-25"></i>No results yet.
+                    </div>
+                }
+                @foreach (var r in Model.RecentResults)
+                {
+                    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div style="width:42px;height:42px;border-radius:50%;background:@(r.Color)18;display:flex;align-items:center;justify-content:center;flex-shrink:0;flex-direction:column;line-height:1;">
+                            <span style="font-size:.85rem;font-weight:800;color:@r.Color;">@((int)r.Percentage)%</span>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@r.Title</div>
+                            <small style="color:#9ca3af;font-size:.72rem;">@r.ChildName &nbsp;|&nbsp; @r.Date.ToString("MMM d")</small>
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <span style="font-weight:700;font-size:.9rem;color:@r.Color;">@r.Score</span>
+                            <span style="color:#9ca3af;font-size:.75rem;"> / @r.TotalMarks</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

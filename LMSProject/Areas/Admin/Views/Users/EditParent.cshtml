@@ -4,7 +4,7 @@
 }
 
 <div class="row justify-content-center">
-    <div class="col-lg-7">
+    <div class="col-lg-8">
         <div class="sa-card">
             <div class="sa-modal-header" style="border-radius:16px 16px 0 0;">
                 <h5 class="mb-0" style="color:white;"><i class="fas fa-user-edit me-2"></i>Edit Parent — @Model.FullName</h5>
@@ -13,7 +13,9 @@
                 <form asp-area="Admin" asp-controller="Users" asp-action="EditParent" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Id" />
-                    <div class="row g-3">
+
+                    <!-- Basic info -->
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label">Full Name <span class="text-danger">*</span></label>
                             <input asp-for="FullName" class="sa-form-control" />
@@ -29,12 +31,186 @@
                             <input asp-for="Phone" class="sa-form-control" />
                         </div>
                     </div>
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary rounded-3 px-4"><i class="fas fa-save me-2"></i>Save Changes</button>
-                        <a asp-area="Admin" asp-controller="Users" asp-action="Parents" class="btn-secondary-sa">Cancel</a>
+
+                    <!-- Link Children -->
+                    <div class="p-3 rounded-3 mb-4" style="background:rgba(0,203,184,.06);border:1.5px solid rgba(0,203,184,.2);">
+                        <label class="form-label mb-3" style="font-weight:700;color:var(--primary);">
+                            <i class="fas fa-child me-2" style="color:var(--secondary);"></i>Linked Children
+                        </label>
+
+                        <!-- Currently linked children -->
+                        <div id="childrenList" class="mb-3">
+                            @for (int i = 0; i < Model.ChildIds.Count; i++)
+                            {
+                                <div class="child-row d-flex align-items-center gap-2 mb-2" data-index="@i">
+                                    <input type="hidden" name="ChildIds" value="@Model.ChildIds[i]"
+                                           class="child-id-input" />
+                                    <div class="flex-grow-1 d-flex align-items-center gap-2 p-2 rounded-3"
+                                         style="background:white;border:1.5px solid rgba(0,203,184,.3);">
+                                        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),var(--accent-blue));display:flex;align-items:center;justify-content:center;color:white;font-size:.65rem;font-weight:700;flex-shrink:0;">
+                                            @(Model.ExistingChildNames.Count > i ? Model.ExistingChildNames[i][..Math.Min(2, Model.ExistingChildNames[i].Length)].ToUpper() : "?")
+                                        </div>
+                                        <span style="font-size:.85rem;font-weight:600;">@(Model.ExistingChildNames.Count > i ? Model.ExistingChildNames[i] : "Unknown")</span>
+                                    </div>
+                                    <button type="button" class="sa-btn-icon sa-btn-delete btn-remove-child"
+                                            title="Remove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Add child row -->
+                        <div id="addChildArea">
+                            <div class="add-child-row d-flex align-items-center gap-2 mb-2">
+                                <div style="flex:1;position:relative;">
+                                    <input type="text" class="sa-form-control child-search"
+                                           placeholder="Type student name to search…"
+                                           autocomplete="off" />
+                                    <div class="child-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid rgba(0,0,0,.1);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:999;max-height:200px;overflow-y:auto;"></div>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 btn-add-child">
+                                    <i class="fas fa-plus me-1"></i>Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" id="addMoreBtn"
+                                style="background:none;border:none;color:var(--secondary);font-size:.78rem;font-weight:600;cursor:pointer;padding:0;">
+                            <i class="fas fa-plus-circle me-1"></i>+ Add more children
+                        </button>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-2">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a asp-area="Admin" asp-controller="Users" asp-action="Parents"
+                           class="btn-secondary-sa">Cancel</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // All students data for autocomplete
+        var allStudents = [
+            @foreach (var s in Model.AllStudents)
+            {
+                    <text>{ id: @s.Id, name: "@s.Name.Replace("\"", "\\\"")" },</text>
+            }
+        ];
+
+        // Track selected child IDs to prevent duplicates
+        var selectedIds = new Set([@string.Join(",", Model.ChildIds)]);
+
+        // Initialise a search row
+        function initSearchRow(row) {
+            var input    = row.querySelector('.child-search');
+            var dropdown = row.querySelector('.child-dropdown');
+            var addBtn   = row.querySelector('.btn-add-child');
+            var chosen   = null; // { id, name }
+
+            input.addEventListener('input', function () {
+                var q = this.value.trim().toLowerCase();
+                if (!q) { dropdown.style.display = 'none'; return; }
+
+                var matches = allStudents.filter(function (s) {
+                    return s.name.toLowerCase().includes(q) && !selectedIds.has(s.id);
+                }).slice(0, 8);
+
+                if (!matches.length) { dropdown.style.display = 'none'; return; }
+
+                dropdown.innerHTML = matches.map(function (s) {
+                    return '<div class="child-option" data-id="' + s.id + '" data-name="' + s.name +
+                           '" style="padding:9px 14px;cursor:pointer;font-size:.85rem;font-weight:500;transition:background .1s;"' +
+                           ' onmouseover="this.style.background=\'rgba(0,203,184,.08)\'" onmouseout="this.style.background=\'\'">'+
+                           '<i class="fas fa-user-graduate me-2" style="color:var(--secondary);font-size:.75rem;"></i>' + s.name + '</div>';
+                }).join('');
+                dropdown.style.display = 'block';
+
+                dropdown.querySelectorAll('.child-option').forEach(function (opt) {
+                    opt.addEventListener('mousedown', function (e) {
+                        e.preventDefault();
+                        chosen = { id: parseInt(this.dataset.id), name: this.dataset.name };
+                        input.value = chosen.name;
+                        dropdown.style.display = 'none';
+                    });
+                });
+            });
+
+            input.addEventListener('blur', function () {
+                setTimeout(function () { dropdown.style.display = 'none'; }, 150);
+            });
+
+            addBtn.addEventListener('click', function () {
+                if (!chosen || selectedIds.has(chosen.id)) {
+                    if (!chosen) { input.focus(); input.style.borderColor = 'var(--accent-pink)'; return; }
+                    alert('This student is already linked.'); return;
+                }
+                input.style.borderColor = '';
+                addChildTag(chosen.id, chosen.name);
+                chosen = null;
+                input.value = '';
+                row.style.display = 'none'; // hide this row after adding
+            });
+        }
+
+        function addChildTag(id, name) {
+            selectedIds.add(id);
+            var initials = name.substring(0, Math.min(2, name.length)).toUpperCase();
+            var div = document.createElement('div');
+            div.className = 'child-row d-flex align-items-center gap-2 mb-2';
+            div.innerHTML =
+                '<input type="hidden" name="ChildIds" value="' + id + '" class="child-id-input" />' +
+                '<div class="flex-grow-1 d-flex align-items-center gap-2 p-2 rounded-3" style="background:white;border:1.5px solid rgba(0,203,184,.3);">' +
+                    '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),var(--accent-blue));display:flex;align-items:center;justify-content:center;color:white;font-size:.65rem;font-weight:700;flex-shrink:0;">' + initials + '</div>' +
+                    '<span style="font-size:.85rem;font-weight:600;">' + name + '</span>' +
+                '</div>' +
+                '<button type="button" class="sa-btn-icon sa-btn-delete btn-remove-child" title="Remove"><i class="fas fa-times"></i></button>';
+
+            div.querySelector('.btn-remove-child').addEventListener('click', function () {
+                selectedIds.delete(id);
+                div.remove();
+            });
+
+            document.getElementById('childrenList').appendChild(div);
+        }
+
+        // Wire remove buttons for existing children
+        document.querySelectorAll('.btn-remove-child').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var row  = btn.closest('.child-row');
+                var idIn = row.querySelector('.child-id-input');
+                if (idIn) selectedIds.delete(parseInt(idIn.value));
+                row.remove();
+            });
+        });
+
+        // Init first add row
+        document.querySelectorAll('.add-child-row').forEach(initSearchRow);
+
+        // Add more button
+        document.getElementById('addMoreBtn').addEventListener('click', function () {
+            // Show any hidden add rows first, otherwise create new one
+            var hidden = document.querySelector('.add-child-row[style*="none"]');
+            if (hidden) { hidden.style.display = 'flex'; return; }
+
+            var newRow = document.createElement('div');
+            newRow.className = 'add-child-row d-flex align-items-center gap-2 mb-2';
+            newRow.innerHTML =
+                '<div style="flex:1;position:relative;">' +
+                    '<input type="text" class="sa-form-control child-search" placeholder="Type student name…" autocomplete="off" />' +
+                    '<div class="child-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid rgba(0,0,0,.1);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:999;max-height:200px;overflow-y:auto;"></div>' +
+                '</div>' +
+                '<button type="button" class="btn btn-primary btn-sm rounded-3 px-3 btn-add-child"><i class="fas fa-plus me-1"></i>Add</button>';
+
+            document.getElementById('addChildArea').insertBefore(newRow, document.getElementById('addMoreBtn').parentElement ? null : document.getElementById('addMoreBtn'));
+            document.getElementById('addChildArea').insertBefore(newRow, document.getElementById('addMoreBtn'));
+            initSearchRow(newRow);
+        });
+    </script>
+}

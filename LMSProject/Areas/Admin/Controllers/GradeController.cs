@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using LMSProject.Areas.Admin.Helpers;
 using LMSProject.Areas.Admin.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MLSCore;
 using MLSCore.Models;
@@ -8,106 +9,112 @@ using MLSCore.Models;
 namespace LMSProject.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class GradeController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+
         public GradeController(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-
         }
+
         public async Task<IActionResult> Index()
         {
-            IEnumerable<TbGrade> grades = await _unitOfWork.Grades.FindAllAsync(a => a.CurrentState == 1);
-            // return Ok(stages);
-            return View(grades);
-            
+            ViewData["Title"] = "Grades";
+            var grades = await _unitOfWork.Grades.FindAllAsync(g => g.CurrentState == 1);
+            return View("~/Areas/Admin/Views/Grade/Index.cshtml", grades);
         }
+
         [HttpGet]
-        public async Task<ActionResult> Create()
+        public async Task<IActionResult> Create()
         {
-            List<SelectDropList> stageList = (await _unitOfWork.Stages.FindAllAsyncDroplist(x => x.CurrentState == 1,
-                x => new SelectDropList
-                { Id = x.Id, Name = x.Name })).ToList();
-            GradeVM gradeVM = new GradeVM();
-            gradeVM.Stages = stageList;
-
-            return View(gradeVM);
+            ViewData["Title"] = "Add Grade";
+            var stages = (await _unitOfWork.Stages.FindAllAsyncDroplist(
+                s => s.CurrentState == 1,
+                s => new SelectDropList { Id = s.Id, Name = s.Name })).ToList();
+            return View("~/Areas/Admin/Views/Grade/Create.cshtml", new GradeVM { Stages = stages });
         }
-        [HttpPost]
-        public async Task<ActionResult> Create(GradeVM gradeVM)
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(GradeVM vm)
         {
-
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-              //  List<SelectDropList> stageList = gradeVM.Stages;
-                if (gradeVM.Image != null)
-                {
-                    string folder = "Images/images/";
-                    gradeVM.ImageName = Upload.UploadImage(folder, gradeVM.Image);
-                }
-
-                TbGrade grade = _mapper.Map<TbGrade>(gradeVM);
-                await _unitOfWork.Grades.AddAsync(grade);
-
-                _unitOfWork.Complete();
-                ViewBag.Messag = "subsubject Added Successfully";
-
-
+                vm.Stages = (await _unitOfWork.Stages.FindAllAsyncDroplist(
+                    s => s.CurrentState == 1,
+                    s => new SelectDropList { Id = s.Id, Name = s.Name })).ToList();
+                return View("~/Areas/Admin/Views/Grade/Create.cshtml", vm);
             }
+
+            await _unitOfWork.Grades.AddAsync(new TbGrade
+            {
+                Name = vm.Name,
+                StageId = vm.StageId,
+                ImageName = "",
+                CurrentState = 1,
+                CreatedBy = User.Identity?.Name ?? "Admin",
+                CreatedDate = DateTime.Now
+            });
+            _unitOfWork.Complete();
+            TempData["Success"] = $"Grade \"{vm.Name}\" added successfully.";
             return RedirectToAction("Index");
         }
+
         [HttpGet]
         public async Task<IActionResult> Edit(int Id)
         {
-            List<SelectDropList> stagelist = (await _unitOfWork.Stages.FindAllAsyncDroplist(x => x.CurrentState == 1,
-                x => new SelectDropList
-                { Id = x.Id, Name = x.Name })).ToList();
-
+            ViewData["Title"] = "Edit Grade";
             var grade = await _unitOfWork.Grades.GetById(Id);
-            GradeEditVM gradeVM = _mapper.Map<GradeEditVM>(grade);
-            gradeVM.Stages = stagelist;
-            return View(gradeVM);
+            if (grade == null) return NotFound();
+
+            var vm = _mapper.Map<GradeEditVM>(grade);
+            vm.Stages = (await _unitOfWork.Stages.FindAllAsyncDroplist(
+                s => s.CurrentState == 1,
+                s => new SelectDropList { Id = s.Id, Name = s.Name })).ToList();
+            return View("~/Areas/Admin/Views/Grade/Edit.cshtml", vm);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Edit(GradeEditVM gradevm)
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(GradeEditVM vm)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                if (gradevm.Image != null)
-                {
-                    string prevImage = gradevm.ImageName;
-                    //--------------------------delete image from folder
-                    Upload.DeletImage(prevImage);
-                    string folder = "Images/images/";
-                    gradevm.ImageName = Upload.UploadImage(folder, gradevm.Image);
-                }
-                var grade = await _unitOfWork.Grades.GetById(gradevm.Id);
-                _mapper.Map(gradevm, grade);
-
-                await _unitOfWork.Grades.Update(grade);
-
-                _unitOfWork.Complete();
-                ViewBag.Messag = "subsubject Updated Successfully";
-
+                vm.Stages = (await _unitOfWork.Stages.FindAllAsyncDroplist(
+                    s => s.CurrentState == 1,
+                    s => new SelectDropList { Id = s.Id, Name = s.Name })).ToList();
+                return View("~/Areas/Admin/Views/Grade/Edit.cshtml", vm);
             }
+
+            var grade = await _unitOfWork.Grades.GetById(vm.Id);
+            if (grade == null) return NotFound();
+
+            grade.Name = vm.Name;
+            grade.StageId = vm.StageId;
+            grade.UpdatedBy = User.Identity?.Name ?? "Admin";
+            grade.UpdatedDate = DateTime.Now;
+
+            await _unitOfWork.Grades.Update(grade);
+            _unitOfWork.Complete();
+            TempData["Success"] = "Grade updated successfully.";
             return RedirectToAction("Index");
         }
-        [HttpGet]
-        public async Task<ActionResult> Delete(int Id)
 
+        [HttpGet]
+        public async Task<IActionResult> Delete(int Id)
         {
             var grade = await _unitOfWork.Grades.GetById(Id);
-            //--------------------------delete image from folder
-            Upload.DeletImage(grade.ImageName);
+            if (grade == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(grade.ImageName))
+                Upload.DeletImage(grade.ImageName);
 
             grade.CurrentState = 0;
             _unitOfWork.Grades.Update(grade);
-
             _unitOfWork.Complete();
+            TempData["Success"] = "Grade deleted.";
             return RedirectToAction("Index");
         }
     }

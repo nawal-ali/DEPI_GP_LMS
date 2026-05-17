@@ -16,11 +16,11 @@
 <p class="sa-group-label mt-3">Profile</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Profile" asp-action="Index"
-           class="sa-nav-item @Active("Profile", "Index")">
+       class="sa-nav-item @Active("Profile", "Index")">
         <i class="fas fa-user-shield"></i><span>My Profile</span>
     </a>
     <a asp-area="SuperAdmin" asp-controller="Profile" asp-action="Edit"
-           class="sa-nav-item @Active("Profile", "Edit")">
+       class="sa-nav-item @Active("Profile", "Edit")">
         <i class="fas fa-cog"></i><span>Profile Settings</span>
     </a>
 </div>
@@ -29,19 +29,19 @@
 <p class="sa-group-label mt-3">Users Management</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Students"
-           class="sa-nav-item @Active("Users", "Students")">
+       class="sa-nav-item @Active("Users", "Students")">
         <i class="fas fa-user-graduate"></i><span>Students</span>
     </a>
     <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Parents"
-           class="sa-nav-item @Active("Users", "Parents")">
+       class="sa-nav-item @Active("Users", "Parents")">
         <i class="fas fa-users"></i><span>Parents</span>
     </a>
     <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Teachers"
-           class="sa-nav-item @Active("Users", "Teachers")">
+       class="sa-nav-item @Active("Users", "Teachers")">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span>
     </a>
     <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Admins"
-           class="sa-nav-item @Active("Users", "Admins")">
+       class="sa-nav-item @Active("Users", "Admins")">
         <i class="fas fa-user-cog"></i><span>Admins</span>
     </a>
 </div>
@@ -50,12 +50,12 @@
 <p class="sa-group-label mt-3">Communication</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Index"
-           class="sa-nav-item @Active("Announcements")">
+       class="sa-nav-item @Active("Announcements")">
         <i class="fas fa-bullhorn"></i><span>Announcements</span>
     </a>
-    <a asp-area="SuperAdmin" asp-controller="Tickets" asp-action="Index"
-           class="sa-nav-item @Active("Tickets")">
-        <i class="fas fa-headset"></i><span>Support Tickets</span>
+    <a asp-area="SuperAdmin" asp-controller="Support" asp-action="Index"
+       class="sa-nav-item @Active("Support")">
+        <i class="fas fa-headset"></i><span>Escalated Tickets</span>
     </a>
 </div>
 
@@ -63,15 +63,15 @@
 <p class="sa-group-label mt-3">Analytics</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Statistics" asp-action="Index"
-           class="sa-nav-item @Active("Statistics", "Index")">
+       class="sa-nav-item @Active("Statistics", "Index")">
         <i class="fas fa-chart-pie"></i><span>System Statistics</span>
     </a>
     <a asp-area="SuperAdmin" asp-controller="Statistics" asp-action="Users"
-           class="sa-nav-item @Active("Statistics", "Users")">
+       class="sa-nav-item @Active("Statistics", "Users")">
         <i class="fas fa-chart-bar"></i><span>User Analytics</span>
     </a>
     <a asp-area="SuperAdmin" asp-controller="Statistics" asp-action="Courses"
-           class="sa-nav-item @Active("Statistics", "Courses")">
+       class="sa-nav-item @Active("Statistics", "Courses")">
         <i class="fas fa-chart-line"></i><span>Course Analytics</span>
     </a>
 </div>
@@ -80,7 +80,7 @@
 <p class="sa-group-label mt-3">System</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Home" asp-action="Index"
-           class="sa-nav-item @Active("Home", "Index")">
+       class="sa-nav-item @Active("Home", "Index")">
         <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
     </a>
 </div>

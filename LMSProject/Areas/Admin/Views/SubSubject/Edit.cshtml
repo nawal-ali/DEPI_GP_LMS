@@ -1,85 +1,154 @@
 ﻿@using LMSProject.Areas.Admin.ViewModel
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-    ViewData["Title"] = "Sub-Subject-Edit";
-}
-@section Styles
-{
-    <link rel="stylesheet" href="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.css">
-}
 @model SubSubjectEditVM
-<div class="col-12 grid-margin stretch-card">
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Adding Sub-Subject Data</h4>
-            <p class="card-description"> Insert Sub-Subject Data </p>
-            <form asp-area="Admin" class="forms-sample" method="post" enctype="multipart/form-data">
-                <div class="form-group row">
-                    <input asp-for="ImageName" type="hidden" />
-                    <input asp-for="Id" type="hidden" />
-                    <label asp-for="Subjects" class="col-sm-3 col-form-label">Select Subject</label>
-                    <div class="col-sm-9">
-                        <select id="SubjectId" name="SubjectId" class="form-check form-control">
-                            @foreach (var item in Model.Subjects)
+@{
+    {
+        ViewData["Title"] = "Edit Sub-Subject";
+    }
+}
+
+<style>
+    @@keyframes fadeSlideUp {
+
+    {
+        from {
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    }
+
+    to {
+
+    {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+    }
+    }
+
+    .edit-card {
+
+    {
+        animation: fadeSlideUp .4s ease;
+    }
+
+    }
+
+    .preview-icon {
+
+    {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg,var(--accent-purple),var(--accent-pink));
+        transition: all .3s;
+        text-transform: uppercase;
+    }
+
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="sa-card edit-card">
+            <div style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));border-radius:16px 16px 0 0;
+                padding:1.5rem 2rem;display:flex;align-items:center;gap:1rem;">
+                <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.15);
+                    display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-edit" style="color:white;font-size:1.2rem;"></i>
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;">Edit Sub-Subject</h5>
+                    <small style="color:rgba(255,255,255,.7);font-size:.78rem;">@@Model.Name</small>
+                </div>
+            </div>
+
+            <div class="sa-card-body">
+                <form asp-area="Admin" asp-controller="SubSubject" asp-action="Edit" method="post">
+                    @@Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="ImageName" />
+
+                    <div class="text-center mb-4">
+                        <div class="preview-icon mx-auto" id="previewIcon">
+                            @@(string.IsNullOrEmpty(Model.Name) ? "?" : Model.Name[0].ToString().ToUpper())
+                        </div>
+                        <small class="text-muted mt-2 d-block" style="font-size:.75rem;">
+                            Icon preview — first letter of name
+                        </small>
+                    </div>
+
+                    
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Subject <span class="text-danger">*</span>
+                        </label>
+                        <select name="SubjectId" class="sa-form-control" required>
+                            <option value="">— Select Subject —</option>
+                            @@foreach (var s in Model.Subjects)
                             {
-                                <option value="@item.Id" selected="@(Model.SubjectId == item.Id)">@item.Name</option>}
-                                                              
+                            <option value="@@s.Id" selected="@@(Model.SubjectId == s.Id ? " selected" : null)">@@s.Name</option>
                             }
                         </select>
-                        
                     </div>
 
-                </div>
-                <div class="form-group row">
-                    
-                    <label asp-for="Name" class="col-sm-3 col-form-label"></label>
-                    <div class="col-sm-9">
-                        <input type="text" class="form-control" asp-for="Name">
-                        <span asp-validation-for="Name" class="text-danger"></span>
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Sub-Subject Name <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Name" class="sa-form-control"
+                               id="nameInput" placeholder="e.g. Algebra, Geometry, Calculus…" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
                     </div>
 
-                </div>
-                <div class="form-group row">
-                    <label class=" col-sm-3 col-form-label">
-                        Show In Home Page
-                    </label>
-                    <div class="col-sm-9">
-                        <input type="checkbox" asp-for="ShowInHomePage" class="form-check-input"><i class="input-helper"></i>
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 flex-grow-1">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a asp-area="Admin" asp-controller="SubSubject" asp-action="Index"
+                           class="btn rounded-3 px-4 py-2"
+                           style="background:rgba(47,50,125,.07);color:var(--primary);font-weight:600;">
+                            Cancel
+                        </a>
                     </div>
-                </div>
-                <div class="form-group row">
-                    <label class=" col-sm-3 col-form-label">
-                        Upload Image
-                    </label>
-                    <div class="col-sm-9">
-                        <input asp-for="Image" type="file"
-                               class="form-control" placeholder="Uplad Image"
-                               accept=".jpg, .jpeg, .png, ,.gif">
-
-                    </div>
-                </div> <button type="submit" onclick="" class="btn btn-gradient-primary me-2">Submit</button>
-               
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-<!-- Custom js for this page -->
-@section Scripts {
-    @{
-        <script src="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.js"></script>
-        <script src="~/Admin/assets/js/toastDemo.js"></script>
 
-        await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
-        @if (ViewBag.Messag != null)
-        {
-            <script type="text/javascript">
-                showSuccessToast();
-            </script>
-        }
-
-            
-    }
-    <!-- End custom js for this page -->
-}
+@@section Scripts {{
+<script>
+    var gradients = ['linear-gradient(135deg,#E13468,#5B72EE)',
+        'linear-gradient(135deg,#5B72EE,#29B9E7)',
+        'linear-gradient(135deg,#29B9E7,#33EFA0)',
+        'linear-gradient(135deg,#F48C06,#E13468)',
+        'linear-gradient(135deg,#33EFA0,#00CBB8)',
+        'linear-gradient(135deg,#2F327D,#5B72EE)'];
+    var input   = document.getElementById('nameInput');
+    var preview = document.getElementById('previewIcon');
+    function updatePreview() {{
+        var val = input.value.trim();
+        if (val) {{
+            var ch = val[0].toUpperCase();
+            preview.textContent      = ch;
+            preview.style.background = gradients[ch.charCodeAt(0) % gradients.length];
+        }} else {{
+            preview.textContent      = '?';
+            preview.style.background = gradients[0];
+        }}
+    }}
+    input.addEventListener('input', updatePreview);
+    updatePreview();
+</script>
+}}

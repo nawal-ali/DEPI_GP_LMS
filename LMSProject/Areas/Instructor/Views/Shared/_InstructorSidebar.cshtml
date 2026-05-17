@@ -50,7 +50,17 @@
 
 <div class="sa-group-label mt-3">Communication</div>
 
-<a asp-area="Instructor" asp-controller="Announcements" asp-action="Index"
+<a asp-area="Instructor"
+   asp-controller="Tickets"
+   asp-action="Index"
+   class="sa-nav-item @(Is("Tickets") ? "active" : "")">
+    <i class="fas fa-headset"></i>
+    <span>Support Tickets</span>
+</a>
+
+<a asp-area="Instructor"
+   asp-controller="Announcements"
+   asp-action="Index"
    class="sa-nav-item @(Is("Announcements") ? "active" : "")">
     <i class="fas fa-bullhorn"></i>
     <span>Announcements</span>

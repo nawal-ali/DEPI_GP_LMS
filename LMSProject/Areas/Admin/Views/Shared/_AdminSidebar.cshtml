@@ -47,6 +47,8 @@
 </a>
 
 <p class="sa-group-label mt-3">Communication</p>
+<a asp-area="Admin" asp-controller="AdminTickets" asp-action="Index"
+   class="sa-nav-item @(Is("AdminTickets") ? "active" : "")"><i class="fas fa-headset"></i><span>Support Tickets</span></a>
 <a asp-area="Admin" asp-controller="AdminAnnouncements" asp-action="Index"
    class="sa-nav-item @(Is("AdminAnnouncements") ? "active" : "")">
     <i class="fas fa-bullhorn"></i><span>Announcements</span>

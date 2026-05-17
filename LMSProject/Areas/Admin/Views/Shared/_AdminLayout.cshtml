@@ -731,6 +731,29 @@
         padding: 0.7rem 1.25rem;
         }
         }
+
+        .topbar-nav-link {
+        color: var(--primary);
+        font-size: .78rem;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 4px 9px;
+        border-radius: 8px;
+        transition: background .15s;
+        }
+
+        .topbar-nav-link:hover {
+        background: rgba(47,50,125,.08);
+        color: var(--primary);
+        }
+
+        #bell-dot {
+        display: none;
+        }
+
+        #bell-dot.has-notif {
+        display: block;
+        }
     </style>
 
     @await RenderSectionAsync("Styles", required: false)
@@ -793,10 +816,16 @@
             <div class="sa-topbar">
                 <h6 class="sa-topbar-title">@(ViewData["Title"] ?? "Dashboard")</h6>
                 <div class="sa-topbar-right">
-                    <span class="sa-topbar-badge">
+                    <div class="d-none d-xl-flex align-items-center gap-1 me-2">
+                        <a href="/" class="topbar-nav-link"><i class="fas fa-home me-1"></i>Home</a>
+                        <a href="#" class="topbar-nav-link">Blog</a>
+                        <a href="#" class="topbar-nav-link">About</a>
+                    </div>
+                    <a asp-area="Admin" asp-controller="AdminAnnouncements" asp-action="Index"
+                       class="sa-topbar-badge text-decoration-none" id="bell-link" title="Announcements">
                         <i class="fas fa-bell"></i>
-                        <span class="badge-dot"></span>
-                    </span>
+                        <span class="badge-dot" id="bell-dot"></span>
+                    </a>
                     <div class="sa-avatar-sm" style="width:34px;height:34px;font-size:0.78rem;">
                         @(User.Identity?.Name?.Length > 0 ? User.Identity.Name[0].ToString().ToUpper() : "A")
                     </div>
@@ -859,5 +888,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        (function(){
+        fetch('/api/announcements/count').then(r=>r.json()).then(function(d){
+        if(d>0){var dot=document.getElementById('bell-dot');if(dot)dot.classList.add('has-notif');};
+        }).catch(function(){});
+        })();
+    </script>
 </body>
 </html>

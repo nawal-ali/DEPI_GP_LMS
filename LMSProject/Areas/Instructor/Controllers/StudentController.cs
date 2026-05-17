@@ -50,6 +50,8 @@ namespace LMSProject.Areas.Instructor.Controllers
                     .ThenInclude(s => s.Grade)
                 .Include(sc => sc.Student)
                     .ThenInclude(s => s.User)
+                .Include(sc => sc.Student)
+                    .ThenInclude(s => s.Parent)
                 .ToListAsync();
 
             var students = enrollments
@@ -66,7 +68,12 @@ namespace LMSProject.Areas.Instructor.Controllers
                         EnrolledCourses = g
                             .Select(sc => courseNames.GetValueOrDefault(sc.CourseId, ""))
                             .Where(n => !string.IsNullOrEmpty(n))
-                            .ToList()
+                            .ToList(),
+                        ParentId = student.ParentId,
+                        ParentName = student.Parent?.FullName,
+                        ParentPhone = student.Parent?.PhoneNumber,
+                        ParentEmail = student.Parent?.Email,
+                        ParentRelationship = student.Parent?.Relationship
                     };
                 })
                 .OrderBy(s => s.FullName)
@@ -89,6 +96,7 @@ namespace LMSProject.Areas.Instructor.Controllers
                 .Include(s => s.Grade)
                 .Include(s => s.User)
                 .Include(s => s.StudentCourses)
+                .Include(s => s.Parent)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (student == null) return NotFound();
@@ -143,7 +151,14 @@ namespace LMSProject.Areas.Instructor.Controllers
                 FullName = student.FullName,
                 GradeName = student.Grade?.Name,
                 Email = student.User?.Email,
-                CourseProgress = progress
+                CourseProgress = progress,
+                ParentId = student.ParentId,
+                ParentName = student.Parent?.FullName,
+                ParentPhone = student.Parent?.PhoneNumber,
+                ParentEmail = student.Parent?.Email,
+                ParentRelationship = student.Parent?.Relationship,
+                ParentOccupation = student.Parent?.Occupation,
+                ParentImageName = student.Parent?.ImageName
             };
 
             ViewData["Title"] = $"Student: {student.FullName}";

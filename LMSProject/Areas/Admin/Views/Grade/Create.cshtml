@@ -1,85 +1,144 @@
 ﻿@using LMSProject.Areas.Admin.ViewModel
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-    ViewData["Title"] = "Grade-Create";
-}
-@section Styles
-{
-    <link rel="stylesheet" href="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.css">
-}
 @model GradeVM
-<div class="col-12 grid-margin stretch-card">
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Adding Grade Data</h4>
-            <p class="card-description"> Insert Grade Data </p>
-            <form asp-area="Admin" class="forms-sample" method="post" enctype="multipart/form-data">
-                <div class="form-group row">
-                    
-                    <label asp-for="Stages" class="col-sm-3 col-form-label">Select Stage</label>
-                    <div class="col-sm-9">
-                        <select id="StageId" name="StageId" class="form-check form-control">
-                            @foreach (var item in Model.Stages)
+@{
+    ViewData["Title"] = "Add Grade";
+}
+
+<style>
+    @@keyframes fadeSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .create-card {
+        animation: fadeSlideUp .4s ease;
+    }
+
+    .preview-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        transition: all .3s;
+        text-transform: uppercase;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="sa-card create-card">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));
+                border-radius:16px 16px 0 0;padding:1.5rem 2rem;
+                display:flex;align-items:center;gap:1rem;">
+                <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.15);
+                    display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-graduation-cap" style="color:white;font-size:1.2rem;"></i>
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;">Add New Grade</h5>
+                    <small style="color:rgba(255,255,255,.7);font-size:.78rem;">
+                        Grades belong to a stage (e.g. Grade 1 → Primary)
+                    </small>
+                </div>
+            </div>
+
+            <div class="sa-card-body">
+                <form asp-area="Admin" asp-controller="Grade" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Live preview -->
+                    <div class="text-center mb-4">
+                        <div class="preview-icon mx-auto" id="previewIcon">?</div>
+                        <small class="text-muted mt-2 d-block" style="font-size:.75rem;">
+                            Icon preview — first letter of grade name
+                        </small>
+                    </div>
+
+                    <!-- Stage -->
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Stage <span class="text-danger">*</span>
+                        </label>
+                        <select name="StageId" class="sa-form-control" required>
+                            <option value="">— Select Stage —</option>
+                            @foreach (var s in Model.Stages)
                             {
-                             
-                                <option value="@item.Id">@item.Name</option>
-                             
+                                <option value="@s.Id">@s.Name</option>
                             }
                         </select>
-                        
+                        <small class="text-muted" style="font-size:.72rem;">
+                            <i class="fas fa-info-circle me-1"></i>The stage this grade belongs to
+                        </small>
                     </div>
 
-                </div>
-                <div class="form-group row">
-                    
-                    <label asp-for="Name" class="col-sm-3 col-form-label"></label>
-                    <div class="col-sm-9">
-                        <input type="text" class="form-control" asp-for="Name">
-                        <span asp-validation-for="Name" class="text-danger"></span>
+                    <!-- Grade Name -->
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Grade Name <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Name"
+                               class="sa-form-control"
+                               placeholder="e.g. Grade 1, KG2, Year 10…"
+                               id="gradeNameInput"
+                               autocomplete="off" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
                     </div>
 
-                </div>
-                <div class="form-group row">
-                    <label class=" col-sm-3 col-form-label">
-                        Show In Home Page
-                    </label>
-                    <div class="col-sm-9">
-                        <input type="checkbox" asp-for="ShowInHomePage" class="form-check-input"><i class="input-helper"></i>
+                    <!-- Actions -->
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 flex-grow-1">
+                            <i class="fas fa-plus-circle me-2"></i>Create Grade
+                        </button>
+                        <a asp-area="Admin" asp-controller="Grade" asp-action="Index"
+                           class="btn rounded-3 px-4 py-2"
+                           style="background:rgba(47,50,125,.07);color:var(--primary);font-weight:600;">
+                            Cancel
+                        </a>
                     </div>
-                </div>
-                <div class="form-group row">
-                    <label class=" col-sm-3 col-form-label">
-                        Upload Image
-                    </label>
-                    <div class="col-sm-9">
-                        <input asp-for="Image" type="file"
-                               class="form-control" placeholder="Uplad Image"
-                               accept=".jpg, .jpeg, .png, ,.gif">
-
-                    </div>
-                </div> <button type="submit" onclick="" class="btn btn-gradient-primary me-2">Submit</button>
-               
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-<!-- Custom js for this page -->
+
 @section Scripts {
-    @{
-        <script src="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.js"></script>
-        <script src="~/Admin/assets/js/toastDemo.js"></script>
+    <script>
+        var gradients = [
+            'linear-gradient(135deg,#29B9E7,#5B72EE)',
+            'linear-gradient(135deg,#00CBB8,#29B9E7)',
+            'linear-gradient(135deg,#5B72EE,#E13468)',
+            'linear-gradient(135deg,#2F327D,#00CBB8)',
+            'linear-gradient(135deg,#F48C06,#FDCB6E)',
+        ];
+        var input   = document.getElementById('gradeNameInput');
+        var preview = document.getElementById('previewIcon');
 
-        await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
-        @if (ViewBag.Messag != null)
-        {
-            <script type="text/javascript">
-                showSuccessToast();
-            </script>
+        function updatePreview() {
+            var val = input.value.trim();
+            if (val) {
+                var ch = val[0].toUpperCase();
+                preview.textContent   = ch;
+                preview.style.background = gradients[ch.charCodeAt(0) % gradients.length];
+            } else {
+                preview.textContent   = '?';
+                preview.style.background = gradients[0];
+            }
         }
-
-            
-    }
-    <!-- End custom js for this page -->
+        input.addEventListener('input', updatePreview);
+        updatePreview();
+    </script>
 }

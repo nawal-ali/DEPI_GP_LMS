@@ -1,0 +1,192 @@
+﻿@model LMSProject.Areas.Parent.ViewModels.ChildDetailVM
+@{
+    ViewData["Title"] = Model.FullName + " — Academic Profile";
+}
+
+<!-- Header card -->
+<div class="pa-card mb-4">
+    <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));padding:1.5rem 2rem;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;">
+        @if (!string.IsNullOrEmpty(Model.ImageName))
+        {
+            <img src="~/@Model.ImageName" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3);" />
+        }
+        else
+        {
+            <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:800;color:white;flex-shrink:0;">@Model.Initials</div>
+        }
+        <div style="flex:1;">
+            <h5 style="color:white;font-weight:700;margin:0;">@Model.FullName</h5>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+                <span style="background:rgba(255,255,255,.2);color:white;border-radius:20px;padding:2px 12px;font-size:.75rem;">@Model.Grade</span>
+                @if (!string.IsNullOrEmpty(Model.Email))
+                {
+                    <span style="background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);border-radius:20px;padding:2px 12px;font-size:.75rem;"><i class="fas fa-envelope me-1"></i>@Model.Email</span>
+                }
+            </div>
+        </div>
+        <div class="d-flex gap-3 flex-wrap" style="color:white;text-align:center;">
+            <div><div style="font-size:1.6rem;font-weight:800;">@Model.Courses.Count</div><small style="opacity:.8;font-size:.72rem;">Courses</small></div>
+            <div><div style="font-size:1.6rem;font-weight:800;">@Model.ExamResults.Count</div><small style="opacity:.8;font-size:.72rem;">Exams</small></div>
+            <div><div style="font-size:1.6rem;font-weight:800;">@Model.Assignments.Count(a => a.IsSubmitted)</div><small style="opacity:.8;font-size:.72rem;">Submitted</small></div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="pa-stat g1"><p>Avg Exam Score</p><h3>@Model.AverageExamScore.ToString("F0")%</h3><i class="fas fa-chart-line si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="pa-stat g3"><p>Missing Work</p><h3>@Model.MissingAssignments</h3><i class="fas fa-exclamation-circle si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="pa-stat g2"><p>Pending Tasks</p><h3>@Model.PendingAssignments</h3><i class="fas fa-clock si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="pa-stat g6"><p>Courses</p><h3>@Model.Courses.Count</h3><i class="fas fa-book-open si"></i></div></div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" style="border-bottom:2px solid rgba(0,0,0,.06);">
+    <li class="nav-item">
+        <a class="nav-link active fw-semibold" data-bs-toggle="tab" href="#courses" style="color:var(--primary);">
+            <i class="fas fa-book-open me-1"></i>Courses (@Model.Courses.Count)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link fw-semibold" data-bs-toggle="tab" href="#exams" style="color:var(--primary);">
+            <i class="fas fa-file-alt me-1"></i>Exams (@Model.ExamResults.Count)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link fw-semibold" data-bs-toggle="tab" href="#assignments" style="color:var(--primary);">
+            <i class="fas fa-tasks me-1"></i>Assignments (@Model.Assignments.Count)
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Courses tab -->
+    <div class="tab-pane fade show active" id="courses">
+        @if (!Model.Courses.Any())
+        {
+            <div class="pa-card p-5 text-center" style="color:#aaa;"><i class="fas fa-book-open fa-2x mb-2 d-block opacity-25"></i>No courses enrolled yet.</div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var c in Model.Courses)
+                {
+                    <div class="col-md-6">
+                        <div class="pa-card">
+                            <div class="pa-card-body">
+                                <h6 style="font-weight:700;margin-bottom:.2rem;">@c.CourseName</h6>
+                                <small style="color:#9ca3af;"><i class="fas fa-user-tie me-1"></i>@c.InstructorName</small>
+                                <div class="row g-2 text-center my-3">
+                                    @foreach (var (label, val, col) in new[]{
+                                        ("Materials", c.MaterialCount.ToString(), "var(--accent-blue)"),
+                                        ("Exams",     c.ExamCount.ToString(),     "var(--accent-purple)"),
+                                        ("Assignments",c.AssignmentCount.ToString(),"var(--orange)")})
+                                    {
+                                        <div class="col-4">
+                                            <div style="font-weight:800;color:@col;font-size:1.1rem;">@val</div>
+                                            <small style="color:#9ca3af;font-size:.68rem;">@label</small>
+                                        </div>
+                                    }
+                                </div>
+                                @if (c.ExamAvg > 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-1" style="font-size:.76rem;">
+                                        <span>Exam Avg</span><span style="font-weight:700;color:var(--accent-purple);">@c.ExamAvg%</span>
+                                    </div>
+                                    <div class="pa-progress">
+                                        <div class="pa-progress-bar" style="width:@((int)c.ExamAvg)%;background:var(--accent-purple);"></div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Exams tab -->
+    <div class="tab-pane fade" id="exams">
+        @if (!Model.ExamResults.Any())
+        {
+            <div class="pa-card p-5 text-center" style="color:#aaa;"><i class="fas fa-file-alt fa-2x mb-2 d-block opacity-25"></i>No exam attempts yet.</div>
+        }
+        else
+        {
+            <div class="pa-card">
+                <div class="table-responsive">
+                    <table class="pa-table">
+                        <thead><tr><th>Exam</th><th>Course</th><th>Score</th><th>Grade</th><th>Date</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var e in Model.ExamResults)
+                            {
+                                <tr>
+                                    <td style="font-weight:600;">@e.ExamTitle</td>
+                                    <td><span class="pbadge pb-blue">@e.CourseName</span></td>
+                                    <td>
+                                        <span style="font-weight:700;font-size:1rem;color:@e.GradeColor;">@e.Score</span>
+                                        <small style="color:#9ca3af;"> / @e.TotalMarks</small>
+                                        <div style="width:80px;height:5px;background:rgba(0,0,0,.06);border-radius:10px;overflow:hidden;margin-top:4px;">
+                                            <div style="height:100%;width:@((int)e.ScorePercentage)%;background:@e.GradeColor;border-radius:10px;"></div>
+                                        </div>
+                                    </td>
+                                    <td><span class="pbadge" style="background:@(e.GradeColor)18;color:@e.GradeColor;font-size:.82rem;font-weight:800;">@e.Grade</span></td>
+                                    <td style="font-size:.82rem;">@(e.TakenAt?.ToString("MMM dd, yyyy") ?? "—")</td>
+                                    <td>
+                                        @if (e.IsLate)
+                                        {
+                                            <span class="pbadge pb-orange">Late</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="pbadge pb-green">On Time</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Assignments tab -->
+    <div class="tab-pane fade" id="assignments">
+        @if (!Model.Assignments.Any())
+        {
+            <div class="pa-card p-5 text-center" style="color:#aaa;"><i class="fas fa-tasks fa-2x mb-2 d-block opacity-25"></i>No assignments yet.</div>
+        }
+        else
+        {
+            <div class="pa-card">
+                <div class="table-responsive">
+                    <table class="pa-table">
+                        <thead><tr><th>Assignment</th><th>Course</th><th>Deadline</th><th>Marks</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var a in Model.Assignments)
+                            {
+                                <tr>
+                                    <td style="font-weight:600;">@a.Title</td>
+                                    <td><span class="pbadge pb-blue">@a.CourseName</span></td>
+                                    <td style="font-size:.82rem;">
+                                        @a.Deadline.ToString("MMM dd, yyyy")
+                                        @if (a.IsExpired)
+                                        {
+                                            <span class="pbadge pb-red ms-1" style="font-size:.68rem;">Expired</span>
+                                        }
+                                    </td>
+                                    <td style="font-weight:700;color:var(--primary);">@a.TotalMarks</td>
+                                    <td>
+                                        <span class="pbadge" style="background:@(a.StatusColor)18;color:@a.StatusColor;font-size:.74rem;">@a.StatusLabel</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>

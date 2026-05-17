@@ -1,0 +1,70 @@
+﻿@*
+    Reusable delete confirmation modal.
+    Include once per page with: @await Html.PartialAsync("_DeleteModal")
+
+    Trigger from any button:
+      data-delete-url="/Admin/Grade/Delete?Id=5"
+      data-delete-name="Grade 5"
+      data-bs-toggle="modal" data-bs-target="#deleteModal"
+*@
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+        <div class="modal-content" style="border-radius:18px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.18);">
+
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,var(--accent-pink),#c0392b);border-radius:18px 18px 0 0;padding:1.3rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-exclamation-triangle" style="color:white;font-size:1rem;"></i>
+                    </div>
+                    <h5 id="deleteModalLabel" style="margin:0;color:white;font-weight:700;font-size:1rem;">
+                        Confirm Delete
+                    </h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        style="filter:brightness(0) invert(1);"></button>
+            </div>
+
+            <!-- Body -->
+            <div style="padding:1.75rem 1.5rem 1rem;">
+                <p style="font-size:.9rem;color:#555;margin:0;">
+                    Are you sure you want to delete
+                    <strong id="deleteItemName" style="color:var(--primary);">this item</strong>?
+                </p>
+                <p style="font-size:.82rem;color:#9ca3af;margin:.5rem 0 0;">
+                    <i class="fas fa-info-circle me-1"></i>This action cannot be undone.
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding:.75rem 1.5rem 1.5rem;display:flex;gap:.75rem;justify-content:flex-end;">
+                <button type="button" class="btn btn-sm btn-secondary rounded-3 px-4"
+                        data-bs-dismiss="modal"
+                        style="font-family:Poppins,sans-serif;font-weight:600;">
+                    Cancel
+                </button>
+                <a id="deleteConfirmBtn" href="#"
+                   class="btn btn-sm rounded-3 px-4"
+                   style="background:var(--accent-pink);border-color:var(--accent-pink);color:white;font-family:Poppins,sans-serif;font-weight:600;">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Wire up any element with data-delete-url + data-delete-name
+    (function () {
+        var modal = document.getElementById('deleteModal');
+        if (!modal) return;
+        modal.addEventListener('show.bs.modal', function (e) {
+            var btn  = e.relatedTarget;
+            var url  = btn ? btn.getAttribute('data-delete-url')  : null;
+            var name = btn ? btn.getAttribute('data-delete-name') : null;
+            if (url)  document.getElementById('deleteConfirmBtn').href = url;
+            if (name) document.getElementById('deleteItemName').textContent = name;
+        });
+    })();
+</script>

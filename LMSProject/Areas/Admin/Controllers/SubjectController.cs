@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using LMSProject.Areas.Admin.Helpers;
 using LMSProject.Areas.Admin.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MLSCore;
 using MLSCore.Models;
@@ -8,96 +9,93 @@ using MLSCore.Models;
 namespace LMSProject.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class SubjectController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+
         public SubjectController(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-
-
         }
+
         public async Task<IActionResult> Index()
         {
-            IEnumerable<TbSubject> subjects = await _unitOfWork.Subjects.FindAllAsync(a => a.CurrentState == 1);
-            // return Ok(stages);
-            return View(subjects);
+            ViewData["Title"] = "Subjects";
+            var subjects = await _unitOfWork.Subjects.FindAllAsync(s => s.CurrentState == 1);
+            return View("~/Areas/Admin/Views/Subject/Index.cshtml", subjects);
         }
+
         [HttpGet]
-        public async Task<ActionResult> Create()
+        public IActionResult Create()
         {
-
-            return View();
+            ViewData["Title"] = "Add Subject";
+            return View("~/Areas/Admin/Views/Subject/Create.cshtml", new SubjectVM());
         }
-        [HttpPost]
-        public async Task<ActionResult> Create(SubjectVM subjectVM)
-        {
 
-            if (ModelState.IsValid)
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(SubjectVM vm)
+        {
+            if (!ModelState.IsValid)
+                return View("~/Areas/Admin/Views/Subject/Create.cshtml", vm);
+
+            await _unitOfWork.Subjects.AddAsync(new TbSubject
             {
-                if (subjectVM.Image != null)
-                {
-                    string folder = "Images/images/";
-                    subjectVM.ImageName = Upload.UploadImage(folder, subjectVM.Image);
-                }
-
-                TbSubject subject = _mapper.Map<TbSubject>(subjectVM);
-                await _unitOfWork.Subjects.AddAsync(subject);
-
-                _unitOfWork.Complete();
-                ViewBag.Messag = "Stage Added Successfully";
-
-            }
-            return View();
-        }
-        [HttpGet]
-        public async Task<IActionResult> Edit(int Id)
-        {
-            var subject = await _unitOfWork.Subjects.GetById(Id);
-            SubjectEditVM subjectvm = _mapper.Map<SubjectEditVM>(subject);
-            return View(subjectvm);
-        }
-        [HttpPost]
-        public async Task<IActionResult> Edit(SubjectEditVM subjectvm)
-        {
-            if (ModelState.IsValid)
-            {
-                if (subjectvm.Image != null)
-                {
-                    string prevImage = subjectvm.ImageName;
-                    //--------------------------delete image from folder
-                    Upload.DeletImage(prevImage);
-                    string folder = "Images/images/";
-                    subjectvm.ImageName = Upload.UploadImage(folder, subjectvm.Image);
-                }
-                var Stage = await _unitOfWork.Stages.GetById(subjectvm.Id);
-                _mapper.Map(subjectvm, Stage);
-
-                _unitOfWork.Stages.Update(Stage);
-
-                _unitOfWork.Complete();
-                ViewBag.Messag = "Stage Updated Successfully";
-
-            }
-            return View();
-        }
-        [HttpGet]
-        public async Task<ActionResult> Delete(int Id)
-
-        {
-            var subject = await _unitOfWork.Subjects.GetById(Id);
-            //--------------------------delete image from folder
-            Upload.DeletImage(subject.ImageName);
-
-            subject.CurrentState = 0;
-            _unitOfWork.Subjects.Update(subject);
-
+                Name = vm.Name,
+                ImageName = "",
+                CurrentState = 1,
+                CreatedBy = User.Identity?.Name ?? "Admin",
+                CreatedDate = DateTime.Now
+            });
             _unitOfWork.Complete();
+            TempData["Success"] = $"Subject \"{vm.Name}\" added successfully.";
             return RedirectToAction("Index");
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Edit(int Id)
+        {
+            ViewData["Title"] = "Edit Subject";
+            var subject = await _unitOfWork.Subjects.GetById(Id);
+            if (subject == null) return NotFound();
+            return View("~/Areas/Admin/Views/Subject/Edit.cshtml", _mapper.Map<SubjectEditVM>(subject));
+        }
 
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(SubjectEditVM vm)
+        {
+            if (!ModelState.IsValid)
+                return View("~/Areas/Admin/Views/Subject/Edit.cshtml", vm);
+
+            var subject = await _unitOfWork.Subjects.GetById(vm.Id);
+            if (subject == null) return NotFound();
+
+            subject.Name = vm.Name;
+            subject.UpdatedBy = User.Identity?.Name ?? "Admin";
+            subject.UpdatedDate = DateTime.Now;
+
+            _unitOfWork.Subjects.Update(subject);
+            _unitOfWork.Complete();
+            TempData["Success"] = "Subject updated successfully.";
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Delete(int Id)
+        {
+            var subject = await _unitOfWork.Subjects.GetById(Id);
+            if (subject == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(subject.ImageName))
+                Upload.DeletImage(subject.ImageName);
+
+            subject.CurrentState = 0;
+            _unitOfWork.Subjects.Update(subject);
+            _unitOfWork.Complete();
+            TempData["Success"] = "Subject deleted.";
+            return RedirectToAction("Index");
+        }
     }
 }

@@ -198,9 +198,12 @@ namespace LMSProject.Areas.Admin.Controllers
                 Email = s.User?.Email ?? "",
                 Phone = s.User?.PhoneNumber ?? "",
                 GradeId = s.GradeId,
+                ParentId = s.ParentId,
                 ImageName = s.ImageName,
                 Grades = await _db.Grades.Where(g => g.CurrentState == 1)
-                    .Select(g => new SelectDropList { Id = g.Id, Name = g.Name }).ToListAsync()
+                    .Select(g => new SelectDropList { Id = g.Id, Name = g.Name }).ToListAsync(),
+                Parents = await _db.Parents
+                    .Select(p => new SelectDropList { Id = p.Id, Name = p.FullName }).ToListAsync()
             };
             return View(vm);
         }
@@ -226,6 +229,7 @@ namespace LMSProject.Areas.Admin.Controllers
             if (vm.Image != null) { Upload.DeletImage(s.ImageName); s.ImageName = Upload.UploadImage("Images/images/", vm.Image); }
             s.FullName = vm.FullName;
             s.GradeId = vm.GradeId;
+            s.ParentId = vm.ParentId;
             s.UpdatedBy = CurrentUserId;
             s.UpdatedDate = DateTime.Now;
             await _db.SaveChangesAsync();
@@ -273,9 +277,22 @@ namespace LMSProject.Areas.Admin.Controllers
         public async Task<IActionResult> EditParent(int id)
         {
             ViewData["Title"] = "Edit Parent";
-            var p = await _db.Parents.FindAsync(id);
+            var p = await _db.Parents.Include(x => x.Children).FirstOrDefaultAsync(x => x.Id == id);
             if (p == null) return NotFound();
-            return View(new EditParentVM { Id = p.Id, FullName = p.FullName, Email = p.Email ?? "", Phone = p.PhoneNumber });
+            var vm = new EditParentVM
+            {
+                Id = p.Id,
+                FullName = p.FullName,
+                Email = p.Email ?? "",
+                Phone = p.PhoneNumber,
+                ChildIds = p.Children?.Select(c => c.Id).ToList() ?? new(),
+                ExistingChildNames = p.Children?.Select(c => c.FullName).ToList() ?? new(),
+                AllStudents = await _db.Students
+                    .Where(s => s.CurrentState == 1)
+                    .Select(s => new SelectDropList { Id = s.Id, Name = s.FullName })
+                    .ToListAsync()
+            };
+            return View(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -288,6 +305,23 @@ namespace LMSProject.Areas.Admin.Controllers
             p.Email = vm.Email;
             p.PhoneNumber = vm.Phone;
             await _db.SaveChangesAsync();
+
+            // Update student → parent links
+            // 1. Remove this parent from students no longer in ChildIds
+            var prevChildren = await _db.Students.Where(s => s.ParentId == vm.Id).ToListAsync();
+            foreach (var s in prevChildren.Where(s => !vm.ChildIds.Contains(s.Id)))
+                s.ParentId = null;
+
+            // 2. Assign this parent to newly added students
+            if (vm.ChildIds.Any())
+            {
+                var newChildren = await _db.Students
+                    .Where(s => vm.ChildIds.Contains(s.Id)).ToListAsync();
+                foreach (var s in newChildren)
+                    s.ParentId = vm.Id;
+            }
+            await _db.SaveChangesAsync();
+
             TempData["Success"] = "Parent updated successfully.";
             return RedirectToAction("Parents");
         }

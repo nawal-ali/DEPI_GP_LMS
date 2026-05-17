@@ -1,4 +1,69 @@
-﻿@model LMSProject.Areas.SuperAdmin.ViewModels.AdminListVM
+﻿<style>
+    @@keyframes _fsu {
+        from {
+            opacity: 0;
+            transform: translateY(20px)
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    }
+
+    .stat-anim {
+        animation: _fsu .4s ease both
+    }
+
+        .stat-anim:nth-child(1) {
+            animation-delay: .00s
+        }
+
+        .stat-anim:nth-child(2) {
+            animation-delay: .08s
+        }
+
+        .stat-anim:nth-child(3) {
+            animation-delay: .16s
+        }
+
+        .stat-anim:nth-child(4) {
+            animation-delay: .24s
+        }
+
+    .row-anim {
+        animation: _fsu .35s ease both
+    }
+
+        .row-anim:nth-child(1) {
+            animation-delay: .05s
+        }
+
+        .row-anim:nth-child(2) {
+            animation-delay: .10s
+        }
+
+        .row-anim:nth-child(3) {
+            animation-delay: .15s
+        }
+
+        .row-anim:nth-child(4) {
+            animation-delay: .20s
+        }
+
+        .row-anim:nth-child(5) {
+            animation-delay: .25s
+        }
+
+        .row-anim:nth-child(6) {
+            animation-delay: .30s
+        }
+
+        .row-anim:nth-child(7) {
+            animation-delay: .35s
+        }
+</style>
+@model LMSProject.Areas.SuperAdmin.ViewModels.AdminListVM
 @{
     var statuses = new[] { "Active", "Inactive" };
     var accesses = new[] { "Full Access", "Limited Access", "Read Only" };
@@ -10,16 +75,16 @@
 
 <!-- Stats -->
 <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-1"><p>Total Admins</p><h3>@Model.TotalAdmins</h3><i class="fas fa-user-cog stat-icon"></i></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-2"><p>Full Access</p><h3>@Model.FullAccess</h3><i class="fas fa-shield-alt stat-icon"></i></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-3"><p>Departments</p><h3>@(Model.Admins.Select(a => a.Department).Distinct().Count())</h3><i class="fas fa-building stat-icon"></i></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-4"><p>Active Admins</p><h3>@(Model.Admins.Count(a => a.Status == "Active"))</h3><i class="fas fa-check-circle stat-icon"></i></div>
     </div>
 </div>
@@ -75,7 +140,7 @@
             <tbody>
                 @foreach (var a in paged)
                 {
-                    <tr>
+                    <tr class="row-anim">
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--orange));display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700;flex-shrink:0;">@a.Initials</div>
@@ -111,7 +176,7 @@
                                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile"
                                    asp-route-id="@a.Id" asp-route-role="Admin"
                                    class="sa-btn-icon sa-btn-view" title="View Profile"><i class="fas fa-eye"></i></a>
-                                <button class="sa-btn-icon sa-btn-edit" onclick="alert('Wire to Edit action')"><i class="fas fa-edit"></i></button>
+                                <button class="sa-btn-icon sa-btn-edit" asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile"><i class="fas fa-edit"></i></button>
                                 <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" style="display:inline;" onsubmit="return confirm('Delete @a.Name?')">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@a.Id" />
@@ -131,4 +196,17 @@
     </div>
 </div>
 
+@await Html.PartialAsync("_DeleteModal")
 @await Html.PartialAsync("_CreateUserModal", new LMSProject.Areas.SuperAdmin.ViewModels.CreateUserVM { Role = "Admin" })
+@section Scripts {
+
+    <script>
+        (function(){var dm=document.getElementById('deleteModal');if(!dm)return;
+        dm.addEventListener('show.bs.modal',function(e){
+          var btn=e.relatedTarget;if(!btn)return;
+          var el=document.getElementById('deleteItemName');if(el)el.textContent=btn.dataset.deleteName||'this user';
+          var cb=document.getElementById('deleteConfirmBtn');
+          if(cb&&btn.dataset.formId){cb.onclick=function(ev){ev.preventDefault();document.getElementById(btn.dataset.formId).submit();};cb.href='#';}
+        });})();
+    </script>
+}

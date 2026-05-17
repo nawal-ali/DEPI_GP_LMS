@@ -1,6 +1,25 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<MLSCore.IdentityModel.ApplicationUser> SignInManager
+@inject UserManager<MLSCore.IdentityModel.ApplicationUser> UserMgr
+@{
     var isHome = ViewContext.RouteData.Values["controller"]?.ToString() == "Home"
                  && ViewContext.RouteData.Values["action"]?.ToString() == "Index";
+
+    // Determine the correct dashboard URL based on role
+    string dashUrl = "/";
+    string dashLabel = "Dashboard";
+    if (SignInManager.IsSignedIn(User))
+    {
+        var user = await UserMgr.GetUserAsync(User);
+        if (user != null)
+        {
+            if (await UserMgr.IsInRoleAsync(user, "SuperAdmin")) { dashUrl = "/SuperAdmin/Home/Index"; dashLabel = "SuperAdmin Panel"; }
+            else if (await UserMgr.IsInRoleAsync(user, "Admin")) { dashUrl = "/Admin/Home/Index"; dashLabel = "Admin Panel"; }
+            else if (await UserMgr.IsInRoleAsync(user, "Instructor")) { dashUrl = "/Instructor/Home/Index"; dashLabel = "Instructor Panel"; }
+            else if (await UserMgr.IsInRoleAsync(user, "Parent")) { dashUrl = "/Parent/Home/Index"; dashLabel = "Parent Portal"; }
+            else { dashUrl = "/"; dashLabel = "Dashboard"; }
+        }
+    }
 }
 
 <nav class="navbar navbar-expand-md p-4 fixed-top transition @(isHome ? "navbar-transparent" : "navbar-solid shadow-sm")"
@@ -23,23 +42,60 @@
         <div class="offcanvas offcanvas-end" id="offcanvasNavbar">
             <div class="offcanvas-body">
                 <ul class="navbar-nav ms-auto align-items-center gap-3">
-                    <li class="nav-item fs-4">
-                        <a class="nav-link nav-text" asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item fs-4">
-                        <a class="nav-link nav-text" href="#">Blog</a>
-                    </li>
-                    <li class="nav-item fs-4">
-                        <a class="nav-link nav-text" href="#">About</a>
+
+                    <li class="nav-item fs-5">
+                        <a class="nav-link nav-text d-flex align-items-center gap-2"
+                           asp-controller="Home" asp-action="Index">
+                            <i class="fas fa-home"></i>Home
+                        </a>
                     </li>
 
-                    <!-- LOGIN BUTTON -->
-                    <li class="nav-item fs-4 rounded-5 px-3 text-light" style="background-color:#2F327D; color:white !important;">
-                        <a class="nav-link nav-text" style="color:white !important;" asp-controller="Account" asp-action="Login">Login</a>
+                    <li class="nav-item fs-5">
+                        <a class="nav-link nav-text d-flex align-items-center gap-2" href="#">
+                            <i class="fas fa-newspaper"></i>Blog
+                        </a>
                     </li>
+
+                    <li class="nav-item fs-5">
+                        <a class="nav-link nav-text d-flex align-items-center gap-2" href="#">
+                            <i class="fas fa-info-circle"></i>About
+                        </a>
+                    </li>
+
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <!-- Logged in: show Dashboard button -->
+                        <li class="nav-item fs-5 rounded-5 px-3"
+                            style="background-color:#2F327D;">
+                            <a class="nav-link d-flex align-items-center gap-2"
+                               style="color:white !important;"
+                               href="@dashUrl">
+                                <i class="fas fa-tachometer-alt"></i>@dashLabel
+                            </a>
+                        </li>
+                        <li class="nav-item fs-5">
+                            <a class="nav-link nav-text d-flex align-items-center gap-2"
+                               asp-controller="Account" asp-action="Logout"
+                               style="color:var(--accent-pink);">
+                                <i class="fas fa-sign-out-alt"></i>Logout
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <!-- Not logged in: show Login button -->
+                        <li class="nav-item fs-5 rounded-5 px-3"
+                            style="background-color:#2F327D;">
+                            <a class="nav-link d-flex align-items-center gap-2"
+                               style="color:white !important;"
+                               asp-controller="Account" asp-action="Login">
+                                <i class="fas fa-sign-in-alt"></i>Login
+                            </a>
+                        </li>
+                    }
+
                 </ul>
             </div>
         </div>
     </div>
 </nav>
-

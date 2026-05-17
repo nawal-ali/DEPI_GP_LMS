@@ -1,4 +1,69 @@
-﻿@model LMSProject.Areas.SuperAdmin.ViewModels.StudentListVM
+﻿<style>
+    @@keyframes _fsu {
+        from {
+            opacity: 0;
+            transform: translateY(20px)
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    }
+
+    .stat-anim {
+        animation: _fsu .4s ease both
+    }
+
+        .stat-anim:nth-child(1) {
+            animation-delay: .00s
+        }
+
+        .stat-anim:nth-child(2) {
+            animation-delay: .08s
+        }
+
+        .stat-anim:nth-child(3) {
+            animation-delay: .16s
+        }
+
+        .stat-anim:nth-child(4) {
+            animation-delay: .24s
+        }
+
+    .row-anim {
+        animation: _fsu .35s ease both
+    }
+
+        .row-anim:nth-child(1) {
+            animation-delay: .05s
+        }
+
+        .row-anim:nth-child(2) {
+            animation-delay: .10s
+        }
+
+        .row-anim:nth-child(3) {
+            animation-delay: .15s
+        }
+
+        .row-anim:nth-child(4) {
+            animation-delay: .20s
+        }
+
+        .row-anim:nth-child(5) {
+            animation-delay: .25s
+        }
+
+        .row-anim:nth-child(6) {
+            animation-delay: .30s
+        }
+
+        .row-anim:nth-child(7) {
+            animation-delay: .35s
+        }
+</style>
+@model LMSProject.Areas.SuperAdmin.ViewModels.StudentListVM
 @{
     var grades = new[] { "Grade 10", "Grade 11", "Grade 12" };
     var statuses = new[] { "Active", "Inactive", "Pending" };
@@ -10,16 +75,16 @@
 
 <!-- Stats -->
 <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-1"><p>Total Students</p><h3>@Model.TotalStudents</h3><i class="fas fa-user-graduate stat-icon"></i></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-2"><p>Active</p><h3>@Model.ActiveStudents</h3><i class="fas fa-check-circle stat-icon"></i></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-3"><p>Graduating</p><h3>@Model.GraduatingStudents</h3><i class="fas fa-graduation-cap stat-icon"></i></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3 stat-anim">
         <div class="sa-stat-card grad-4"><p>Linked to Parents</p><h3>@Model.StudentsWithParents</h3><i class="fas fa-users stat-icon"></i></div>
     </div>
 </div>
@@ -89,7 +154,7 @@
             <tbody>
                 @foreach (var s in paged)
                 {
-                    <tr>
+                    <tr class="row-anim">
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700;flex-shrink:0;">
@@ -122,8 +187,8 @@
                             @if (s.ParentId != null)
                             {
                                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile"
-                                       asp-route-id="@s.ParentId" asp-route-role="Parent"
-                                       class="sa-btn-icon" style="background:rgba(51,239,160,0.12);color:#16a34a;" title="View Parent">
+                                   asp-route-id="@s.ParentId" asp-route-role="Parent"
+                                   class="sa-btn-icon" style="background:rgba(51,239,160,0.12);color:#16a34a;" title="View Parent">
                                     <i class="fas fa-user-friends"></i>
                                 </a>
                             }
@@ -136,22 +201,14 @@
                         <td>
                             <div class="d-flex gap-1">
                                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile"
-                                       asp-route-id="@s.Id" asp-route-role="Student"
-                                       class="sa-btn-icon sa-btn-view" title="View Profile">
+                                   asp-route-id="@s.Id" asp-route-role="Student"
+                                   class="sa-btn-icon sa-btn-view" title="View Profile">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <button class="sa-btn-icon sa-btn-edit" title="Edit" onclick="alert('Wire to Edit action')">
+                                <button class="sa-btn-icon sa-btn-edit" title="Edit" asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" style="display:inline;"
-                                      onsubmit="return confirm('Delete @s.Name?')">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@s.Id" />
-                                    <input type="hidden" name="role" value="Student" />
-                                    <button type="submit" class="sa-btn-icon sa-btn-delete" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" id="del_@s.Id" style="display:none;">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@s.Id" /><input type="hidden" name="role" value="Student" /></form><button type="button" class="sa-btn-icon sa-btn-delete" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal" data-delete-name="@s.Name" data-form-id="del_@s.Id"><i class="fas fa-trash"></i></button>
                             </div>
                         </td>
                     </tr>
@@ -186,4 +243,17 @@
 }
 
 <!-- Create User Modal -->
+@await Html.PartialAsync("_DeleteModal")
 @await Html.PartialAsync("_CreateUserModal", new LMSProject.Areas.SuperAdmin.ViewModels.CreateUserVM { Role = "Student" })
+@section Scripts {
+
+    <script>
+        (function(){var dm=document.getElementById('deleteModal');if(!dm)return;
+        dm.addEventListener('show.bs.modal',function(e){
+          var btn=e.relatedTarget;if(!btn)return;
+          var el=document.getElementById('deleteItemName');if(el)el.textContent=btn.dataset.deleteName||'this user';
+          var cb=document.getElementById('deleteConfirmBtn');
+          if(cb&&btn.dataset.formId){cb.onclick=function(ev){ev.preventDefault();document.getElementById(btn.dataset.formId).submit();};cb.href='#';}
+        });})();
+    </script>
+}

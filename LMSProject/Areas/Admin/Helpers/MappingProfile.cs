@@ -13,7 +13,7 @@ namespace LMSProject.Areas.Admin.Helpers
             //------------------stage Mapping----------------------
             CreateMap<StageVM, TbStage>();
             CreateMap<StageEditVM, TbStage>();
-            CreateMap<TbStage,StageEditVM>();
+            CreateMap<TbStage, StageEditVM>();
             //-----------------term Mapping------------------------
             CreateMap<TermVM, TbTerm>();
             CreateMap<TermEditVM, TbTerm>();
@@ -21,8 +21,9 @@ namespace LMSProject.Areas.Admin.Helpers
             //-----------------Grade Mapping------------------------
             CreateMap<GradeVM, TbGrade>();
             CreateMap<GradeEditVM, TbGrade>();
+            CreateMap<TbGrade, GradeEditVM>();  // ← was missing — caused AutoMapperMappingException
             //-----------------instructor-----------------------
-            CreateMap<InstructorEditDTO,InstructorEditVM>();
+            CreateMap<InstructorEditDTO, InstructorEditVM>();
             //-----------------sub Mapping------------------------
             CreateMap<SubjectVM, TbSubject>();
             CreateMap<SubjectEditVM, TbSubject>();
@@ -43,4 +44,3 @@ namespace LMSProject.Areas.Admin.Helpers
         }
     }
 }
-

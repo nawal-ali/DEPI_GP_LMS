@@ -41,10 +41,10 @@
                     {
                         var (icon, color, label) = m.MaterialType switch
                         {
-                            MaterialType.PDF   => ("fa-file-pdf",   "#E13468", "PDF"),
-                            MaterialType.DOC   => ("fa-file-word",  "#5B72EE", "DOC"),
+                            MaterialType.PDF => ("fa-file-pdf", "#E13468", "PDF"),
+                            MaterialType.DOC => ("fa-file-word", "#5B72EE", "DOC"),
                             MaterialType.Image => ("fa-file-image", "#33EFA0", "Image"),
-                            _                  => ("fa-link",       "#29B9E7", "Link")
+                            _ => ("fa-link", "#29B9E7", "Link")
                         };
                         <tr>
                             <td>
@@ -81,10 +81,9 @@
                                     <a asp-action="Edit" asp-route-id="@m.Id" class="sa-btn-icon sa-btn-edit" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form asp-action="Delete" asp-route-id="@m.Id" method="post" class="d-inline"
-                                          onsubmit="return confirm('Delete this material?')">
+                                    <form id="delForm1" asp-action="Delete" asp-route-id="@m.Id" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="sa-btn-icon sa-btn-delete" title="Delete">
+                                        <button type="button" class="sa-btn-icon sa-btn-delete" title="Delete" onclick="triggerDeleteModal(this)">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </form>
@@ -97,3 +96,21 @@
         }
     </div>
 </div>
+
+@await Html.PartialAsync("_DeleteModal")
+
+@section Scripts {
+    <script>
+        function triggerDeleteModal(btn) {
+            var form  = btn.closest('form');
+            var row   = btn.closest('tr');
+            var title = row ? (row.querySelector('[style*="font-weight:600"]') || row.querySelector('td:nth-child(1)')) : null;
+            var name  = title ? title.textContent.trim().substring(0, 60) : 'this item';
+            document.getElementById('deleteItemName').textContent = name;
+            var confirmBtn = document.getElementById('deleteConfirmBtn');
+            confirmBtn.onclick = function(e) { e.preventDefault(); form.submit(); };
+            confirmBtn.href = '#';
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

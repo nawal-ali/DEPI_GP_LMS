@@ -1,0 +1,113 @@
+﻿@model LMSProject.Areas.Admin.ViewModels.CreateCourseVM
+@using MLSCore.Models
+@{
+    ViewData["Title"] = "Create Course";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="sa-card">
+            <div class="sa-modal-header" style="border-radius:16px 16px 0 0;">
+                <h5 class="mb-0" style="color:white;"><i class="fas fa-plus-circle me-2"></i>Create New Course</h5>
+            </div>
+            <div class="sa-card-body">
+                <form asp-area="SuperAdmin" asp-controller="Courses" asp-action="Create"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Course Name <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="sa-form-control" placeholder="e.g. Advanced Mathematics Grade 10" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Status</label>
+                            <select asp-for="Status" class="sa-form-control">
+                                <option value="@CourseStatus.OnLine">Online (Live)</option>
+                                <option value="@CourseStatus.Recorded">Recorded</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Term <span class="text-danger">*</span></label>
+                            <select asp-for="TermId" asp-items="@(new SelectList(Model.Terms, "Id", "Name"))"
+                                    class="sa-form-control">
+                                <option value="">— Select Term —</option>
+                            </select>
+                            <span asp-validation-for="TermId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Grade <span class="text-danger">*</span></label>
+                            <select asp-for="GradeId" asp-items="@(new SelectList(Model.Grades, "Id", "Name"))"
+                                    class="sa-form-control">
+                                <option value="">— Select Grade —</option>
+                            </select>
+                            <span asp-validation-for="GradeId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Subject <span class="text-danger">*</span></label>
+                            <select id="subjectSelect" class="sa-form-control" onchange="loadSubSubjects(this.value)">
+                                <option value="">— Select Subject —</option>
+                                @foreach (var s in Model.Subjects)
+                                {
+                                    <option value="@s.Id">@s.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sub-Subject <span class="text-danger">*</span></label>
+                            <select asp-for="SubSubjId" id="subsubjectSelect" class="sa-form-control">
+                                <option value="">— Select Sub-Subject —</option>
+                                @foreach (var ss in Model.SubSubjects)
+                                {
+                                    <option value="@ss.Id">@ss.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="SubSubjId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Assign Instructor <span class="text-danger">*</span></label>
+                            <select asp-for="InstructorId" asp-items="@(new SelectList(Model.Instructors, "Id", "Name"))"
+                                    class="sa-form-control">
+                                <option value="">— Select Instructor —</option>
+                            </select>
+                            <span asp-validation-for="InstructorId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Course Image</label>
+                            <input asp-for="Image" type="file" class="sa-form-control" accept="image/*" />
+                        </div>
+                        <div class="col-12">
+                            <div class="p-3 rounded-3" style="background:rgba(0,203,184,0.06);border-left:3px solid var(--secondary);">
+                                <div class="form-check">
+                                    <input asp-for="ShowInHomePage" class="form-check-input" type="checkbox" />
+                                    <label class="form-check-label" asp-for="ShowInHomePage" style="font-weight:600;font-size:0.87rem;">
+                                        Show this course on the Home Page
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4"><i class="fas fa-save me-2"></i>Create Course</button>
+                        <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index" class="btn-secondary-sa">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadSubSubjects(subjectId) {
+            const sel = document.getElementById('subsubjectSelect');
+            sel.innerHTML = '<option value="">Loading…</option>';
+            if (!subjectId) { sel.innerHTML = '<option value="">— Select Sub-Subject —</option>'; return; }
+            const res  = await fetch(`/SuperAdmin/Courses/GetSubSubjects?subjectId=${subjectId}`);
+            const data = await res.json();
+            sel.innerHTML = '<option value="">— Select Sub-Subject —</option>' +
+                data.map(ss => `<option value="${ss.id}">${ss.name}</option>`).join('');
+        }
+    </script>
+}

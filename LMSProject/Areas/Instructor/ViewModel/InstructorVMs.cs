@@ -297,6 +297,11 @@ namespace LMSProject.Areas.Instructor.ViewModel
         public string? GradeName { get; set; }
         public string? Email { get; set; }
         public List<string> EnrolledCourses { get; set; } = new();
+        public int? ParentId { get; set; }
+        public string? ParentName { get; set; }
+        public string? ParentPhone { get; set; }
+        public string? ParentEmail { get; set; }
+        public string? ParentRelationship { get; set; }
     }
 
     public class StudentProgressVM
@@ -306,6 +311,13 @@ namespace LMSProject.Areas.Instructor.ViewModel
         public string? GradeName { get; set; }
         public string? Email { get; set; }
         public List<CourseProgressItem> CourseProgress { get; set; } = new();
+        public int? ParentId { get; set; }
+        public string? ParentName { get; set; }
+        public string? ParentPhone { get; set; }
+        public string? ParentEmail { get; set; }
+        public string? ParentRelationship { get; set; }
+        public string? ParentOccupation { get; set; }
+        public string? ParentImageName { get; set; }
     }
 
     public class CourseProgressItem

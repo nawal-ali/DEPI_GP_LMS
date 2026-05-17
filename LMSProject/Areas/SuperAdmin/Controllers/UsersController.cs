@@ -3,6 +3,7 @@ using LMSProject.Areas.SuperAdmin.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MLSCore.IdentityModel;
 using MLSCore.Models;
 using MLSEF;
@@ -17,7 +18,9 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly AppDbContext _context;
 
-        public UsersController(SuperAdminDataService data, UserManager<ApplicationUser> userManager, AppDbContext context)
+        public UsersController(SuperAdminDataService data,
+                                UserManager<ApplicationUser> userManager,
+                                AppDbContext context)
         {
             _data = data;
             _userManager = userManager;
@@ -36,7 +39,7 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
 
         // ── Teachers tab ──────────────────────────────────────────────────
         public async Task<IActionResult> Teachers(string search = "", string subject = "",
-                                                  string status = "", string grade = "", int page = 1)
+                                                   string status = "", string grade = "", int page = 1)
         {
             ViewData["Title"] = "Users — Teachers";
             ViewData["Breadcrumb"] = new List<(string, string?)> { ("Users", null), ("Teachers", null) };
@@ -84,8 +87,7 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
         }
 
         // ── Create user (POST) ────────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(CreateUserVM vm)
         {
             if (!ModelState.IsValid)
@@ -102,24 +104,33 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
                 return RedirectToAction(vm.Role + "s");
             }
 
+            // Create Identity user — always set FullName
             var user = new ApplicationUser
             {
                 UserName = vm.Email,
                 Email = vm.Email,
-                PhoneNumber = vm.Phone
+                FullName = vm.FullName,          // ← was missing before
+                PhoneNumber = vm.Phone,
+                EmailConfirmed = true
             };
 
             // "Teacher" in the UI maps to the "Instructor" identity role
             var identityRole = vm.Role == "Teacher" ? "Instructor" : vm.Role;
 
             var result = await _userManager.CreateAsync(user, vm.Password);
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, identityRole);
+                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToAction(vm.Role + "s");
+            }
 
-                if (identityRole == "Instructor")
-                {
-                    var tbInstructor = new TbInstructor
+            await _userManager.AddToRoleAsync(user, identityRole);
+
+            // ── Create the matching profile row ───────────────────────────
+            switch (identityRole)
+            {
+                case "Instructor":
+                    _context.Instructors.Add(new TbInstructor
                     {
                         FullName = vm.FullName,
                         UserId = user.Id,
@@ -128,24 +139,59 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
                         ExperienceYears = 0,
                         CurrentState = 1,
                         ImageName = ""
-                    };
-                    _context.Instructors.Add(tbInstructor);
-                    await _context.SaveChangesAsync();
-                }
+                    });
+                    break;
 
-                TempData["Success"] = $"{vm.Role} account for {vm.FullName} created successfully.";
-            }
-            else
-            {
-                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                case "Student":
+                    // Look up the grade by name if provided
+                    int gradeId = 0;
+                    if (!string.IsNullOrWhiteSpace(vm.Grade))
+                    {
+                        var grade = await _context.Grades
+                            .FirstOrDefaultAsync(g => g.Name == vm.Grade && g.CurrentState == 1);
+                        gradeId = grade?.Id ?? 0;
+                    }
+                    // Fallback to first active grade if not found
+                    if (gradeId == 0)
+                    {
+                        var firstGrade = await _context.Grades
+                            .FirstOrDefaultAsync(g => g.CurrentState == 1);
+                        gradeId = firstGrade?.Id ?? 1;
+                    }
+                    _context.Students.Add(new TbStudent
+                    {
+                        FullName = vm.FullName,
+                        UserId = user.Id,
+                        GradeId = gradeId,
+                        CurrentState = 1,
+                        ImageName = "",
+                        ParentMobile = vm.Phone ?? "",
+                        ParentNationalId = ""
+                    });
+                    break;
+
+                case "Parent":
+                    _context.Parents.Add(new TbParent
+                    {
+                        FullName = vm.FullName,
+                        Email = vm.Email,
+                        PhoneNumber = vm.Phone ?? "",
+                        UserId = user.Id,
+                        CurrentState = 1,
+                        CreatedDate = DateTime.Now,
+                        IsPrimaryGuardian = true
+                    });
+                    break;
             }
 
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"{vm.Role} account for {vm.FullName} created successfully.";
             return RedirectToAction(vm.Role + "s");
         }
 
         // ── Delete user (POST) ────────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public IActionResult DeleteUser(string id, string role)
         {
             _data.DeleteUser(id, role);

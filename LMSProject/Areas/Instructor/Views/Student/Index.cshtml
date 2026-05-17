@@ -34,6 +34,7 @@
                         <th>Student</th>
                         <th>Email</th>
                         <th>Grade</th>
+                        <th>Parent</th>
                         <th>Enrolled In</th>
                         <th>Actions</th>
                     </tr>
@@ -58,7 +59,27 @@
                                 }
                             </td>
                             <td>
-                                <div class="d-flex flex-wrap gap-1">
+                                @if (!string.IsNullOrEmpty(s.ParentName))
+                                {
+                                    <button type="button"
+                                            class="btn-parent-info d-flex align-items-center gap-1"
+                                            style="background:rgba(0,203,184,.1);color:var(--secondary);border:none;border-radius:20px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;"
+                                            data-bs-toggle="modal" data-bs-target="#parentModal"
+                                            data-parent-name="@s.ParentName"
+                                            data-parent-phone="@(s.ParentPhone ?? "—")"
+                                            data-parent-email="@(s.ParentEmail ?? "—")"
+                                            data-parent-rel="@(s.ParentRelationship ?? "Parent")"
+                                            title="View Parent Profile">
+                                        <i class="fas fa-user-friends"></i> @s.ParentName
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span style="color:#9ca3af;font-size:.8rem;">—</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
                                     @foreach (var c in s.EnrolledCourses)
                                     {
                                         <span class="sa-badge" style="background:rgba(47,50,125,0.08);color:var(--primary);">@c</span>
@@ -66,9 +87,12 @@
                                 </div>
                             </td>
                             <td>
-                                <a asp-action="Details" asp-route-id="@s.Id" class="sa-btn-icon sa-btn-view" title="View Progress">
-                                    <i class="fas fa-chart-line"></i>
-                                </a>
+                                <div class="d-flex gap-1">
+                                    <a asp-action="Details" asp-route-id="@s.Id"
+                                       class="sa-btn-icon sa-btn-view" title="View Progress">
+                                        <i class="fas fa-chart-line"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -78,13 +102,81 @@
     </div>
 </div>
 
+<!-- Parent Profile Modal -->
+<div class="modal fade" id="parentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="border-radius:18px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.15);">
+            <div style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));
+                border-radius:18px 18px 0 0;padding:1.3rem 1.5rem;
+                display:flex;align-items:center;justify-content:space-between;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);
+                        display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-user-friends" style="color:white;font-size:1.1rem;"></i>
+                    </div>
+                    <div>
+                        <h6 id="modalParentName" style="color:white;font-weight:700;margin:0;font-size:.95rem;">Parent</h6>
+                        <small id="modalParentRel" style="color:rgba(255,255,255,.75);font-size:.75rem;">Guardian</small>
+                    </div>
+                </div>
+                <button class="btn-close" data-bs-dismiss="modal"
+                        style="filter:brightness(0) invert(1);"></button>
+            </div>
+            <div style="padding:1.5rem;">
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,203,184,.1);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas fa-phone" style="color:var(--secondary);font-size:.82rem;"></i>
+                        </div>
+                        <div>
+                            <small style="color:#9ca3af;font-size:.7rem;display:block;">Phone</small>
+                            <span id="modalParentPhone" style="font-weight:600;font-size:.87rem;">—</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width:32px;height:32px;border-radius:8px;background:rgba(91,114,238,.1);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas fa-envelope" style="color:var(--accent-purple);font-size:.82rem;"></i>
+                        </div>
+                        <div>
+                            <small style="color:#9ca3af;font-size:.7rem;display:block;">Email</small>
+                            <span id="modalParentEmail" style="font-weight:600;font-size:.87rem;">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:.5rem 1.5rem 1.3rem;border-top:1px solid rgba(0,0,0,.05);">
+                <button type="button" class="btn btn-sm w-100 rounded-3"
+                        style="background:rgba(0,203,184,.08);color:var(--secondary);font-weight:600;"
+                        data-bs-dismiss="modal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-<script>
-    document.getElementById('studentSearch')?.addEventListener('input', function () {
-        const q = this.value.toLowerCase();
-        document.querySelectorAll('#studentTable tbody tr').forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    <script>
+        // Search filter
+        document.getElementById('studentSearch')?.addEventListener('input', function () {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('#studentTable tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
         });
-    });
-</script>
+
+        // Wire parent modal
+        var parentModal = document.getElementById('parentModal');
+        if (parentModal) {
+            parentModal.addEventListener('show.bs.modal', function (e) {
+                var btn = e.relatedTarget;
+                document.getElementById('modalParentName').textContent  = btn.dataset.parentName  || '—';
+                document.getElementById('modalParentRel').textContent   = btn.dataset.parentRel   || 'Guardian';
+                document.getElementById('modalParentPhone').textContent = btn.dataset.parentPhone || '—';
+                document.getElementById('modalParentEmail').textContent = btn.dataset.parentEmail || '—';
+            });
+        }
+    </script>
 }

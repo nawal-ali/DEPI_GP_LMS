@@ -1,13 +1,36 @@
 ﻿@using MLSCore.Models
-@model List<TbStage>
+@model IEnumerable<TbStage>
 @{
     ViewData["Title"] = "Stages";
+    var stages = Model.ToList();
 }
+
+<style>
+/* ── Stage card animations ──────────────────────────────── */
+@@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.stage-row {
+    animation: fadeSlideUp .35s ease both;
+}
+@for (int ai = 0; ai < 20; ai++) {
+    <text>.stage-row:nth-child(@(ai+1)) { animation-delay: @(ai * 0.05)s; }</text>
+}
+
+/* ── Letter icon ────────────────────────────────────────── */
+.stage-letter {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.1rem; color: white; flex-shrink: 0;
+    text-transform: uppercase; letter-spacing: 0;
+}
+</style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h5 style="font-weight:700;color:var(--primary);margin:0;">
         <i class="fas fa-layer-group me-2" style="color:var(--secondary);"></i>Stages
-        <span class="sa-badge sa-badge-info ms-2">@Model.Count</span>
+        <span class="sa-badge sa-badge-info ms-2">@stages.Count</span>
     </h5>
     <a asp-area="Admin" asp-controller="Stage" asp-action="Create"
        class="btn btn-primary btn-sm rounded-3 px-3">
@@ -15,83 +38,83 @@
     </a>
 </div>
 
-<div class="sa-card">
-    <div class="table-responsive">
-        <table class="sa-table">
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Stage Name</th>
-                    <th>Created By</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var stage in Model)
-                {
-                    <tr>
-                        <td>
-                            @if (!string.IsNullOrEmpty(stage.ImageName))
-                            {
-                                <img src="~/@stage.ImageName"
-                                     style="width:48px;height:48px;border-radius:10px;object-fit:cover;" />
-                            }
-                            else
-                            {
-                                <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--accent-purple),var(--secondary));display:flex;align-items:center;justify-content:center;">
-                                    <i class="fas fa-layer-group" style="color:rgba(255,255,255,0.7);"></i>
-                                </div>
-                            }
-                        </td>
-                        <td style="font-weight:600;">@stage.Name</td>
-                        <td style="color:#6c757d;font-size:0.85rem;">@(stage.CreatedBy ?? "—")</td>
-                        <td>
-                            @if (stage.CurrentState == 1)
-                            {
-                                <span class="sa-badge sa-badge-active">Active</span>
-                            }
-                            else
-                            {
-
-                                <span class="sa-badge sa-badge-inactive">Inactive</span>
-                            }
-                        </td>
-                        <td>
-                            <div class="d-flex gap-2">
-                                <a asp-area="Admin" asp-controller="Stage" asp-action="Edit"
-                                   asp-route-id="@stage.Id"
-                                   class="sa-btn-icon sa-btn-edit" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button type="button"
-                                        class="sa-btn-icon sa-btn-delete" title="Delete"
-                                        onclick="confirmDelete('/Admin/Stage/Delete?Id=@stage.Id', '@stage.Name')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                }
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="text-center py-5" style="color:#aaa;">
-                            <i class="fas fa-layer-group fa-2x d-block mb-2 opacity-25"></i>No stages yet.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+@if (!stages.Any())
+{
+    <div class="sa-card p-5 text-center" style="color:#aaa;animation:fadeSlideUp .4s ease;">
+        <i class="fas fa-layer-group fa-3x mb-3 d-block opacity-25"></i>
+        <p class="mb-0">No stages yet. Click <strong>Add Stage</strong> to create one.</p>
     </div>
-</div>
-
-@section Scripts {
-    <script>
-        function confirmDelete(url, name) {
-            if (confirm('Are you sure you want to delete "' + name + '"?\nThis action cannot be undone.')) {
-                window.location.href = url;
-            }
-        }
-    </script>
 }
+else
+{
+    <div class="sa-card">
+        <div class="table-responsive">
+            <table class="sa-table">
+                <thead>
+                    <tr>
+                        <th style="width:60px;"></th>
+                        <th>Stage Name</th>
+                        <th>Created By</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        // Gradient palette for letter icons
+                        var gradients = new[]
+                        {
+                            "linear-gradient(135deg,#5B72EE,#29B9E7)",
+                            "linear-gradient(135deg,#00CBB8,#33EFA0)",
+                            "linear-gradient(135deg,#E13468,#F48C06)",
+                            "linear-gradient(135deg,#2F327D,#5B72EE)",
+                            "linear-gradient(135deg,#F48C06,#FDCB6E)",
+                            "linear-gradient(135deg,#29B9E7,#00CBB8)",
+                        };
+                        int gi = 0;
+                    }
+                    @foreach (var stage in stages)
+                    {
+                        var letter   = string.IsNullOrEmpty(stage.Name) ? "?" : stage.Name[0].ToString();
+                        var gradient = gradients[gi++ % gradients.Length];
+                        <tr class="stage-row">
+                            <td>
+                                <div class="stage-letter" style="background:@gradient;">
+                                    @letter
+                                </div>
+                            </td>
+                            <td style="font-weight:600;font-size:.9rem;">@stage.Name</td>
+                            <td style="color:#6c757d;font-size:.84rem;">@(stage.CreatedBy ?? "—")</td>
+                            <td>
+                                @if (stage.CurrentState == 1)
+                                { <span class="sa-badge sa-badge-active">Active</span> }
+                                else
+                                { <span class="sa-badge sa-badge-inactive">Inactive</span> }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a asp-area="Admin" asp-controller="Stage" asp-action="Edit"
+                                       asp-route-id="@stage.Id"
+                                       class="sa-btn-icon sa-btn-edit" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button"
+                                            class="sa-btn-icon sa-btn-delete"
+                                            title="Delete"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal"
+                                            data-delete-url="/Admin/Stage/Delete?Id=@stage.Id"
+                                            data-delete-name="@stage.Name">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@await Html.PartialAsync("_DeleteModal")
