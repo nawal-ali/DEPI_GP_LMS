@@ -1,69 +1,153 @@
 ﻿@model LMSProject.Areas.SuperAdmin.ViewModels.CreateUserVM
+@{
+    var grades = ViewBag.GradeList as IEnumerable<MLSCore.Models.TbGrade> ?? Enumerable.Empty<MLSCore.Models.TbGrade>();
+    var subjects = ViewBag.SubjectList as IEnumerable<MLSCore.Models.TbSubject> ?? Enumerable.Empty<MLSCore.Models.TbSubject>();
+}
+
+<style>
+    .pw-modal-wrap {
+        position: relative;
+    }
+
+        .pw-modal-wrap input {
+            padding-right: 2.5rem !important;
+        }
+
+    .pw-modal-eye {
+        position: absolute;
+        right: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #9ca3af;
+        font-size: .88rem;
+        padding: 3px 5px;
+        z-index: 5;
+        transition: color .15s;
+        line-height: 1;
+    }
+
+        .pw-modal-eye:hover {
+            color: var(--primary, #2F327D);
+        }
+</style>
 
 <div class="modal fade" id="createUserModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content" style="border-radius:18px;border:none;">
             <div class="sa-modal-header d-flex align-items-center justify-content-between">
-                <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Create New @Model.Role Account</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Create New @Model.Role Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        style="filter:brightness(0) invert(1);"></button>
             </div>
+
             <form asp-area="SuperAdmin" asp-controller="Users" asp-action="CreateUser" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="Role" value="@Model.Role" />
+
                 <div class="modal-body p-4">
                     <div class="row g-3">
+                        <!-- Full Name -->
                         <div class="col-md-6">
-                            <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                            <input name="FullName" class="form-control sa-form-control" placeholder="e.g. Ahmed Hassan" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email Address <span class="text-danger">*</span></label>
-                            <input name="Email" type="email" class="form-control sa-form-control" placeholder="e.g. ahmed@school.edu" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Password <span class="text-danger">*</span></label>
-                            <input name="Password" type="password" class="form-control sa-form-control" placeholder="Min. 6 characters" required minlength="6" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Phone Number</label>
-                            <input name="Phone" class="form-control sa-form-control" placeholder="e.g. 01012345678" />
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                Full Name <span class="text-danger">*</span>
+                            </label>
+                            <input name="FullName" class="form-control sa-form-control"
+                                   placeholder="e.g. Ahmed Hassan" required />
                         </div>
 
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                Email Address <span class="text-danger">*</span>
+                            </label>
+                            <input name="Email" type="email" class="form-control sa-form-control"
+                                   placeholder="e.g. ahmed@school.edu" required />
+                        </div>
+
+                        <!-- Password + eye icon -->
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                Password <span class="text-danger">*</span>
+                            </label>
+                            <div class="pw-modal-wrap">
+                                <input name="Password" type="password" id="modalPw"
+                                       class="form-control sa-form-control"
+                                       placeholder="Min. 8 characters" required minlength="8" />
+                                <button type="button" class="pw-modal-eye"
+                                        onclick="toggleModalPw('modalPw', this)" tabindex="-1">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted" style="font-size:.72rem;">
+                                This password will be sent to the user by email.
+                            </small>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Phone</label>
+                            <input name="Phone" class="form-control sa-form-control"
+                                   placeholder="e.g. 01012345678" />
+                        </div>
+
+                        <!-- Grade (Student only) — from DB -->
                         @if (Model.Role == "Student")
                         {
                             <div class="col-md-6">
-                                <label class="form-label">Grade</label>
-                                <select name="Grade" class="form-select sa-form-control">
-                                    <option value="">Select Grade</option>
-                                    <option>Grade 10</option>
-                                    <option>Grade 11</option>
-                                    <option>Grade 12</option>
+                                <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                    Grade <span class="text-danger">*</span>
+                                </label>
+                                <select name="Grade" class="form-select sa-form-control" required>
+                                    <option value="">— Select Grade —</option>
+                                    @foreach (var g in grades)
+                                    {
+                                        <option value="@g.Name">@g.Name</option>
+                                    }
                                 </select>
+                                @if (!grades.Any())
+                                {
+                                    <small class="text-warning" style="font-size:.72rem;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        No grades found. Add grades in Configuration first.
+                                    </small>
+                                }
                             </div>
                         }
+
+                        <!-- Subject (Teacher only) — from DB -->
                         @if (Model.Role == "Teacher")
                         {
                             <div class="col-md-6">
-                                <label class="form-label">Subject</label>
+                                <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                    Subject / Specialization
+                                </label>
                                 <select name="Subject" class="form-select sa-form-control">
-                                    <option value="">Select Subject</option>
-                                    <option>Mathematics</option>
-                                    <option>Physics</option>
-                                    <option>Chemistry</option>
-                                    <option>Biology</option>
-                                    <option>English</option>
-                                    <option>History</option>
-                                    <option>Geography</option>
-                                    <option>Arabic</option>
+                                    <option value="">— Select Subject —</option>
+                                    @foreach (var s in subjects)
+                                    {
+                                        <option value="@s.Name">@s.Name</option>
+                                    }
+                                    @if (!subjects.Any())
+                                    {
+                                        <option value="" disabled>No subjects found</option>
+                                    }
                                 </select>
                             </div>
                         }
+
                         @if (Model.Role == "Admin")
                         {
                             <div class="col-md-6">
-                                <label class="form-label">Department</label>
+                                <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                    Department
+                                </label>
                                 <select name="Department" class="form-select sa-form-control">
-                                    <option value="">Select Department</option>
+                                    <option value="">— Select Department —</option>
                                     <option>IT</option>
                                     <option>HR</option>
                                     <option>Academic</option>
@@ -75,20 +159,43 @@
                     </div>
 
                     <!-- Info box -->
-                    <div class="mt-3 p-3 rounded-3" style="background:rgba(0,203,184,0.06);border-left:3px solid var(--secondary);">
-                        <small style="color:#6c757d;font-size:0.8rem;">
-                            <i class="fas fa-info-circle me-1" style="color:var(--secondary);"></i>
-                            The user will receive login credentials and can change their password on first login. The account will be assigned the <strong>@Model.Role</strong> role automatically.
+                    <div class="mt-3 p-3 rounded-3"
+                         style="background:rgba(0,203,184,.07);border-left:3px solid var(--secondary);">
+                        <small style="color:#555;font-size:.8rem;">
+                            <i class="fas fa-envelope me-1" style="color:var(--secondary);"></i>
+                            A welcome email containing the login credentials will be automatically sent
+                            to <strong>@Model.Role</strong> after the account is created.
                         </small>
                     </div>
                 </div>
+
                 <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                    <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary rounded-3"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
                     <button type="submit" class="btn btn-primary rounded-3 px-4">
-                        <i class="fas fa-user-plus me-2"></i>Create Account
+                        <i class="fas fa-user-plus me-2"></i>Create &amp; Send Email
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    function toggleModalPw(inputId, btn) {
+        var inp  = document.getElementById(inputId);
+        var icon = btn.querySelector('i');
+        if (!inp) return;
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+            btn.style.color = 'var(--primary, #2F327D)';
+        } else {
+            inp.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+            btn.style.color = '#9ca3af';
+        }
+    }
+</script>

@@ -1,4 +1,5 @@
 ﻿using LMSProject.Areas.SuperAdmin.Services;
+using LMSProject.AI.Services;
 using LMSProject.Areas.SuperAdmin.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -17,23 +18,30 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
         private readonly SuperAdminDataService _data;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly AppDbContext _context;
+        private readonly EmailService _email;
 
         public UsersController(SuperAdminDataService data,
                                 UserManager<ApplicationUser> userManager,
-                                AppDbContext context)
+                                AppDbContext context,
+                                EmailService email)
         {
             _data = data;
             _userManager = userManager;
             _context = context;
+            _email = email;
         }
 
         // ── Students tab ──────────────────────────────────────────────────
-        public IActionResult Students(string search = "", string grade = "",
+        public async Task<IActionResult> Students(string search = "", string grade = "",
                                       string status = "", string section = "", int page = 1)
         {
             ViewData["Title"] = "Users — Students";
             ViewData["Breadcrumb"] = new List<(string, string?)> { ("Users", null), ("Students", null) };
             var vm = _data.GetStudents(search, grade, status, section, page);
+            ViewBag.GradeList = await _context.Grades
+                .Where(g => g.CurrentState == 1)
+                .OrderBy(g => g.Name)
+                .ToListAsync();
             return View(vm);
         }
 
@@ -43,6 +51,10 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
         {
             ViewData["Title"] = "Users — Teachers";
             ViewData["Breadcrumb"] = new List<(string, string?)> { ("Users", null), ("Teachers", null) };
+            ViewBag.SubjectList = await _context.Subjects
+                .Where(s => s.CurrentState == 1)
+                .OrderBy(s => s.Name)
+                .ToListAsync();
             var vm = await _data.GetTeachersAsync(search, subject, status, grade, page);
             return View(vm);
         }
@@ -164,9 +176,7 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
                         UserId = user.Id,
                         GradeId = gradeId,
                         CurrentState = 1,
-                        ImageName = "",
-                        ParentMobile = vm.Phone ?? "",
-                        ParentNationalId = ""
+                        ImageName = ""
                     });
                     break;
 
@@ -186,7 +196,21 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"{vm.Role} account for {vm.FullName} created successfully.";
+            // ── Send welcome email ────────────────────────────────────────
+            try
+            {
+                await _email.SendWelcomeEmailAsync(
+                    toEmail: vm.Email,
+                    fullName: vm.FullName,
+                    role: vm.Role,
+                    tempPassword: vm.Password);
+            }
+            catch (Exception ex)
+            {
+                TempData["EmailError"] = $"Account created but email failed: {ex.Message}";
+            }
+
+            TempData["Success"] = $"{vm.Role} account for {vm.FullName} created. Welcome email sent to {vm.Email}.";
             return RedirectToAction(vm.Role + "s");
         }
 

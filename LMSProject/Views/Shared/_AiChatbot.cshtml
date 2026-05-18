@@ -1,0 +1,885 @@
+﻿
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<MLSCore.IdentityModel.ApplicationUser> SM
+
+@if (SM.IsSignedIn(User) && User.IsInRole("Student"))
+{
+    <style>
+        :root {
+            --ai-primary: #5B72EE;
+            --ai-secondary: #00CBB8;
+            --ai-dark: #2F327D;
+        }
+
+        @@keyframes aiPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(91,114,238,.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(91,114,238,0);
+            }
+        }
+
+        @@keyframes aiSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ── Trigger button ───────────────────────────────────── */
+        .ai-trigger {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--ai-primary), var(--ai-dark));
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            box-shadow: 0 6px 24px rgba(47,50,125,.35);
+            transition: transform .2s;
+            animation: aiPulse 2.5s ease-in-out infinite;
+        }
+
+            .ai-trigger:hover {
+                transform: scale(1.1);
+            }
+
+            .ai-trigger .ai-badge {
+                position: absolute;
+                top: -3px;
+                right: -3px;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: var(--ai-secondary);
+                color: white;
+                font-size: .6rem;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid white;
+            }
+
+        /* ── Panel — FIXED: explicit flex column with overflow hidden ── */
+        .ai-panel {
+            position: fixed;
+            bottom: 96px;
+            right: 24px;
+            z-index: 9998;
+            width: 380px;
+            /* Fixed height so inner flex children can fill and scroll */
+            height: 580px;
+            max-height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 16px 60px rgba(47,50,125,.2);
+            display: none;
+            flex-direction: column; /* column stack */
+            overflow: hidden; /* clip children */
+            animation: aiSlideUp .3s ease;
+        }
+
+            .ai-panel.open {
+                display: flex;
+            }
+
+        /* ── Header — fixed size ─────────────────────────────── */
+        .ai-header {
+            background: linear-gradient(135deg, var(--ai-dark), var(--ai-primary));
+            padding: 1rem 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0; /* never shrink */
+        }
+
+        .ai-header-left {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .ai-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .ai-header-title {
+            color: white;
+            font-weight: 700;
+            font-size: .88rem;
+            line-height: 1.2;
+        }
+
+        .ai-header-sub {
+            color: rgba(255,255,255,.65);
+            font-size: .68rem;
+        }
+
+        .ai-close-btn {
+            background: rgba(255,255,255,.15);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            transition: background .15s;
+        }
+
+            .ai-close-btn:hover {
+                background: rgba(255,255,255,.25);
+            }
+
+        /* ── Tabs — fixed size ───────────────────────────────── */
+        .ai-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0,0,0,.07);
+            background: #f8f9ff;
+            flex-shrink: 0;
+        }
+
+        .ai-tab {
+            flex: 1;
+            padding: .55rem .5rem;
+            font-size: .72rem;
+            font-weight: 600;
+            color: #9ca3af;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all .15s;
+            font-family: Poppins, sans-serif;
+        }
+
+            .ai-tab.active {
+                color: var(--ai-primary);
+                border-bottom-color: var(--ai-primary);
+            }
+
+        /* ── Tab containers — each fills remaining panel space ── */
+        /* CRITICAL FIX: tab wrappers must be flex columns with flex:1 and overflow:hidden */
+        .ai-tab-pane {
+            display: none;
+            flex: 1; /* fill all remaining height */
+            flex-direction: column;
+            overflow: hidden; /* let children scroll, not the pane itself */
+            min-height: 0; /* allow flex shrink below content size */
+        }
+
+            .ai-tab-pane.active {
+                display: flex;
+            }
+
+        /* ── Chat suggestions — fixed ────────────────────────── */
+        .ai-suggestions {
+            padding: .6rem .9rem .3rem;
+            flex-shrink: 0;
+        }
+
+        .ai-sugg-label {
+            font-size: .68rem;
+            color: #9ca3af;
+            font-weight: 600;
+            margin-bottom: .35rem;
+        }
+
+        .ai-sugg-chips {
+            display: flex;
+            gap: .4rem;
+            flex-wrap: wrap;
+        }
+
+        .ai-chip {
+            background: rgba(91,114,238,.08);
+            color: var(--ai-primary);
+            border: 1px solid rgba(91,114,238,.15);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: .7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+            font-family: Poppins,sans-serif;
+            white-space: nowrap;
+        }
+
+            .ai-chip:hover {
+                background: rgba(91,114,238,.15);
+            }
+
+        /* ── Messages — SCROLLABLE ───────────────────────────── */
+        /* flex:1 + overflow-y:auto = takes remaining space and scrolls */
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto; /* ← this is what makes it scroll */
+            overflow-x: hidden;
+            padding: .85rem;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+            min-height: 0; /* required for flex scroll to work */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(91,114,238,.2) transparent;
+        }
+
+            .ai-messages::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .ai-messages::-webkit-scrollbar-thumb {
+                background: rgba(91,114,238,.2);
+                border-radius: 4px;
+            }
+
+        .ai-msg {
+            max-width: 88%;
+            border-radius: 14px;
+            padding: .6rem .85rem;
+            font-size: .82rem;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .ai-msg-user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--ai-dark), var(--ai-primary));
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-msg-bot {
+            align-self: flex-start;
+            background: #f1f3fb;
+            color: #374151;
+            border-bottom-left-radius: 4px;
+        }
+
+            .ai-msg-bot.thinking {
+                color: #9ca3af;
+                font-style: italic;
+            }
+
+        .ai-msg pre {
+            white-space: pre-wrap;
+            font-family: Poppins, sans-serif;
+            margin: 0;
+            font-size: .82rem;
+        }
+
+        /* ── Input row — fixed at bottom ─────────────────────── */
+        .ai-input-area {
+            padding: .75rem;
+            border-top: 1px solid rgba(0,0,0,.06);
+            display: flex;
+            gap: .5rem;
+            align-items: flex-end;
+            flex-shrink: 0; /* never shrink */
+        }
+
+        .ai-input {
+            flex: 1;
+            border: 1.5px solid rgba(47,50,125,.14);
+            border-radius: 12px;
+            padding: .55rem .8rem;
+            font-size: .82rem;
+            font-family: Poppins, sans-serif;
+            outline: none;
+            resize: none;
+            max-height: 80px;
+            overflow-y: auto;
+            transition: border-color .15s;
+        }
+
+            .ai-input:focus {
+                border-color: var(--ai-secondary);
+            }
+
+        .ai-send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--ai-primary), var(--ai-secondary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+            transition: opacity .15s;
+            align-self: flex-end;
+        }
+
+            .ai-send-btn:hover {
+                opacity: .85;
+            }
+
+            .ai-send-btn:disabled {
+                opacity: .4;
+                cursor: not-allowed;
+            }
+
+        /* ── Files tab ───────────────────────────────────────── */
+        .ai-files-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: .9rem;
+            min-height: 0;
+        }
+
+        .ai-file-item {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: .65rem .8rem;
+            border-radius: 11px;
+            background: #f8f9ff;
+            margin-bottom: .5rem;
+            border: 1.5px solid rgba(0,0,0,.06);
+        }
+
+        .ai-file-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(91,114,238,.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ai-primary);
+            font-size: .82rem;
+            flex-shrink: 0;
+        }
+
+        .ai-file-name {
+            font-size: .79rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ai-file-meta {
+            font-size: .66rem;
+            color: #9ca3af;
+        }
+
+        .ai-file-del {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #E13468;
+            cursor: pointer;
+            font-size: .78rem;
+            padding: 2px 5px;
+            flex-shrink: 0;
+        }
+
+        .ai-upload-btn {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            width: 100%;
+            background: rgba(91,114,238,.07);
+            border: 1.5px dashed rgba(91,114,238,.2);
+            border-radius: 12px;
+            padding: .75rem;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--ai-primary);
+            cursor: pointer;
+            font-family: Poppins,sans-serif;
+            justify-content: center;
+            margin-bottom: .75rem;
+            transition: background .15s;
+        }
+
+            .ai-upload-btn:hover {
+                background: rgba(91,114,238,.12);
+            }
+
+        /* ── Upload progress bar ─────────────────────────────── */
+        .ai-progress-wrap {
+            background: rgba(0,0,0,.06);
+            border-radius: 20px;
+            overflow: hidden;
+            height: 6px;
+            margin: .4rem 0;
+        }
+
+        .ai-progress-bar {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(90deg, var(--ai-primary), var(--ai-secondary));
+            transition: width .3s ease;
+            width: 0%;
+        }
+
+        /* ── Tools tab ───────────────────────────────────────── */
+        .ai-tools-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: .9rem;
+            min-height: 0;
+        }
+
+        .ai-action-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,203,184,.08);
+            color: var(--ai-secondary);
+            border: 1px solid rgba(0,203,184,.2);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: .72rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: Poppins,sans-serif;
+            margin: 3px;
+            transition: background .15s;
+        }
+
+            .ai-action-chip:hover {
+                background: rgba(0,203,184,.15);
+            }
+
+        .ai-tool-result {
+            flex: 1;
+            overflow-y: auto;
+            padding: .9rem 0;
+            min-height: 0;
+        }
+
+        /* ── Spinner ─────────────────────────────────────────── */
+        .ai-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(91,114,238,.2);
+            border-top-color: var(--ai-primary);
+            animation: spin .6s linear infinite;
+        }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .ai-panel {
+                width: calc(100vw - 16px);
+                right: 8px;
+                bottom: 80px;
+                height: 70vh;
+            }
+
+            .ai-trigger {
+                bottom: 16px;
+                right: 16px;
+            }
+        }
+    </style>
+
+    <!-- Floating trigger -->
+    <button class="ai-trigger" id="aiTrigger" title="AI Study Assistant" onclick="toggleAiPanel()">
+        <i class="fas fa-robot"></i>
+        <span class="ai-badge" id="aiBadge" style="display:none;"></span>
+    </button>
+
+    <!-- ── Panel ─────────────────────────────────────────── -->
+    <div class="ai-panel" id="aiPanel">
+
+        <!-- Header -->
+        <div class="ai-header">
+            <div class="ai-header-left">
+                <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+                <div>
+                    <div class="ai-header-title">TOTC AI Assistant</div>
+                    <div class="ai-header-sub">Ask me anything about your studies</div>
+                </div>
+            </div>
+            <button class="ai-close-btn" onclick="toggleAiPanel()">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="ai-tabs">
+            <button class="ai-tab active" onclick="switchTab('chat', this)">
+                <i class="fas fa-comments me-1"></i>Chat
+            </button>
+            <button class="ai-tab" onclick="switchTab('files', this)">
+                <i class="fas fa-file me-1"></i>Files
+            </button>
+            <button class="ai-tab" onclick="switchTab('tools', this)">
+                <i class="fas fa-magic me-1"></i>Tools
+            </button>
+        </div>
+
+        <!-- ── CHAT TAB ──────────────────────────────────── -->
+        <div id="tab-chat" class="ai-tab-pane active">
+            <!-- Suggested prompts (fixed) -->
+            <div class="ai-suggestions">
+                <div class="ai-sugg-label">Quick prompts</div>
+                <div class="ai-sugg-chips">
+                    <span class="ai-chip" onclick="sendSuggestion('Summarize my uploaded document')">📄 Summarize</span>
+                    <span class="ai-chip" onclick="sendSuggestion('Generate 5 MCQs from my document')">❓ MCQs</span>
+                    <span class="ai-chip" onclick="sendSuggestion('Extract key points')">🔑 Key Points</span>
+                    <span class="ai-chip" onclick="sendSuggestion('Create a study plan for my upcoming exams')">📅 Study Plan</span>
+                </div>
+            </div>
+
+            <!-- Scrollable messages -->
+            <div class="ai-messages" id="aiMessages">
+                <div class="ai-msg ai-msg-bot">
+                    👋 Hi! I'm your AI study assistant. Upload a document and ask me questions,
+                    or use the quick prompts above to get started.
+                </div>
+            </div>
+
+            <!-- Fixed input row -->
+            <div class="ai-input-area">
+                <textarea class="ai-input" id="aiInput" rows="1"
+                          placeholder="Ask anything…"
+                          onkeydown="handleKey(event)"
+                          oninput="autoResize(this)"></textarea>
+                <button class="ai-send-btn" id="aiSendBtn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── FILES TAB ─────────────────────────────────── -->
+        <div id="tab-files" class="ai-tab-pane">
+            <div class="ai-files-panel">
+                <label class="ai-upload-btn" for="aiFileInput">
+                    <i class="fas fa-upload"></i> Upload Document (PDF, DOCX, Image)
+                </label>
+                <input type="file" id="aiFileInput" style="display:none;"
+                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                       onchange="uploadFile(this)" />
+
+                <!-- Progress indicator -->
+                <div id="uploadProgress" style="display:none;margin-bottom:.75rem;">
+                    <div style="font-size:.75rem;color:var(--ai-primary);font-weight:600;margin-bottom:4px;"
+                         id="uploadProgressLabel">
+                        Uploading…
+                    </div>
+                    <div class="ai-progress-wrap">
+                        <div class="ai-progress-bar" id="uploadProgressBar"></div>
+                    </div>
+                </div>
+
+                <div id="uploadStatus"
+                     style="font-size:.76rem;text-align:center;min-height:18px;margin-bottom:.5rem;"></div>
+                <div id="filesList"></div>
+            </div>
+        </div>
+
+        <!-- ── TOOLS TAB ─────────────────────────────────── -->
+        <div id="tab-tools" class="ai-tab-pane">
+            <div class="ai-tools-panel">
+                <p style="font-size:.78rem;color:#9ca3af;margin-bottom:.75rem;font-weight:600;">
+                    Select a file, then pick a tool:
+                </p>
+                <select id="toolFileSelect" class="ai-input"
+                        style="max-height:none;margin-bottom:.85rem;">
+                    <option value="">— Select a file —</option>
+                </select>
+                <div>
+                    <button class="ai-action-chip" onclick="runTool('summarize')">
+                        <i class="fas fa-compress-alt"></i> Summarize
+                    </button>
+                    <button class="ai-action-chip" onclick="runTool('mcq')">
+                        <i class="fas fa-question-circle"></i> Generate MCQs
+                    </button>
+                    <button class="ai-action-chip" onclick="runTool('keypoints')">
+                        <i class="fas fa-list-ul"></i> Key Points
+                    </button>
+                    <button class="ai-action-chip"
+                            style="background:rgba(91,114,238,.08);color:var(--ai-primary);border-color:rgba(91,114,238,.2);"
+                            onclick="runTool('studyplan')">
+                        <i class="fas fa-calendar-alt"></i> Study Planner
+                    </button>
+                </div>
+            </div>
+            <div class="ai-messages ai-tool-result" id="toolResult"></div>
+        </div>
+    </div>
+
+    <script>
+        var AI_SESSION_ID = null;
+        var AI_FILES      = [];
+
+        // ── Toggle panel ──────────────────────────────────────────────────────────
+        function toggleAiPanel() {
+            var panel = document.getElementById('aiPanel');
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open')) {
+                loadFiles();
+                setTimeout(function() { document.getElementById('aiInput').focus(); }, 100);
+            }
+        }
+
+        // ── Tab switching ─────────────────────────────────────────────────────────
+        function switchTab(name, btn) {
+            document.querySelectorAll('.ai-tab-pane').forEach(function(p) {
+                p.classList.remove('active');
+            });
+            document.querySelectorAll('.ai-tab').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            var pane = document.getElementById('tab-' + name);
+            if (pane) pane.classList.add('active');
+            btn.classList.add('active');
+            if (name === 'files') loadFiles();
+        }
+
+        // ── Send message ──────────────────────────────────────────────────────────
+        function sendMessage() {
+            var input   = document.getElementById('aiInput');
+            var sendBtn = document.getElementById('aiSendBtn');
+            var text    = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            input.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            appendMsg(text, 'user');
+            var thinking = appendMsg('Thinking…', 'bot thinking');
+
+            fetch('/Student/Ai/Chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, fileId: null, sessionId: AI_SESSION_ID })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                thinking.remove();
+                AI_SESSION_ID = d.sessionId;
+                appendMsg(d.answer || d.error || 'No response.', 'bot');
+                sendBtn.disabled = false;
+            })
+            .catch(function() {
+                thinking.remove();
+                appendMsg('Connection error. Please try again.', 'bot');
+                sendBtn.disabled = false;
+            });
+        }
+
+        function sendSuggestion(text) {
+            switchTab('chat', document.querySelector('.ai-tab'));
+            document.getElementById('aiInput').value = text;
+            sendMessage();
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        }
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+        }
+
+        function appendMsg(text, type) {
+            var msgs = document.getElementById('aiMessages');
+            var div  = document.createElement('div');
+            var isUser = type.includes('user');
+            div.className = 'ai-msg ' + (isUser ? 'ai-msg-user' : 'ai-msg-bot') +
+                            (type.includes('thinking') ? ' thinking' : '');
+            if (type.includes('thinking')) {
+                div.innerHTML = '<span class="ai-spinner"></span> ' + esc(text);
+            } else {
+                div.innerHTML = '<pre>' + esc(text) + '</pre>';
+            }
+            msgs.appendChild(div);
+            // Scroll to bottom
+            msgs.scrollTop = msgs.scrollHeight;
+            return div;
+        }
+
+        function esc(t) {
+            return String(t)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ── File upload — fixed: no embedding during upload ───────────────────────
+        // Root cause of slow uploads: the server was calling the AI embedding API
+        // for every text chunk synchronously. Now chunks are stored without embeddings
+        // and retrieval uses keyword matching instead.
+        function uploadFile(input) {
+            if (!input.files.length) return;
+
+            var fd       = new FormData();
+            var stat     = document.getElementById('uploadStatus');
+            var prog     = document.getElementById('uploadProgress');
+            var progBar  = document.getElementById('uploadProgressBar');
+            var progLbl  = document.getElementById('uploadProgressLabel');
+
+            fd.append('file', input.files[0]);
+            stat.textContent = '';
+            prog.style.display = 'block';
+            progLbl.textContent = 'Uploading ' + input.files[0].name + '…';
+
+            // Animate progress bar (indeterminate)
+            var pct = 0;
+            var ticker = setInterval(function() {
+                pct = pct < 85 ? pct + 3 : pct;
+                progBar.style.width = pct + '%';
+            }, 120);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/Student/Ai/Upload');
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    var real = Math.round(e.loaded / e.total * 70);
+                    progBar.style.width = real + '%';
+                    progLbl.textContent = 'Uploading… ' + real + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                clearInterval(ticker);
+                progBar.style.width = '100%';
+                progLbl.textContent = 'Processing…';
+
+                try {
+                    var d = JSON.parse(xhr.responseText);
+                    setTimeout(function() {
+                        prog.style.display = 'none';
+                        progBar.style.width = '0%';
+                        if (d.error) {
+                            stat.innerHTML = '<span style="color:#E13468;">❌ ' + esc(d.error) + '</span>';
+                        } else {
+                            stat.innerHTML = '<span style="color:#16a34a;">✅ ' + esc(d.message) + '</span>';
+                            loadFiles();
+                        }
+                    }, 600);
+                } catch (e) {
+                    prog.style.display = 'none';
+                    stat.innerHTML = '<span style="color:#E13468;">❌ Server error</span>';
+                }
+                input.value = '';
+            };
+
+            xhr.onerror = function() {
+                clearInterval(ticker);
+                prog.style.display = 'none';
+                stat.innerHTML = '<span style="color:#E13468;">❌ Upload failed — check connection</span>';
+                input.value = '';
+            };
+
+            xhr.send(fd);
+        }
+
+        function loadFiles() {
+            fetch('/Student/Ai/Files')
+            .then(function(r) { return r.json(); })
+            .then(function(files) {
+                AI_FILES = files;
+                renderFilesList(files);
+                renderFileSelect(files);
+            }).catch(function() {});
+        }
+
+        function renderFilesList(files) {
+            var el = document.getElementById('filesList');
+            if (!files || !files.length) {
+                el.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:.78rem;padding:1.5rem 0;">' +
+                               '<i class="fas fa-folder-open d-block mb-2" style="font-size:1.5rem;opacity:.3;"></i>' +
+                               'No files uploaded yet.</div>';
+                return;
+            }
+            el.innerHTML = files.map(function(f) {
+                var kb = Math.round(f.fileSizeBytes / 1024);
+                return '<div class="ai-file-item">' +
+                    '<div class="ai-file-icon"><i class="fas fa-file-alt"></i></div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<div class="ai-file-name">' + esc(f.originalName) + '</div>' +
+                    '<div class="ai-file-meta">' + kb + ' KB · ' + f.chunkCount + ' chunks</div></div>' +
+                    '<button class="ai-file-del" onclick="deleteFile(\'' + f.id + '\')" title="Delete">' +
+                    '<i class="fas fa-trash"></i></button></div>';
+            }).join('');
+        }
+
+        function renderFileSelect(files) {
+            var sel = document.getElementById('toolFileSelect');
+            sel.innerHTML = '<option value="">— Select a file —</option>' +
+                (files || []).map(function(f) {
+                    return '<option value="' + f.id + '">' + esc(f.originalName) + '</option>';
+                }).join('');
+        }
+
+        function deleteFile(id) {
+            if (!confirm('Delete this file and all its data?')) return;
+            fetch('/Student/Ai/DeleteFile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileId: id })
+            }).then(function() { loadFiles(); });
+        }
+
+        // ── Tools ─────────────────────────────────────────────────────────────────
+        function runTool(action) {
+            var fileId = document.getElementById('toolFileSelect').value;
+            if (!fileId && action !== 'studyplan') {
+                alert('Please select a file first.');
+                return;
+            }
+            var result = document.getElementById('toolResult');
+            result.innerHTML = '<div class="ai-msg ai-msg-bot thinking">' +
+                               '<span class="ai-spinner"></span> Generating…</div>';
+            result.scrollTop = 0;
+
+            fetch('/Student/Ai/Action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action, fileId: fileId || '' })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                result.innerHTML = '<div class="ai-msg ai-msg-bot"><pre>' +
+                                   esc(d.result || 'Done.') + '</pre></div>';
+            })
+            .catch(function() {
+                result.innerHTML = '<div class="ai-msg ai-msg-bot">Error. Please check API configuration.</div>';
+            });
+        }
+    </script>
+}

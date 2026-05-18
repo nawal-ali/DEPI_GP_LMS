@@ -1,0 +1,189 @@
+﻿@{
+    ViewData["Title"] = "AI Exam Generator";
+    var files = ViewBag.Files as List<LMSProject.AI.Models.UploadedFile> ?? new();
+}
+
+<style>
+    @@keyframes fadeSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px)
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    }
+
+    .anim {
+        animation: fadeSlideUp .4s ease;
+    }
+
+    .gen-result {
+        white-space: pre-wrap;
+        font-size: .87rem;
+        line-height: 1.75;
+        background: #f8f9ff;
+        border-radius: 12px;
+        padding: 1.2rem;
+        border: 1.5px solid rgba(47,50,125,.1);
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+</style>
+
+<div class="row g-4">
+    <!-- Upload panel -->
+    <div class="col-lg-4">
+        <div class="iact-card anim">
+            <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));
+                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;">
+                <h5 style="color:white;font-weight:700;margin:0;font-size:.95rem;">
+                    <i class="fas fa-upload me-2"></i>Upload Material
+                </h5>
+            </div>
+            <div class="iact-card-body">
+                <label class="d-block w-100 text-center p-3 mb-3 rounded-3"
+                       style="background:rgba(91,114,238,.07);border:1.5px dashed rgba(91,114,238,.2);
+                    cursor:pointer;font-size:.84rem;font-weight:600;color:var(--primary);"
+                       for="instrFileInput">
+                    <i class="fas fa-file-arrow-up d-block mb-1" style="font-size:1.4rem;"></i>
+                    PDF, DOCX, or Image
+                </label>
+                <input type="file" id="instrFileInput" style="display:none;"
+                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                       onchange="instrUpload(this)" />
+                <div id="instrUploadStatus" style="font-size:.75rem;text-align:center;min-height:18px;"></div>
+
+                <div id="instrFileList" class="mt-3">
+                    @foreach (var f in files)
+                    {
+                        <div class="d-flex align-items-center gap-2 p-2 mb-2 rounded-3"
+                             style="background:#f8f9ff;border:1.5px solid rgba(0,0,0,.06);"
+                             id="file_@f.Id">
+                            <i class="fas fa-file-alt" style="color:var(--accent-purple);font-size:.85rem;"></i>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@f.OriginalName</div>
+                                <small style="color:#9ca3af;font-size:.68rem;">@f.ChunkCount chunks</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generator panel -->
+    <div class="col-lg-8">
+        <div class="iact-card anim">
+            <div style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));
+                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;">
+                <h5 style="color:white;font-weight:700;margin:0;font-size:.95rem;">
+                    <i class="fas fa-magic me-2"></i>Generate Exam
+                </h5>
+            </div>
+            <div class="iact-card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label" style="font-weight:600;font-size:.83rem;">Source File</label>
+                        <select id="genFileSelect" class="iact-form-control">
+                            <option value="">— Select file —</option>
+                            @foreach (var f in files)
+                            {
+                                <option value="@f.Id">@f.OriginalName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" style="font-weight:600;font-size:.83rem;">MCQ Count</label>
+                        <input type="number" id="mcqCount" value="5" min="1" max="20" class="iact-form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" style="font-weight:600;font-size:.83rem;">T/F Count</label>
+                        <input type="number" id="tfCount" value="3" min="0" max="10" class="iact-form-control" />
+                    </div>
+                </div>
+
+                <button onclick="generateExam()" class="btn btn-primary rounded-3 px-4 mb-4"
+                        style="font-family:Poppins,sans-serif;" id="genBtn">
+                    <i class="fas fa-magic me-2"></i>Generate Exam
+                </button>
+
+                <div id="genSpinner" style="display:none;text-align:center;padding:2rem;color:#9ca3af;font-size:.88rem;">
+                    <div class="spinner-border spinner-border-sm me-2" style="color:var(--secondary);"></div>
+                    Generating exam questions…
+                </div>
+
+                <div id="genResult" style="display:none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 style="font-weight:700;color:var(--primary);margin:0;">Generated Exam</h6>
+                        <button onclick="copyResult()" class="btn btn-sm rounded-3"
+                                style="background:rgba(0,203,184,.1);color:var(--secondary);font-size:.75rem;">
+                            <i class="fas fa-copy me-1"></i>Copy
+                        </button>
+                    </div>
+                    <div class="gen-result" id="genResultText"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function instrUpload(input) {
+            if (!input.files.length) return;
+            var fd   = new FormData();
+            var stat = document.getElementById('instrUploadStatus');
+            fd.append('file', input.files[0]);
+            stat.innerHTML = '<span style="color:#F48C06;">⏳ Processing…</span>';
+            fetch('/Instructor/Ai/Upload', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) { stat.innerHTML = '<span style="color:#E13468;">❌ ' + d.error + '</span>'; return; }
+                stat.innerHTML = '<span style="color:#16a34a;">✅ Ready!</span>';
+                var sel = document.getElementById('genFileSelect');
+                var opt = document.createElement('option');
+                opt.value = d.fileId; opt.textContent = d.fileName;
+                sel.appendChild(opt);
+                input.value = '';
+            })
+            .catch(() => { stat.innerHTML = '<span style="color:#E13468;">❌ Failed</span>'; });
+        }
+
+        function generateExam() {
+            var fileId = document.getElementById('genFileSelect').value;
+            if (!fileId) { alert('Please select a file first.'); return; }
+            var mcq = parseInt(document.getElementById('mcqCount').value) || 5;
+            var tf  = parseInt(document.getElementById('tfCount').value)  || 3;
+
+            document.getElementById('genBtn').disabled     = true;
+            document.getElementById('genSpinner').style.display = 'block';
+            document.getElementById('genResult').style.display  = 'none';
+
+            fetch('/Instructor/Ai/Generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileId: fileId, mcqCount: mcq, tfCount: tf })
+            })
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('genSpinner').style.display = 'none';
+                document.getElementById('genBtn').disabled = false;
+                document.getElementById('genResultText').textContent = d.result || 'No result.';
+                document.getElementById('genResult').style.display = 'block';
+            })
+            .catch(() => {
+                document.getElementById('genSpinner').style.display = 'none';
+                document.getElementById('genBtn').disabled = false;
+                alert('Generation failed. Check your API key configuration.');
+            });
+        }
+
+        function copyResult() {
+            var text = document.getElementById('genResultText').textContent;
+            navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+        }
+    </script>
+}

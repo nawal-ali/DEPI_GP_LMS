@@ -15,6 +15,9 @@
 </a>
 
 <div class="sa-group-label mt-3">Teaching</div>
+<a asp-area="Instructor" asp-controller="Ai" asp-action="ExamGenerator" class="sa-nav-item">
+    <i class="fas fa-magic"></i><span>AI Exam Generator</span>
+</a>
 
 <a asp-area="Instructor" asp-controller="Course" asp-action="Index"
    class="sa-nav-item @(Is("Course") ? "active" : "")">

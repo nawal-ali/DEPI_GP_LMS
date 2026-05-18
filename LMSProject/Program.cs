@@ -1,12 +1,13 @@
+using LMSProject.AI.Models;
+using LMSProject.Areas.Admin.Helpers;
+using LMSProject.Areas.SuperAdmin.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MLSCore;
-using MLSEF;
-using Microsoft.AspNetCore.Identity;
 using MLSCore.IdentityModel;
-using LMSProject.Areas.Admin.Helpers;
 using MLSCore.Interfaces;
+using MLSEF;
 using MLSEF.Repositories;
-using LMSProject.Areas.SuperAdmin.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,27 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/Login";
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
 });
+
+builder.Services.AddSingleton<LMSProject.AI.Services.MongoDbService>();
+
+// AI / GitHub Models HTTP client
+builder.Services.AddHttpClient("GithubAI");
+builder.Services.AddHttpClient("N8N");
+
+// AI Services
+builder.Services.AddScoped<LMSProject.AI.Services.GithubAiService>();
+builder.Services.AddScoped<LMSProject.AI.Services.DocumentProcessingService>();
+builder.Services.AddScoped<LMSProject.AI.Services.AiChatService>();
+builder.Services.AddScoped<LMSProject.AI.Services.InstructorAiService>();
+
+// Email
+builder.Services.AddScoped<LMSProject.AI.Services.EmailService>();
+
+// n8n + Reports
+builder.Services.AddScoped<LMSProject.AI.Services.N8nService>();
+builder.Services.AddScoped<LMSProject.AI.Services.WeeklyReportService>();
+
+
 
 var app = builder.Build();
 
@@ -90,6 +112,7 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(newAdmin, "Admin");
     }
 }
+
 
 // ── HTTP pipeline ──────────────────────────────────────────────────────────
 if (!app.Environment.IsDevelopment())
