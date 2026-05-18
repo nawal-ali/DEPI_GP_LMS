@@ -53,27 +53,13 @@
                 <h5 style="color:white;"><i class="fas fa-lock me-2"></i>Change Password</h5>
             </div>
             <div class="sa-card-body">
-                <form asp-area="SuperAdmin" asp-controller="Profile" asp-action="ChangePassword" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="mb-3">
-                        <label class="form-label">Current Password</label>
-                        <input name="CurrentPassword" type="password" class="form-control sa-form-control"
-                               placeholder="Enter current password" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">New Password</label>
-                        <input name="NewPassword" type="password" class="form-control sa-form-control"
-                               placeholder="Min. 6 characters" minlength="6" />
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label">Confirm New Password</label>
-                        <input name="ConfirmPassword" type="password" class="form-control sa-form-control"
-                               placeholder="Repeat new password" />
-                    </div>
-                    <button type="submit" class="btn btn-primary rounded-3 w-100">
-                        <i class="fas fa-key me-2"></i>Update Password
-                    </button>
-                </form>
+                @await Html.PartialAsync("_PasswordChange", new ViewDataDictionary(ViewData) {
+                    { "PwArea",       "SuperAdmin" },
+                    { "PwController", "Profile" },
+                    { "PwAction",     "ChangePassword" },
+                    { "PwFormId",     "saPwForm" },
+                    { "InputClass",   "form-control sa-form-control" }
+                })
             </div>
         </div>
 

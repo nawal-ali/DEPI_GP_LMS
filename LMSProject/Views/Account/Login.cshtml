@@ -1,6 +1,6 @@
 ﻿@using LMSProject.ViewModel
 @{
-    Layout = null;  // standalone page — no layout inheritance
+    Layout = null;
 }
 @model LoginVM
 <!DOCTYPE html>
@@ -30,6 +30,43 @@
                 background: #f4f6fb;
             }
 
+            /* ── Entrance animation ─────────────────────────── */
+            @@keyframes cardIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(32px) scale(.97);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @@keyframes panelIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(-24px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @@keyframes formIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(24px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
             .login-shell {
                 min-height: 100vh;
                 display: flex;
@@ -41,14 +78,16 @@
             .login-card {
                 background: white;
                 border-radius: 20px;
-                box-shadow: 0 8px 40px rgba(47,50,125,0.12);
+                box-shadow: 0 8px 40px rgba(47,50,125,.12);
                 overflow: hidden;
                 width: 100%;
                 max-width: 900px;
                 display: flex;
                 min-height: 520px;
+                animation: cardIn .55s cubic-bezier(.22,.68,0,1.2) both;
             }
-            /* Left panel */
+
+            /* ── Left panel ─────────────────────────────────── */
             .login-panel-left {
                 background: linear-gradient(145deg, var(--primary) 0%, var(--accent) 60%, var(--secondary) 100%);
                 flex: 1;
@@ -59,6 +98,7 @@
                 padding: 3rem 2rem;
                 position: relative;
                 overflow: hidden;
+                animation: panelIn .6s .1s ease both;
             }
 
                 .login-panel-left::before {
@@ -67,7 +107,7 @@
                     width: 300px;
                     height: 300px;
                     border-radius: 50%;
-                    background: rgba(255,255,255,0.05);
+                    background: rgba(255,255,255,.05);
                     top: -80px;
                     right: -80px;
                 }
@@ -78,7 +118,7 @@
                     width: 200px;
                     height: 200px;
                     border-radius: 50%;
-                    background: rgba(255,255,255,0.05);
+                    background: rgba(255,255,255,.05);
                     bottom: -60px;
                     left: -60px;
                 }
@@ -88,95 +128,133 @@
                     font-size: 1.6rem;
                     font-weight: 700;
                     text-align: center;
-                    margin: 1rem 0 0.5rem;
+                    margin: 1rem 0 .5rem;
                     position: relative;
                     z-index: 1;
                 }
 
                 .login-panel-left p {
-                    color: rgba(255,255,255,0.75);
-                    font-size: 0.88rem;
+                    color: rgba(255,255,255,.75);
+                    font-size: .88rem;
                     text-align: center;
                     max-width: 220px;
                     position: relative;
                     z-index: 1;
                 }
 
+            /* Logo link */
+            .login-brand-link {
+                text-decoration: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: .75rem;
+                position: relative;
+                z-index: 1;
+                transition: transform .2s;
+            }
+
+                .login-brand-link:hover {
+                    transform: scale(1.05);
+                }
+
             .login-brand-icon {
                 width: 72px;
                 height: 72px;
-                background: rgba(255,255,255,0.15);
+                background: rgba(255,255,255,.15);
                 border-radius: 20px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 2rem;
                 color: white;
-                position: relative;
-                z-index: 1;
                 backdrop-filter: blur(4px);
             }
-            /* Right panel */
+
+            /* ── Right panel ─────────────────────────────────── */
             .login-panel-right {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 padding: 3rem 2.5rem;
+                animation: formIn .6s .2s ease both;
             }
 
                 .login-panel-right h4 {
                     font-size: 1.25rem;
                     font-weight: 700;
                     color: var(--primary);
-                    margin-bottom: 0.25rem;
+                    margin-bottom: .25rem;
                 }
 
                 .login-panel-right p.sub {
-                    font-size: 0.83rem;
+                    font-size: .83rem;
                     color: #9ca3af;
                     margin-bottom: 1.75rem;
                 }
 
+            /* ── Form controls ───────────────────────────────── */
             .lf-group {
                 margin-bottom: 1.1rem;
             }
 
                 .lf-group label {
-                    font-size: 0.8rem;
+                    font-size: .8rem;
                     font-weight: 600;
                     color: #374151;
                     display: block;
                     margin-bottom: 5px;
                 }
 
-            .lf-control {
-                width: 100%;
-                border: 1.5px solid rgba(47,50,125,0.15);
-                border-radius: 10px;
-                padding: 0.65rem 0.9rem 0.65rem 2.6rem;
-                font-size: 0.875rem;
-                font-family: 'Poppins', sans-serif;
-                transition: border-color 0.15s, box-shadow 0.15s;
-                outline: none;
-            }
-
-                .lf-control:focus {
-                    border-color: var(--secondary);
-                    box-shadow: 0 0 0 3px rgba(0,203,184,0.15);
-                }
-
             .lf-icon-wrap {
                 position: relative;
             }
 
-                .lf-icon-wrap i {
+                .lf-icon-wrap .lf-left-icon {
                     position: absolute;
                     left: 12px;
                     top: 50%;
                     transform: translateY(-50%);
                     color: #aaa;
-                    font-size: 0.88rem;
+                    font-size: .88rem;
+                    pointer-events: none;
+                }
+
+            /* Eye toggle button */
+            .lf-eye-btn {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: #9ca3af;
+                font-size: .88rem;
+                padding: 3px 5px;
+                transition: color .15s;
+                z-index: 2;
+            }
+
+                .lf-eye-btn:hover {
+                    color: var(--primary);
+                }
+
+            .lf-control {
+                width: 100%;
+                border: 1.5px solid rgba(47,50,125,.15);
+                border-radius: 10px;
+                padding: .65rem 2.5rem .65rem 2.6rem; /* right pad for eye btn */
+                font-size: .875rem;
+                font-family: 'Poppins', sans-serif;
+                transition: border-color .15s, box-shadow .15s;
+                outline: none;
+            }
+
+                .lf-control:focus {
+                    border-color: var(--secondary);
+                    box-shadow: 0 0 0 3px rgba(0,203,184,.15);
                 }
 
             .btn-login {
@@ -185,34 +263,33 @@
                 color: white;
                 border: none;
                 border-radius: 10px;
-                padding: 0.7rem;
-                font-size: 0.9rem;
+                padding: .7rem;
+                font-size: .9rem;
                 font-weight: 600;
                 font-family: 'Poppins', sans-serif;
                 cursor: pointer;
-                transition: opacity 0.15s, transform 0.15s;
-                margin-top: 0.5rem;
+                transition: opacity .15s, transform .15s;
+                margin-top: .5rem;
             }
 
                 .btn-login:hover {
-                    opacity: 0.92;
+                    opacity: .92;
                     transform: translateY(-1px);
                 }
 
             .text-danger {
-                font-size: 0.75rem;
+                font-size: .75rem;
             }
 
             .validation-summary-errors ul {
                 list-style: none;
-                padding: 0;
+                padding: .6rem .8rem;
                 margin: 0 0 1rem;
-                font-size: 0.8rem;
+                font-size: .8rem;
                 color: #dc2626;
                 background: #fef2f2;
                 border-radius: 8px;
                 border-left: 3px solid #dc2626;
-                padding: 0.6rem 0.8rem;
             }
 
             @@media (max-width: 640px) {
@@ -230,12 +307,14 @@
     <div class="login-shell">
         <div class="login-card">
 
-            <!-- Left decorative panel -->
+            <!-- Left decorative panel — logo linked to home -->
             <div class="login-panel-left d-none d-md-flex">
-                <div class="login-brand-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <h2>TOTC LMS</h2>
+                <a href="/" class="login-brand-link">
+                    <div class="login-brand-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h2>TOTC LMS</h2>
+                </a>
                 <p>Your complete learning management platform</p>
             </div>
 
@@ -252,10 +331,11 @@
                 <form method="post" asp-controller="Account" asp-action="Login">
                     @Html.AntiForgeryToken()
 
+                    <!-- Email / Username -->
                     <div class="lf-group">
                         <label>Email or Username</label>
                         <div class="lf-icon-wrap">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-user lf-left-icon"></i>
                             <input asp-for="EmailOrUsername"
                                    class="lf-control"
                                    placeholder="Enter your email or username"
@@ -264,22 +344,32 @@
                         <span asp-validation-for="EmailOrUsername" class="text-danger"></span>
                     </div>
 
+                    <!-- Password + eye toggle -->
                     <div class="lf-group">
                         <label>Password</label>
                         <div class="lf-icon-wrap">
-                            <i class="fas fa-lock"></i>
+                            <i class="fas fa-lock lf-left-icon"></i>
                             <input asp-for="Password"
                                    type="password"
+                                   id="loginPassword"
                                    class="lf-control"
                                    placeholder="Enter your password"
                                    autocomplete="current-password" />
+                            <button type="button" class="lf-eye-btn"
+                                    onclick="toggleLoginPw(this)"
+                                    tabindex="-1"
+                                    title="Show / hide password">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mb-3" style="font-size:0.8rem;">
+                    <div class="d-flex justify-content-between align-items-center mb-3"
+                         style="font-size:.8rem;">
                         <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;">
-                            <input type="checkbox" asp-for="RememberMe" style="accent-color:var(--primary);" />
+                            <input type="checkbox" asp-for="RememberMe"
+                                   style="accent-color:var(--primary);" />
                             Remember me
                         </label>
                         <a asp-controller="Account" asp-action="ForgotPassword"
@@ -294,7 +384,6 @@
                 </form>
 
             </div>
-
         </div>
     </div>
 
@@ -302,5 +391,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        function toggleLoginPw(btn) {
+        var input = document.getElementById('loginPassword');
+        var icon  = btn.querySelector('i');
+        if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+        btn.style.color = 'var(--primary)';
+        } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+        btn.style.color = '#9ca3af';
+        }
+        input.focus();
+        }
+    </script>
 </body>
 </html>

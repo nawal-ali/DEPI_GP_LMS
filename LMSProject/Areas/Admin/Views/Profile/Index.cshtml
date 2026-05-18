@@ -1,0 +1,79 @@
+﻿@{
+    ViewData["Title"] = "My Profile";
+    var user = ViewBag.User as MLSCore.IdentityModel.ApplicationUser;
+    var fullName = user?.FullName ?? User.Identity?.Name ?? "Admin";
+    var email = user?.Email ?? "";
+    var phone = user?.PhoneNumber ?? "";
+    var initials = fullName.Length >= 2 ? fullName[..2].ToUpper() : fullName.ToUpper();
+}
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Profile info card -->
+        <div class="sa-card anim mb-4">
+            <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));
+                border-radius:16px 16px 0 0;padding:1.75rem 2rem;
+                display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
+                <div style="width:64px;height:64px;border-radius:50%;
+                    background:rgba(255,255,255,.2);display:flex;align-items:center;
+                    justify-content:center;color:white;font-size:1.5rem;font-weight:700;flex-shrink:0;">
+                    @initials
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;">@fullName</h5>
+                    <span style="background:rgba(255,255,255,.2);color:white;border-radius:20px;
+                        padding:2px 12px;font-size:.75rem;font-weight:600;">
+                        <i class="fas fa-user-cog me-1"></i>Admin
+                    </span>
+                </div>
+            </div>
+            <div class="sa-card-body">
+                <form asp-area="Admin" asp-controller="Profile" asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Full Name</label>
+                            <input name="FullName" value="@fullName" class="sa-form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Phone</label>
+                            <input name="Phone" value="@phone" class="sa-form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Email</label>
+                            <input value="@email" class="sa-form-control" disabled
+                                   style="background:rgba(0,0,0,.03);" />
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4"
+                                style="font-family:Poppins,sans-serif;">
+                            <i class="fas fa-save me-2"></i>Save Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password change -->
+        <div class="sa-card anim">
+            <div style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink));
+                border-radius:16px 16px 0 0;padding:1.1rem 1.5rem;">
+                <h5 style="color:white;font-weight:700;margin:0;">
+                    <i class="fas fa-lock me-2"></i>Change Password
+                </h5>
+            </div>
+            <div class="sa-card-body">
+                @await Html.PartialAsync("_PasswordChange", new ViewDataDictionary(ViewData) {
+                    { "PwArea",       "Admin" },
+                    { "PwController", "Profile" },
+                    { "PwAction",     "ChangePassword" },
+                    { "PwFormId",     "adminPwForm" },
+                    { "InputClass",   "sa-form-control" }
+                })
+            </div>
+        </div>
+
+    </div>
+</div>

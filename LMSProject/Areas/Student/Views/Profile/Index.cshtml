@@ -1,0 +1,83 @@
+﻿@model StudentProfileVM
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="st-card anim">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));
+                border-radius:16px 16px 0 0;padding:2rem;
+                display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+                <div class="st-avatar" style="width:72px;height:72px;font-size:1.5rem;flex-shrink:0;">
+                    @if (!string.IsNullOrEmpty(Model.ImageName))
+                    {
+                        <img src="~/@Model.ImageName" style="width:100%;height:100%;object-fit:cover;" />
+                    }
+                    else
+                    {
+
+                        @Model.Initials
+                    }
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;">@Model.FullName</h5>
+                    <small style="color:rgba(255,255,255,.75);">@Model.GradeName &nbsp;·&nbsp; Student</small>
+                </div>
+            </div>
+
+            <div class="st-card-body">
+                <!-- Basic info -->
+                <form asp-area="Student" asp-controller="Profile" asp-action="Edit"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="StudentId" />
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Full Name</label>
+                            <input asp-for="FullName" class="st-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Phone</label>
+                            <input asp-for="Phone" class="st-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Email</label>
+                            <input asp-for="Email" class="st-control" disabled
+                                   style="background:rgba(0,0,0,.03);" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Grade</label>
+                            <input value="@Model.GradeName" class="st-control" disabled
+                                   style="background:rgba(0,0,0,.03);" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Profile Photo</label>
+                            <input asp-for="Image" type="file" class="st-control" accept="image/*" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4"
+                            style="font-family:Poppins,sans-serif;">
+                        <i class="fas fa-save me-2"></i>Save Profile
+                    </button>
+                </form>
+
+                <hr style="border-color:rgba(0,0,0,.06);margin:1.75rem 0;" />
+
+                <!-- Password change — reusable partial -->
+                <h6 style="font-weight:700;color:var(--primary);margin-bottom:1rem;">
+                    <i class="fas fa-lock me-2" style="color:var(--accent-purple);font-size:.9rem;"></i>
+                    Change Password
+                </h6>
+                @await Html.PartialAsync("_PasswordChange", new ViewDataDictionary(ViewData) {
+                    { "PwArea",       "Student" },
+                    { "PwController", "Profile" },
+                    { "PwAction",     "ChangePassword" },
+                    { "PwFormId",     "studentPwForm" },
+                    { "InputClass",   "st-control" }
+                })
+            </div>
+        </div>
+    </div>
+</div>

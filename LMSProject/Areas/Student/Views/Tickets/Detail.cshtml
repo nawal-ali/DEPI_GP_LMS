@@ -1,0 +1,9 @@
+﻿@using LMSProject.ViewModels.Tickets
+@model TicketDetailVM
+@{
+    ViewData["Title"] = "Ticket #" + Model.Ticket?.Id;
+    ViewData["BackUrl"] = Url.Action("Index", "Tickets", new { area = "Student" });
+    ViewData["StatusUrl"] = "";
+    ViewData["ForwardUrl"] = "";
+}
+@await Html.PartialAsync("_TicketThread", Model)

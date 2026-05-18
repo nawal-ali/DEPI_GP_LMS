@@ -1,0 +1,63 @@
+﻿@model List<InstructorCardVM>
+@{
+    ViewData["Title"] = "My Instructors";
+}
+<div class="d-flex justify-content-between align-items-center mb-4 anim">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;"><i class="fas fa-chalkboard-teacher me-2" style="color:var(--secondary);"></i>My Instructors <span class="pb pb-blue ms-2">@Model.Count</span></h5>
+</div>
+@if (!Model.Any())
+{
+    <div class="st-card p-5 text-center anim" style="color:#aaa;"><i class="fas fa-chalkboard-teacher fa-3x mb-3 d-block opacity-25"></i>No instructors found.</div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var ins in Model)
+        {
+            <div class="col-md-6 col-xl-4 anim">
+                <div class="st-card h-100">
+                    <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));padding:1.5rem;text-align:center;">
+                        <div class="st-avatar" style="width:64px;height:64px;font-size:1.3rem;margin:0 auto 0.75rem;background:rgba(255,255,255,.2);">
+                            @if (!string.IsNullOrEmpty(ins.ImageName))
+                            {
+                                <img src="~/@ins.ImageName" style="width:100%;height:100%;object-fit:cover;" />
+                            }
+                            else
+                            {
+
+                                @ins.Initials
+                            }
+                        </div>
+                        <h6 style="color:white;font-weight:700;margin:0;">@ins.FullName</h6>
+                        <small style="color:rgba(255,255,255,.7);font-size:.75rem;">@(ins.Specialization ?? "Instructor")</small>
+                    </div>
+                    <div class="st-card-body">
+                        @if (!string.IsNullOrEmpty(ins.Bio))
+                        {
+                            <p style="font-size:.83rem;color:#555;margin-bottom:.75rem;line-height:1.65;">@(ins.Bio.Length > 100 ? ins.Bio[..100] + "…" : ins.Bio)</p>
+                        }
+                        <div class="mb-3">
+                            <small style="font-weight:700;color:var(--primary);font-size:.75rem;">COURSES</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                @foreach (var cn in ins.CourseNames)
+                                {
+                                    <span class="pb pb-purple" style="font-size:.71rem;">@cn</span>
+                                }
+                            </div>
+                        </div>
+                        @if (ins.ExperienceYears > 0)
+                        {
+                            <small style="color:#9ca3af;font-size:.75rem;"><i class="fas fa-award me-1" style="color:var(--yellow);"></i>@ins.ExperienceYears years experience</small>
+                        }
+                        <div class="d-flex gap-2 mt-3">
+                            <a asp-area="Student" asp-controller="Tickets" asp-action="Create"
+                               class="btn btn-primary btn-sm rounded-3 flex-grow-1" style="font-family:Poppins,sans-serif;font-size:.78rem;">
+                                <i class="fas fa-headset me-1"></i>Send Ticket
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

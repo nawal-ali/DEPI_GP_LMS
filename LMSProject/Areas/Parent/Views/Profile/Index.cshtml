@@ -104,3 +104,19 @@
         </div>
     </div>
 </div>
+
+<!-- Change Password -->
+<div class="pa-card mt-4">
+    <div class="pa-card-header">
+        <h5><i class="fas fa-lock me-2" style="color:var(--secondary);"></i>Change Password</h5>
+    </div>
+    <div class="pa-card-body">
+        @await Html.PartialAsync("_PasswordChange", new ViewDataDictionary(ViewData) {
+            { "PwArea",       "Parent" },
+            { "PwController", "Profile" },
+            { "PwAction",     "ChangePassword" },
+            { "PwFormId",     "parentPwForm" },
+            { "InputClass",   "pa-control" }
+        })
+    </div>
+</div>

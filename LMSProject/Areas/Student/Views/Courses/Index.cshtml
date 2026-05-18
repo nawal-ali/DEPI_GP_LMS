@@ -1,0 +1,85 @@
+﻿@model List<CourseCardVM>
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 anim">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-book-open me-2" style="color:var(--secondary);"></i>My Courses
+        <span class="pb pb-blue ms-2">@Model.Count</span>
+    </h5>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="st-card p-5 text-center anim" style="color:#aaa;">
+        <i class="fas fa-book-open fa-3x mb-3 d-block opacity-25"></i>
+        <p>You are not enrolled in any courses yet.</p>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var c in Model)
+        {
+            <div class="col-md-6 col-xl-4 anim">
+                <div class="st-card h-100" style="transition:transform .2s,box-shadow .2s;"
+                     onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 36px rgba(47,50,125,.14)'"
+                     onmouseout="this.style.transform='none';this.style.boxShadow=''">
+                    <!-- Course image / header -->
+                    <div style="height:110px;background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));position:relative;overflow:hidden;">
+                        @if (!string.IsNullOrEmpty(c.ImageName))
+                        {
+                            <img src="~/@c.ImageName" style="width:100%;height:100%;object-fit:cover;opacity:.7;" />
+                        }
+                        <div style="position:absolute;bottom:10px;left:12px;">
+                            <span class="pb pb-blue" style="background:rgba(255,255,255,.2);color:white;font-size:.68rem;">@c.Status</span>
+                        </div>
+                    </div>
+                    <div class="st-card-body">
+                        <h6 style="font-weight:700;margin-bottom:.3rem;font-size:.92rem;">@c.CourseName</h6>
+                        <small style="color:#9ca3af;font-size:.75rem;">
+                            <i class="fas fa-user-tie me-1"></i>@c.InstructorName
+                            @if (!string.IsNullOrEmpty(c.TermName))
+                            {
+                                <span> · @c.TermName</span>
+                            }
+                        </small>
+
+                        <!-- Stats row -->
+                        <div class="row g-2 text-center my-3">
+                            <div class="col-4">
+                                <div style="font-size:1.05rem;font-weight:800;color:var(--accent-purple);">@c.MaterialCount</div>
+                                <small style="color:#9ca3af;font-size:.68rem;">Materials</small>
+                            </div>
+                            <div class="col-4">
+                                <div style="font-size:1.05rem;font-weight:800;color:var(--accent-blue);">@c.ExamCount</div>
+                                <small style="color:#9ca3af;font-size:.68rem;">Exams</small>
+                            </div>
+                            <div class="col-4">
+                                <div style="font-size:1.05rem;font-weight:800;color:var(--orange);">@c.AssignmentCount</div>
+                                <small style="color:#9ca3af;font-size:.68rem;">Tasks</small>
+                            </div>
+                        </div>
+
+                        @if (c.NextDeadline.HasValue)
+                        {
+                            var dl = (c.NextDeadline.Value - DateTime.Now).Days;
+                            <div class="mb-3" style="font-size:.75rem;color:@(dl <= 2 ? "#E13468" : "#F48C06");font-weight:600;">
+                                <i class="fas fa-clock me-1"></i>Next deadline: @c.NextDeadline.Value.ToString("MMM dd")
+                                (@(dl <= 0 ? "Today" : dl == 1 ? "Tomorrow" : $"{dl} days"))
+                            </div>
+                        }
+
+                        <a asp-area="Student" asp-controller="Courses" asp-action="Detail"
+                           asp-route-id="@c.CourseId"
+                           class="btn btn-primary btn-sm w-100 rounded-3"
+                           style="font-family:Poppins,sans-serif;font-size:.82rem;">
+                            <i class="fas fa-arrow-right me-1"></i>Open Course
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

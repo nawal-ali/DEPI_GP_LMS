@@ -1,0 +1,159 @@
+﻿@model StudentDashboardVM
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Welcome + Stats -->
+<div class="d-flex align-items-center gap-3 mb-4 anim">
+    <div class="st-avatar" style="width:56px;height:56px;font-size:1.2rem;flex-shrink:0;">
+        @if (!string.IsNullOrEmpty(Model.ImageName))
+        {
+            <img src="~/@Model.ImageName" style="width:100%;height:100%;object-fit:cover;" />
+        }
+        else
+        {
+
+            @Model.Initials
+        }
+    </div>
+    <div>
+        <h5 style="font-weight:800;color:var(--primary);margin:0;">Welcome back, @Model.StudentName! 👋</h5>
+        <small style="color:#9ca3af;">@Model.GradeName &nbsp;·&nbsp; Student</small>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-2 anim anim-1"><div class="st-stat sg1"><p>Courses</p><h3>@Model.EnrolledCourses</h3><i class="fas fa-book-open si"></i></div></div>
+    <div class="col-6 col-xl-2 anim anim-2"><div class="st-stat sg2"><p>Exams Done</p><h3>@Model.CompletedExams</h3><i class="fas fa-file-alt si"></i></div></div>
+    <div class="col-6 col-xl-2 anim anim-3"><div class="st-stat sg3"><p>Pending Tasks</p><h3>@Model.PendingAssignments</h3><i class="fas fa-tasks si"></i></div></div>
+    <div class="col-6 col-xl-2 anim anim-4"><div class="st-stat sg4"><p>Available Exams</p><h3>@Model.AvailableExams</h3><i class="fas fa-pen si"></i></div></div>
+    <div class="col-6 col-xl-2 anim anim-5"><div class="st-stat sg5"><p>Exam Average</p><h3>@Model.ExamAverage%</h3><i class="fas fa-chart-line si"></i></div></div>
+    <div class="col-6 col-xl-2 anim anim-6"><div class="st-stat sg6"><p>Announcements</p><h3>@Model.Announcements</h3><i class="fas fa-bullhorn si"></i></div></div>
+</div>
+
+<div class="row g-4">
+    <!-- Upcoming Deadlines -->
+    <div class="col-lg-6">
+        <div class="st-card h-100 anim">
+            <div class="st-card-header">
+                <h5><i class="fas fa-calendar-alt me-2" style="color:var(--orange);"></i>Upcoming Deadlines</h5>
+                <a asp-area="Student" asp-controller="Exams" asp-action="Index"
+                   style="font-size:.78rem;color:var(--secondary);text-decoration:none;font-weight:600;">View all</a>
+            </div>
+            <div class="st-card-body p-0">
+                @if (!Model.UpcomingDeadlines.Any())
+                {
+                    <div class="p-4 text-center" style="color:#9ca3af;font-size:.84rem;"><i class="fas fa-calendar-check fa-2x d-block mb-2 opacity-25"></i>No upcoming deadlines!</div>
+                }
+                @foreach (var d in Model.UpcomingDeadlines)
+                {
+                    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div style="width:36px;height:36px;border-radius:9px;background:@(d.Color)15;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas @d.Icon" style="color:@d.Color;font-size:.85rem;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@d.Title</div>
+                            <small style="color:#9ca3af;font-size:.72rem;">@d.CourseName</small>
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <span style="font-size:.74rem;font-weight:700;color:@(d.IsUrgent ? "#E13468" : d.Color);">
+                                @(d.DaysLeft == 0 ? "Today!" : d.DaysLeft == 1 ? "Tomorrow" : $"{d.DaysLeft}d")
+                            </span>
+                            <span class="pb pb-@(d.Type == "Exam" ? "purple" : "orange") d-block" style="font-size:.66rem;margin-top:2px;">@d.Type</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Results -->
+    <div class="col-lg-6">
+        <div class="st-card h-100 anim">
+            <div class="st-card-header">
+                <h5><i class="fas fa-trophy me-2" style="color:var(--yellow);"></i>Recent Results</h5>
+                <a asp-area="Student" asp-controller="Exams" asp-action="Index"
+                   style="font-size:.78rem;color:var(--secondary);text-decoration:none;font-weight:600;">View all</a>
+            </div>
+            <div class="st-card-body p-0">
+                @if (!Model.RecentResults.Any())
+                {
+                    <div class="p-4 text-center" style="color:#9ca3af;font-size:.84rem;"><i class="fas fa-chart-bar fa-2x d-block mb-2 opacity-25"></i>No exam results yet.</div>
+                }
+                @foreach (var r in Model.RecentResults)
+                {
+                    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div style="width:42px;height:42px;border-radius:50%;background:@(r.Color)15;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+                            <span style="font-size:.82rem;font-weight:800;color:@r.Color;">@r.Grade</span>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@r.Title</div>
+                            <small style="color:#9ca3af;font-size:.72rem;">@r.Date.ToString("MMM dd, yyyy")</small>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-weight:800;color:@r.Color;">@r.Score</span>
+                            <span style="color:#9ca3af;font-size:.8rem;"> / @r.TotalMarks</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Announcements -->
+    <div class="col-lg-6">
+        <div class="st-card anim">
+            <div class="st-card-header">
+                <h5><i class="fas fa-bullhorn me-2" style="color:var(--secondary);"></i>Announcements</h5>
+                <a asp-area="Student" asp-controller="Announcements" asp-action="Index"
+                   style="font-size:.78rem;color:var(--secondary);text-decoration:none;font-weight:600;">View all</a>
+            </div>
+            <div class="st-card-body p-0">
+                @if (!Model.RecentAnnouncements.Any())
+                {
+                    <div class="p-4 text-center" style="color:#9ca3af;font-size:.84rem;"><i class="fas fa-bullhorn fa-2x d-block mb-2 opacity-25"></i>No announcements.</div>
+                }
+                @foreach (var a in Model.RecentAnnouncements)
+                {
+                    <div style="padding:11px 16px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="pb pb-@(a.Priority == "Urgent" ? "red" : a.Priority == "High" ? "orange" : "blue")" style="font-size:.66rem;">@a.Priority</span>
+                            <span style="font-size:.83rem;font-weight:600;">@a.Title</span>
+                        </div>
+                        <small style="color:#9ca3af;font-size:.72rem;"><i class="fas fa-clock me-1"></i>@a.Date.ToString("MMM dd")</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Materials -->
+    <div class="col-lg-6">
+        <div class="st-card anim">
+            <div class="st-card-header">
+                <h5><i class="fas fa-folder-open me-2" style="color:var(--accent-purple);"></i>New Materials</h5>
+                <a asp-area="Student" asp-controller="Courses" asp-action="Index"
+                   style="font-size:.78rem;color:var(--secondary);text-decoration:none;font-weight:600;">View courses</a>
+            </div>
+            <div class="st-card-body p-0">
+                @if (!Model.RecentMaterials.Any())
+                {
+                    <div class="p-4 text-center" style="color:#9ca3af;font-size:.84rem;"><i class="fas fa-folder-open fa-2x d-block mb-2 opacity-25"></i>No materials yet.</div>
+                }
+                @foreach (var m in Model.RecentMaterials)
+                {
+                    <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div style="width:32px;height:32px;border-radius:8px;background:rgba(91,114,238,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas fa-file" style="color:var(--accent-purple);font-size:.8rem;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@m.Title</div>
+                            <small style="color:#9ca3af;font-size:.71rem;">@m.CourseName · @m.Type</small>
+                        </div>
+                        <small style="color:#9ca3af;font-size:.71rem;flex-shrink:0;">@m.Date.ToString("MMM dd")</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

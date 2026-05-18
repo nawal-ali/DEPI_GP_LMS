@@ -1,0 +1,204 @@
+﻿@model TakeExamVM
+@{
+    ViewData["Title"] = "Exam — " + Model.Exam.Title;
+}
+
+<style>
+    .question-card {
+        background: white;
+        border-radius: 14px;
+        border: 1.5px solid rgba(0,0,0,.07);
+        padding: 1.4rem;
+        margin-bottom: 1rem;
+        transition: border-color .15s;
+    }
+
+        .question-card.answered {
+            border-color: var(--secondary);
+        }
+
+    .choice-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1.5px solid rgba(0,0,0,.07);
+        cursor: pointer;
+        transition: all .15s;
+        font-size: .87rem;
+        font-weight: 500;
+        margin-bottom: .5rem;
+    }
+
+        .choice-label:hover {
+            border-color: var(--secondary);
+            background: rgba(0,203,184,.05);
+        }
+
+    input[type=radio]:checked + .choice-label {
+        border-color: var(--accent-purple);
+        background: rgba(91,114,238,.07);
+        color: var(--accent-purple);
+        font-weight: 600;
+    }
+
+    .timer-wrap {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: white;
+        border-radius: 12px;
+        border: 1.5px solid rgba(0,0,0,.07);
+        padding: .75rem 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,.07);
+    }
+
+    .timer-val {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--primary);
+        font-variant-numeric: tabular-nums;
+    }
+
+        .timer-val.urgent {
+            color: var(--accent-pink);
+            animation: pulse 1s infinite;
+        }
+
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1
+        }
+
+        50% {
+            opacity: .5
+        }
+    }
+
+    .progress-bar-exam {
+        height: 6px;
+        border-radius: 10px;
+        background: rgba(0,0,0,.07);
+        overflow: hidden;
+        flex: 1;
+        margin: 0 1rem;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(90deg,var(--secondary),var(--accent-blue));
+        transition: width .4s ease;
+    }
+</style>
+
+<!-- Sticky timer + progress -->
+<div class="timer-wrap anim">
+    <div>
+        <div style="font-size:.72rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Time Remaining</div>
+        <div class="timer-val" id="timerDisplay">@Model.Exam.DurationInMinutes:00</div>
+    </div>
+    <div class="progress-bar-exam">
+        <div class="progress-bar-fill" id="progressBar" style="width:0%;"></div>
+    </div>
+    <div style="text-align:right;">
+        <div style="font-size:.72rem;color:#9ca3af;font-weight:600;">Answered</div>
+        <div style="font-weight:800;color:var(--primary);font-size:1rem;">
+            <span id="answeredCount">0</span> / @Model.Questions.Count
+        </div>
+    </div>
+</div>
+
+<!-- Exam header -->
+<div class="st-card mb-4 anim">
+    <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));border-radius:16px 16px 0 0;padding:1.2rem 1.5rem;">
+        <h5 style="color:white;font-weight:700;margin:0;">@Model.Exam.Title</h5>
+        <small style="color:rgba(255,255,255,.75);">@Model.CourseName &nbsp;·&nbsp; @Model.Exam.DurationInMinutes min &nbsp;·&nbsp; @Model.Exam.TotalMarks marks</small>
+    </div>
+    <div class="st-card-body" style="font-size:.87rem;color:#555;">@Model.Exam.Description</div>
+</div>
+
+<!-- Questions -->
+<form asp-area="Student" asp-controller="Exams" asp-action="Submit" method="post" id="examForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="ExamId" value="@Model.Exam.Id" />
+
+    @for (int qi = 0; qi < Model.Questions.Count; qi++)
+    {
+        var q = Model.Questions[qi];
+        <div class="question-card anim" id="qcard_@q.Id">
+            <div class="d-flex gap-3 mb-3">
+                <div style="width:30px;height:30px;border-radius:8px;background:rgba(91,114,238,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;font-size:.85rem;color:var(--accent-purple);">@(qi + 1)</div>
+                <div style="font-weight:600;font-size:.9rem;padding-top:4px;">@q.Title</div>
+            </div>
+            <div class="ps-5">
+                @foreach (var ch in q.Choices ?? new())
+                {
+                    <div>
+                        <input type="radio" name="Answers[@qi].QuestionId" value="@q.Id" style="display:none;" />
+                        <input type="radio" name="Answers[@qi].ChoiceId" value="@ch.Id" id="ch_@ch.Id"
+                               style="display:none;" onchange="markAnswered(@q.Id, @qi)" />
+                        <label for="ch_@ch.Id" class="choice-label">
+                            <span style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;font-weight:700;">@("ABCD"[q.Choices!.IndexOf(ch)])</span>
+                            @ch.Title
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between mt-3">
+        <a asp-area="Student" asp-controller="Exams" asp-action="Index"
+           class="btn btn-sm rounded-3 px-4"
+           style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;"
+           onclick="return confirm('Are you sure you want to leave? Your answers will be lost.')">
+            Cancel
+        </a>
+        <button type="submit" class="btn btn-primary rounded-3 px-5"
+                style="font-family:Poppins,sans-serif;"
+                onclick="return confirm('Submit exam? You cannot change your answers after submission.')">
+            <i class="fas fa-paper-plane me-2"></i>Submit Exam
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        var totalSeconds = @Model.Exam.DurationInMinutes * 60;
+        var remaining    = totalSeconds;
+        var totalQ       = @Model.Questions.Count;
+        var answered     = 0;
+
+        function markAnswered(qId, qi) {
+            var card = document.getElementById('qcard_' + qId);
+            if (card && !card.classList.contains('answered')) {
+                card.classList.add('answered');
+                answered++;
+                document.getElementById('answeredCount').textContent = answered;
+                document.getElementById('progressBar').style.width = (answered / totalQ * 100) + '%';
+            }
+            // also set QuestionId hidden
+            var hiddenQ = document.querySelector('input[name="Answers[' + qi + '].QuestionId"]');
+            if (hiddenQ) hiddenQ.value = qId;
+        }
+
+        var timer = setInterval(function() {
+            remaining--;
+            if (remaining <= 0) { clearInterval(timer); document.getElementById('examForm').submit(); return; }
+            var m = Math.floor(remaining / 60), s = remaining % 60;
+            var display = document.getElementById('timerDisplay');
+            display.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            if (remaining <= 120) display.classList.add('urgent');
+        }, 1000);
+
+        window.addEventListener('beforeunload', function(e) {
+            if (answered > 0) { e.preventDefault(); e.returnValue = ''; }
+        });
+    </script>
+}

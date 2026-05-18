@@ -1,0 +1,727 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Student Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+        --primary: #2F327D;
+        --secondary: #00CBB8;
+        --accent-blue: #29B9E7;
+        --accent-purple: #5B72EE;
+        --accent-green: #33EFA0;
+        --accent-pink: #E13468;
+        --orange: #F48C06;
+        --yellow: #FDCB6E;
+        --text-dark: #2d2d2d;
+        --bg-content: #f4f6fb;
+        --sidebar-border: rgba(47,50,125,.08);
+        --sidebar-width: 270px;
+        }
+
+        *, *::before, *::after {
+        box-sizing: border-box;
+        }
+
+        html, body {
+        height: 100%;
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: var(--bg-content);
+        color: var(--text-dark);
+        }
+
+        /* Shell */
+        .st-shell {
+        display: flex;
+        min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .st-sidebar {
+        width: var(--sidebar-width);
+        min-width: var(--sidebar-width);
+        background: white;
+        border-right: 1px solid var(--sidebar-border);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--secondary) transparent;
+        }
+
+        .st-sidebar::-webkit-scrollbar {
+        width: 4px;
+        }
+
+        .st-sidebar::-webkit-scrollbar-thumb {
+        background: var(--secondary);
+        border-radius: 4px;
+        }
+
+        .st-brand {
+        padding: 1.3rem 1.3rem .9rem;
+        border-bottom: 1px solid var(--sidebar-border);
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+        }
+
+        .st-brand-icon {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg,var(--accent-purple),var(--accent-blue));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        }
+
+        .st-brand-text strong {
+        display: block;
+        font-size: .88rem;
+        color: var(--primary);
+        }
+
+        .st-brand-text small {
+        font-size: .67rem;
+        color: var(--secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        }
+
+        .st-sidebar-body {
+        flex: 1;
+        padding: 1rem .8rem;
+        }
+
+        .st-group-label {
+        font-size: .67rem;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--primary);
+        font-weight: 800;
+        opacity: .45;
+        margin: 1rem .5rem .4rem;
+        }
+
+        .st-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 12px;
+        border-radius: 11px;
+        color: var(--text-dark);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: .86rem;
+        margin-bottom: 2px;
+        transition: background .15s, color .15s;
+        }
+
+        .st-nav-item i {
+        font-size: .9rem;
+        width: 20px;
+        text-align: center;
+        color: var(--secondary);
+        transition: color .15s;
+        }
+
+        .st-nav-item:hover {
+        background: rgba(91,114,238,.07);
+        color: var(--primary);
+        }
+
+        .st-nav-item.active {
+        background: linear-gradient(135deg,var(--accent-purple),var(--accent-blue));
+        color: white;
+        }
+
+        .st-nav-item.active i {
+        color: white;
+        }
+
+        .st-sidebar-footer {
+        padding: .9rem;
+        border-top: 1px solid var(--sidebar-border);
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+        }
+
+        .st-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,var(--accent-purple),var(--accent-blue));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: .78rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        }
+
+        .st-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        }
+
+        .st-footer-info {
+        flex: 1;
+        min-width: 0;
+        }
+
+        .st-footer-info strong {
+        display: block;
+        font-size: .78rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        }
+
+        .st-footer-info small {
+        font-size: .67rem;
+        color: var(--secondary);
+        }
+
+        .st-logout {
+        color: var(--accent-pink);
+        font-size: .85rem;
+        text-decoration: none;
+        padding: 5px;
+        border-radius: 8px;
+        transition: background .15s;
+        }
+
+        .st-logout:hover {
+        background: rgba(225,52,104,.08);
+        }
+
+        /* Main */
+        .st-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        }
+
+        .st-topbar {
+        background: white;
+        border-bottom: 1px solid var(--sidebar-border);
+        padding: .75rem 1.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        }
+
+        .st-topbar h6 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--primary);
+        }
+
+        .st-page {
+        padding: 1.6rem;
+        flex: 1;
+        }
+
+        .topbar-nav-link {
+        color: var(--primary);
+        font-size: .78rem;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 4px 9px;
+        border-radius: 8px;
+        transition: background .15s;
+        }
+
+        .topbar-nav-link:hover {
+        background: rgba(47,50,125,.07);
+        }
+
+        /* Cards */
+        .st-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,.05);
+        box-shadow: 0 2px 12px rgba(47,50,125,.06);
+        overflow: hidden;
+        }
+
+        .st-card-header {
+        padding: .95rem 1.3rem;
+        border-bottom: 1px solid rgba(0,0,0,.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        }
+
+        .st-card-header h5 {
+        margin: 0;
+        font-size: .9rem;
+        font-weight: 700;
+        }
+
+        .st-card-body {
+        padding: 1.3rem;
+        }
+
+        /* Stat cards */
+        .st-stat {
+        border-radius: 16px;
+        padding: 1.2rem 1.4rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,.12);
+        transition: transform .2s;
+        cursor: default;
+        }
+
+        .st-stat:hover {
+        transform: translateY(-3px);
+        }
+
+        .st-stat .si {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2.8rem;
+        opacity: .18;
+        }
+
+        .st-stat h3 {
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin: .15rem 0;
+        }
+
+        .st-stat p {
+        margin: 0;
+        font-size: .78rem;
+        opacity: .9;
+        }
+
+        .sg1 {
+        background: linear-gradient(135deg,var(--accent-purple),var(--accent-blue));
+        }
+
+        .sg2 {
+        background: linear-gradient(135deg,var(--secondary),var(--accent-green));
+        }
+
+        .sg3 {
+        background: linear-gradient(135deg,var(--orange),var(--yellow));
+        }
+
+        .sg4 {
+        background: linear-gradient(135deg,var(--primary),var(--accent-purple));
+        }
+
+        .sg5 {
+        background: linear-gradient(135deg,var(--accent-pink),var(--orange));
+        }
+
+        .sg6 {
+        background: linear-gradient(135deg,var(--accent-green),var(--secondary));
+        }
+
+        /* Table */
+        .st-table {
+        width: 100%;
+        border-collapse: collapse;
+        }
+
+        .st-table thead th {
+        background: var(--primary);
+        color: white;
+        padding: .75rem 1rem;
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        }
+
+        .st-table thead th:first-child {
+        border-radius: 10px 0 0 10px;
+        }
+
+        .st-table thead th:last-child {
+        border-radius: 0 10px 10px 0;
+        }
+
+        .st-table tbody tr {
+        border-bottom: 1px solid rgba(0,0,0,.04);
+        transition: background .15s;
+        }
+
+        .st-table tbody tr:hover {
+        background: rgba(91,114,238,.025);
+        }
+
+        .st-table tbody td {
+        padding: .75rem 1rem;
+        font-size: .86rem;
+        vertical-align: middle;
+        }
+
+        /* Badges */
+        .pb {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: .71rem;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+        }
+
+        .pb-green {
+        background: rgba(22,163,74,.12);
+        color: #16a34a;
+        }
+
+        .pb-red {
+        background: rgba(225,52,104,.12);
+        color: var(--accent-pink);
+        }
+
+        .pb-orange {
+        background: rgba(244,140,6,.12);
+        color: var(--orange);
+        }
+
+        .pb-blue {
+        background: rgba(41,185,231,.12);
+        color: var(--accent-blue);
+        }
+
+        .pb-purple {
+        background: rgba(91,114,238,.12);
+        color: var(--accent-purple);
+        }
+
+        .pb-gray {
+        background: rgba(0,0,0,.06);
+        color: #6c757d;
+        }
+
+        /* Progress */
+        .st-bar {
+        height: 7px;
+        border-radius: 10px;
+        background: rgba(0,0,0,.07);
+        overflow: hidden;
+        }
+
+        .st-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width .8s ease;
+        }
+
+        /* Form controls */
+        .st-control {
+        border-radius: 10px;
+        border: 1.5px solid rgba(47,50,125,.14);
+        font-size: .875rem;
+        padding: .58rem .9rem;
+        font-family: 'Poppins',sans-serif;
+        transition: border-color .15s,box-shadow .15s;
+        width: 100%;
+        outline: none;
+        }
+
+        .st-control:focus {
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(0,203,184,.15);
+        }
+
+        /* Animations */
+        @@keyframes fadeSlideUp {
+        from {
+        opacity: 0;
+        transform: translateY(22px);
+        }
+
+        to {
+        opacity: 1;
+        transform: translateY(0);
+        }
+        }
+
+        .anim {
+        animation: fadeSlideUp .4s ease both;
+        }
+
+        .anim-1 {
+        animation-delay: .04s;
+        }
+
+        .anim-2 {
+        animation-delay: .08s;
+        }
+
+        .anim-3 {
+        animation-delay: .12s;
+        }
+
+        .anim-4 {
+        animation-delay: .16s;
+        }
+
+        .anim-5 {
+        animation-delay: .20s;
+        }
+
+        .anim-6 {
+        animation-delay: .24s;
+        }
+
+        /* Notification bell */
+        .bell-wrap {
+        position: relative;
+        cursor: pointer;
+        }
+
+        .bell-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--accent-pink);
+        border-radius: 50%;
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        border: 2px solid white;
+        display: none;
+        }
+
+        .notif-dropdown {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        width: 320px;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 8px 40px rgba(0,0,0,.14);
+        border: 1px solid rgba(0,0,0,.07);
+        z-index: 1000;
+        display: none;
+        }
+
+        .notif-dropdown.open {
+        display: block;
+        animation: fadeSlideUp .2s ease;
+        }
+
+        .notif-header {
+        padding: .75rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,.05);
+        font-weight: 700;
+        font-size: .85rem;
+        color: var(--primary);
+        }
+
+        .notif-item {
+        padding: .65rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,.04);
+        font-size: .8rem;
+        display: flex;
+        gap: .6rem;
+        align-items: flex-start;
+        }
+
+        .notif-item:last-child {
+        border-bottom: none;
+        }
+
+        .notif-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: .78rem;
+        }
+
+        .notif-empty {
+        padding: 1.5rem;
+        text-align: center;
+        color: #9ca3af;
+        font-size: .82rem;
+        }
+
+        /* Mobile */
+        .st-mobile-bar {
+        display: none;
+        background: white;
+        padding: .75rem 1.2rem;
+        border-bottom: 1px solid var(--sidebar-border);
+        align-items: center;
+        justify-content: space-between;
+        }
+
+        @@media (max-width: 991.98px) {
+        .st-sidebar {
+        display: none;
+        }
+
+        .st-mobile-bar {
+        display: flex;
+        }
+
+        .st-page {
+        padding: 1.1rem;
+        }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    @{
+        var userName = User.Identity?.Name ?? "Student";
+        var initials = userName.Length >= 2 ? userName[..2].ToUpper() : "ST";
+        var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    }
+
+    <!-- Mobile bar -->
+    <div class="st-mobile-bar">
+        <div class="d-flex align-items-center gap-2">
+            <div class="st-brand-icon" style="width:34px;height:34px;border-radius:9px;font-size:.85rem;"><i class="fas fa-user-graduate"></i></div>
+            <strong style="color:var(--primary);font-size:.88rem;">Student Portal</strong>
+        </div>
+        <button class="btn btn-sm" style="background:var(--accent-purple);color:white;border-radius:8px;"
+                data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Mobile offcanvas -->
+    <div class="offcanvas offcanvas-start" id="mobileSidebar" style="width:270px;">
+        <div class="offcanvas-header border-bottom">
+            <div class="d-flex align-items-center gap-2">
+                <div class="st-brand-icon"><i class="fas fa-user-graduate"></i></div>
+                <div class="st-brand-text"><strong>TOTC LMS</strong><small>Student Portal</small></div>
+            </div>
+            <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-3">@await Html.PartialAsync("_StudentSidebar")</div>
+    </div>
+
+    <div class="st-shell">
+        <!-- Desktop Sidebar -->
+        <aside class="st-sidebar d-none d-lg-flex flex-column">
+            <div class="st-brand">
+                <div class="st-brand-icon"><i class="fas fa-user-graduate"></i></div>
+                <div class="st-brand-text"><strong>TOTC LMS</strong><small>Student Portal</small></div>
+            </div>
+            <div class="st-sidebar-body flex-grow-1">@await Html.PartialAsync("_StudentSidebar")</div>
+            <div class="st-sidebar-footer">
+                <div class="st-avatar">@initials</div>
+                <div class="st-footer-info flex-grow-1">
+                    <strong>@userName</strong>
+                    <small>Student</small>
+                </div>
+                <a asp-area="" asp-controller="Account" asp-action="Logout" class="st-logout" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="st-main">
+            <div class="st-topbar">
+                <h6>@ViewData["Title"]</h6>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Nav links -->
+                    <div class="d-none d-xl-flex align-items-center gap-1">
+                        <a href="/" class="topbar-nav-link"><i class="fas fa-home me-1"></i>Home</a>
+                        <a href="#" class="topbar-nav-link">Blog</a>
+                        <a href="#" class="topbar-nav-link">About</a>
+                    </div>
+                    <!-- Notification bell -->
+                    <div class="bell-wrap" id="bellWrap" onclick="toggleNotif()">
+                        <i class="fas fa-bell" style="color:var(--primary);font-size:1rem;"></i>
+                        <span class="bell-dot" id="bellDot"></span>
+                        <div class="notif-dropdown" id="notifDropdown">
+                            <div class="notif-header"><i class="fas fa-bell me-2"></i>Notifications</div>
+                            <div id="notifList"><div class="notif-empty"><i class="fas fa-check-circle d-block mb-1" style="font-size:1.5rem;opacity:.3;"></i>You're all caught up!</div></div>
+                        </div>
+                    </div>
+                    <div class="st-avatar" style="width:32px;height:32px;font-size:.72rem;">@initials</div>
+                </div>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div style="padding:0 1.6rem;margin-top:.8rem;">
+                    <div class="alert alert-success alert-dismissible fade show" style="border-radius:12px;border:none;font-size:.87rem;">
+                        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div style="padding:0 1.6rem;margin-top:.8rem;">
+                    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px;border:none;font-size:.87rem;">
+                        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+
+            <div class="st-page">@RenderBody()</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Bell notification toggle
+        function toggleNotif() {
+        document.getElementById('notifDropdown').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('bellWrap');
+        if (wrap && !wrap.contains(e.target)) document.getElementById('notifDropdown').classList.remove('open');
+        });
+
+        // Load notifications
+        (function() {
+        fetch('/api/announcements/count').then(r => r.json()).then(function(d) {
+        if (d > 0) {
+        document.getElementById('bellDot').style.display = 'block';
+        document.getElementById('notifList').innerHTML =
+        '<a href="/Student/Announcements/Index" class="notif-item text-decoration-none text-dark">' +
+        '<div class="notif-icon" style="background:rgba(0,203,184,.1);color:var(--secondary);"><i class="fas fa-bullhorn"></i></div>' +
+        '<div><div style="font-weight:600;font-size:.8rem;">' + d + ' New Announcement' + (d>1?'s':'') + '</div>' +
+        '<div style="color:#9ca3af;font-size:.72rem;">Click to view</div></div></a>';
+        }
+        }).catch(function() {});
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

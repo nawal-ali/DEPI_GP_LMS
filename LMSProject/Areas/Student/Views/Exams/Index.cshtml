@@ -1,0 +1,143 @@
+﻿@model List<ExamVM>
+@{
+    ViewData["Title"] = "Exams";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 anim">
+    <h5 style="font-weight:700;color:var(--primary);margin:0;">
+        <i class="fas fa-file-alt me-2" style="color:var(--secondary);"></i>Exams
+        <span class="pb pb-blue ms-2">@Model.Count</span>
+    </h5>
+</div>
+
+<!-- Filter tabs -->
+<div class="d-flex gap-2 mb-4 flex-wrap anim">
+    @{
+        var all = Model.Count;
+        var available = Model.Count(e => e.CanTake);
+        var submitted = Model.Count(e => e.IsSubmitted);
+        var expired = Model.Count(e => e.IsExpired);
+    }
+    <button class="btn btn-primary btn-sm rounded-3" onclick="filterExams('all')" id="tab-all">All (@all)</button>
+    <button class="btn btn-sm rounded-3" onclick="filterExams('available')" id="tab-available"
+            style="background:rgba(91,114,238,.1);color:var(--accent-purple);">
+        Available (@available)
+    </button>
+    <button class="btn btn-sm rounded-3" onclick="filterExams('submitted')" id="tab-submitted"
+            style="background:rgba(22,163,74,.1);color:#16a34a;">
+        Submitted (@submitted)
+    </button>
+    <button class="btn btn-sm rounded-3" onclick="filterExams('expired')" id="tab-expired"
+            style="background:rgba(225,52,104,.1);color:var(--accent-pink);">
+        Expired (@expired)
+    </button>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="st-card p-5 text-center anim" style="color:#aaa;">
+        <i class="fas fa-file-alt fa-3x mb-3 d-block opacity-25"></i>No exams found.
+    </div>
+}
+else
+{
+    <div class="st-card anim">
+        <div class="table-responsive">
+            <table class="st-table" id="examsTable">
+                <thead>
+                    <tr>
+                        <th>Exam</th>
+                        <th>Course</th>
+                        <th>Questions</th>
+                        <th>Marks</th>
+                        <th>Duration</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model)
+                    {
+                        string tag = e.IsSubmitted ? "submitted" : e.IsExpired ? "expired" : "available";
+                        <tr data-tag="@tag">
+                            <td style="font-weight:600;font-size:.87rem;">@e.Title</td>
+                            <td><span class="pb pb-purple">@e.CourseName</span></td>
+                            <td style="text-align:center;">@e.QuestionCount</td>
+                            <td style="font-weight:700;color:var(--primary);">@e.TotalMarks</td>
+                            <td style="font-size:.82rem;">@e.DurationMinutes min</td>
+                            <td style="font-size:.8rem;">
+                                @(e.Deadline?.ToString("MMM dd, yyyy") ?? "—")
+                                @if (e.IsExpired)
+                                {
+                                    <span class="pb pb-red ms-1" style="font-size:.65rem;">Expired</span>
+                                }
+                            </td>
+                            <td>
+                                @if (e.IsSubmitted)
+                                {
+                                    <span class="pb pb-green">Submitted</span>
+                                }
+                                else if (e.IsExpired)
+                                {
+
+                                    <span class="pb pb-red">Expired</span>
+                                }
+                                else
+                                {
+
+                                    <span class="pb pb-orange">Available</span>
+                                }
+                            </td>
+                            <td>
+                                @if (e.IsSubmitted && e.Score.HasValue)
+                                {
+                                    <span style="font-weight:800;color:@e.ScoreColor;">@e.Score / @e.TotalMarks</span>
+                                    <span class="pb ms-1" style="background:@(e.ScoreColor)15;color:@e.ScoreColor;font-size:.68rem;">@e.GradeLabel</span>
+                                }
+                                else
+                                {
+
+                                    <span style="color:#9ca3af;">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (e.CanTake)
+                                {
+                                    <a asp-area="Student" asp-controller="Exams" asp-action="Take"
+                                       asp-route-id="@e.ExamId"
+                                       class="btn btn-primary btn-sm rounded-3 px-3"
+                                       style="font-size:.78rem;font-family:Poppins,sans-serif;">
+                                        <i class="fas fa-pen me-1"></i>Start
+                                    </a>
+                                }
+                                else
+                                {
+
+                                    <span style="color:#aaa;font-size:.8rem;">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function filterExams(tag) {
+            document.querySelectorAll('#examsTable tbody tr').forEach(function(r) {
+                r.style.display = (tag === 'all' || r.dataset.tag === tag) ? '' : 'none';
+            });
+            document.querySelectorAll('[id^="tab-"]').forEach(function(b) {
+                b.className = 'btn btn-sm rounded-3';
+                b.style.background = 'rgba(47,50,125,.07)'; b.style.color = 'var(--primary)';
+            });
+            var active = document.getElementById('tab-' + tag);
+            if (active) { active.className = 'btn btn-primary btn-sm rounded-3'; active.style.background = ''; active.style.color = ''; }
+        }
+    </script>
+}

@@ -1,0 +1,54 @@
+﻿@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    bool Is(string c) => string.Equals(ctrl, c, StringComparison.OrdinalIgnoreCase);
+}
+
+<p class="st-group-label mt-2">Overview</p>
+<a asp-area="Student" asp-controller="Home" asp-action="Index"
+   class="st-nav-item @(Is("Home") ? "active" : "")">
+    <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+</a>
+
+<p class="st-group-label mt-3">Academic</p>
+<a asp-area="Student" asp-controller="Courses" asp-action="Index"
+   class="st-nav-item @(Is("Courses") ? "active" : "")">
+    <i class="fas fa-book-open"></i><span>My Courses</span>
+</a>
+<a asp-area="Student" asp-controller="Exams" asp-action="Index"
+   class="st-nav-item @(Is("Exams") ? "active" : "")">
+    <i class="fas fa-file-alt"></i><span>Exams</span>
+</a>
+<a asp-area="Student" asp-controller="Assignments" asp-action="Index"
+   class="st-nav-item @(Is("Assignments") ? "active" : "")">
+    <i class="fas fa-tasks"></i><span>Assignments</span>
+</a>
+
+<p class="st-group-label mt-3">Communication</p>
+<a asp-area="Student" asp-controller="Announcements" asp-action="Index"
+   class="st-nav-item @(Is("Announcements") ? "active" : "")">
+    <i class="fas fa-bullhorn"></i><span>Announcements</span>
+</a>
+<a asp-area="Student" asp-controller="Tickets" asp-action="Index"
+   class="st-nav-item @(Is("Tickets") ? "active" : "")">
+    <i class="fas fa-headset"></i><span>Support Tickets</span>
+</a>
+
+<p class="st-group-label mt-3">People</p>
+<a asp-area="Student" asp-controller="Instructors" asp-action="Index"
+   class="st-nav-item @(Is("Instructors") ? "active" : "")">
+    <i class="fas fa-chalkboard-teacher"></i><span>My Instructors</span>
+</a>
+<a asp-area="Student" asp-controller="ParentInfo" asp-action="Index"
+   class="st-nav-item @(Is("ParentInfo") ? "active" : "")">
+    <i class="fas fa-user-friends"></i><span>My Parent</span>
+</a>
+
+<p class="st-group-label mt-3">Account</p>
+<a asp-area="Student" asp-controller="Profile" asp-action="Index"
+   class="st-nav-item @(Is("Profile") ? "active" : "")">
+    <i class="fas fa-user-circle"></i><span>My Profile</span>
+</a>
+<a asp-area="" asp-controller="Account" asp-action="Logout"
+   class="st-nav-item" style="color:var(--accent-pink);">
+    <i class="fas fa-sign-out-alt" style="color:var(--accent-pink);"></i><span>Sign Out</span>
+</a>

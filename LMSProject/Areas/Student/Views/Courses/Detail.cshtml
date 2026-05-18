@@ -1,0 +1,112 @@
+﻿@model CourseDetailVM
+@{
+    ViewData["Title"] = Model.Course.Name;
+    var c = Model.Course;
+}
+<div class="st-card mb-4 anim">
+    <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));border-radius:16px 16px 0 0;padding:1.5rem 2rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
+        @if (!string.IsNullOrEmpty(c.ImageName))
+        {
+            <img src="~/@c.ImageName" style="width:60px;height:60px;border-radius:12px;object-fit:cover;flex-shrink:0;" />
+        }
+        <div style="flex:1;">
+            <h5 style="color:white;font-weight:700;margin:0;">@c.Name</h5>
+            <small style="color:rgba(255,255,255,.75);">@(Model.Instructor?.FullName ?? "—") &nbsp;·&nbsp; @(c.Grade?.Name ?? "") &nbsp;·&nbsp; @(c.Term?.Name ?? "")</small>
+        </div>
+        <a asp-area="Student" asp-controller="Courses" asp-action="Index" class="btn btn-sm rounded-3" style="background:rgba(255,255,255,.15);color:white;font-family:Poppins,sans-serif;"><i class="fas fa-arrow-left me-1"></i>Back</a>
+    </div>
+</div>
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4 anim" style="border-bottom:2px solid rgba(0,0,0,.06);">
+    <li class="nav-item"><a class="nav-link active fw-semibold" data-bs-toggle="tab" href="#materials" style="color:var(--primary);"><i class="fas fa-folder-open me-1"></i>Materials (@Model.Materials.Count)</a></li>
+    <li class="nav-item"><a class="nav-link fw-semibold" data-bs-toggle="tab" href="#exams" style="color:var(--primary);"><i class="fas fa-file-alt me-1"></i>Exams (@Model.Exams.Count)</a></li>
+    <li class="nav-item"><a class="nav-link fw-semibold" data-bs-toggle="tab" href="#assignments" style="color:var(--primary);"><i class="fas fa-tasks me-1"></i>Assignments (@Model.Assignments.Count)</a></li>
+</ul>
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="materials">
+        @if (!Model.Materials.Any())
+        {
+            <div class="st-card p-5 text-center" style="color:#aaa;"><i class="fas fa-folder-open fa-2x mb-2 d-block opacity-25"></i>No materials.</div>
+        }
+        else
+        {
+            <div class="st-card anim">
+                @foreach (var m in Model.Materials)
+                {
+                    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div style="width:36px;height:36px;border-radius:9px;background:rgba(91,114,238,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-file" style="color:var(--accent-purple);font-size:.85rem;"></i></div>
+                        <div style="flex:1;"><div style="font-weight:600;font-size:.87rem;">@m.Title</div><small style="color:#9ca3af;font-size:.72rem;">@m.MaterialType &nbsp;·&nbsp; @(m.CreatedDate?.ToString("MMM dd") ?? "")</small></div>
+                        @if (!string.IsNullOrEmpty(m.FileUrl))
+                        {
+                            <a href="~/@m.FileUrl" target="_blank" class="btn btn-sm rounded-3" style="background:rgba(0,203,184,.1);color:var(--secondary);font-family:Poppins,sans-serif;font-size:.78rem;"><i class="fas fa-download me-1"></i>Download</a>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <div class="tab-pane fade" id="exams">
+        @if (!Model.Exams.Any())
+        {
+            <div class="st-card p-5 text-center" style="color:#aaa;"><i class="fas fa-file-alt fa-2x mb-2 d-block opacity-25"></i>No exams.</div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var e in Model.Exams)
+                {
+                    <div class="col-md-6">
+                        <div class="st-card">
+                            <div class="st-card-body">
+                                <h6 style="font-weight:700;">@e.Title</h6>
+                                <div class="d-flex gap-2 flex-wrap mb-2">
+                                    <span class="pb pb-blue">@e.QuestionCount Qs</span>
+                                    <span class="pb pb-purple">@e.TotalMarks pts</span>
+                                    <span class="pb pb-gray">@e.DurationMinutes min</span>
+                                </div>
+                                @if (e.Deadline.HasValue)
+                                {
+                                    <small style="color:#9ca3af;font-size:.75rem;display:block;margin-bottom:.75rem;"><i class="fas fa-clock me-1"></i>Due @e.Deadline.Value.ToString("MMM dd, yyyy")</small>
+                                }
+                                @if (e.IsSubmitted)
+                                {
+                                    <span class="pb pb-green">Scored @e.Score / @e.TotalMarks (@e.GradeLabel)</span>
+                                }
+                                else if (e.CanTake)
+                                {
+
+                                    <a asp-area="Student" asp-controller="Exams" asp-action="Take" asp-route-id="@e.ExamId" class="btn btn-primary btn-sm rounded-3 w-100" style="font-family:Poppins,sans-serif;font-size:.8rem;"><i class="fas fa-pen me-1"></i>Start Exam</a>
+                                }
+                                else
+                                {
+
+                                    <span class="pb pb-red">Expired</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <div class="tab-pane fade" id="assignments">
+        @if (!Model.Assignments.Any())
+        {
+            <div class="st-card p-5 text-center" style="color:#aaa;"><i class="fas fa-tasks fa-2x mb-2 d-block opacity-25"></i>No assignments.</div>
+        }
+        else
+        {
+            <div class="st-card">
+                @foreach (var a in Model.Assignments)
+                {
+                    <div style="padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.04);">
+                        <div class="d-flex align-items-start justify-content-between gap-2">
+                            <div><div style="font-weight:600;font-size:.87rem;">@a.Title</div><small style="color:#9ca3af;font-size:.72rem;">Due @a.Deadline.ToString("MMM dd") &nbsp;·&nbsp; @a.TotalMarks pts</small></div>
+                            <span class="pb @a.BadgeClass" style="flex-shrink:0;">@a.StatusLabel</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
