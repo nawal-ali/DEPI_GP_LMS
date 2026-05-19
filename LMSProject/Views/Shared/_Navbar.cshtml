@@ -44,6 +44,19 @@
             <div class="offcanvas-body">
                 <ul class="navbar-nav ms-auto align-items-center gap-3">
 
+
+                    <!-- Language Toggle -->
+                    <li class="nav-item">
+                        <button onclick="toggleLang()" id="langBtn"
+                                style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);
+                            color:white;border-radius:20px;padding:4px 14px;font-size:.82rem;
+                            font-family:Poppins,sans-serif;cursor:pointer;transition:all .2s;
+                            display:flex;align-items:center;gap:6px;">
+                            <span id="langFlag">🇬🇧</span>
+                            <span id="langLabel">العربية</span>
+                        </button>
+                    </li>
+
                     <li class="nav-item fs-5">
                         <a class="nav-link nav-text d-flex align-items-center gap-2"
                            asp-controller="Home" asp-action="Index">
@@ -58,7 +71,7 @@
                     </li>
 
                     <li class="nav-item fs-5">
-                        <a class="nav-link nav-text d-flex align-items-center gap-2" href="#">
+                        <a class="nav-link nav-text d-flex align-items-center gap-2" asp-controller="Home" asp-action="About">
                             <i class="fas fa-info-circle"></i>About
                         </a>
                     </li>

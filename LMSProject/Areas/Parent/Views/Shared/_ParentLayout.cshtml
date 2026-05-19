@@ -605,7 +605,7 @@
                     <div class="d-none d-xl-flex align-items-center gap-1">
                         <a href="/" class="topbar-nav-link"><i class="fas fa-home me-1"></i>Home</a>
                         <a href="#" class="topbar-nav-link">Blog</a>
-                        <a href="#" class="topbar-nav-link">About</a>
+                        <a asp-area="" asp-controller="Home" asp-action="About" class="topbar-nav-link">About</a>
                     </div>
                     <!-- Notification bell -->
                     @await Html.PartialAsync("_NotificationBell")

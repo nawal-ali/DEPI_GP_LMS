@@ -99,10 +99,84 @@ namespace LMSProject.Areas.Student.Controllers
                 f.UploadedAt
             }));
         }
-    }
 
-    // ── Request DTOs ───────────────────────────────────────────────────────
-    public record ChatRequest(string Message, string? FileId, string? SessionId);
-    public record FileIdRequest(string FileId);
-    public record AiActionRequest(string Action, string FileId);
+
+        // ── Study Planner page ────────────────────────────────────────────
+        [HttpGet]
+        public IActionResult StudyPlannerPage()
+        {
+            ViewData["Title"] = "AI Study Planner";
+            return View("~/Areas/Student/Views/Ai/StudyPlanner.cshtml");
+        }
+
+        // ── Generate study plan (POST, no file needed) ────────────────
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> StudyPlan()
+        {
+            try
+            {
+                var result = await _chat.GenerateStudyPlanAsync(CurrentUserId);
+                return Ok(new { result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        // ── Deadlines API for the planner sidebar ─────────────────────
+        [HttpGet]
+        public async Task<IActionResult> Deadlines()
+        {
+            var student = await _db.Students
+                .FirstOrDefaultAsync(s => s.UserId == CurrentUserId && s.CurrentState == 1);
+            if (student == null) return Ok(Array.Empty<object>());
+
+            var now = DateTime.Now;
+            var courseIds = await _db.StudentCourses
+                .Where(sc => sc.StId == student.Id)
+                .Select(sc => sc.CourseId).ToListAsync();
+
+            var courseNames = await _db.Courses
+                .Where(c => courseIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Name);
+
+            var exams = await _db.Tests
+                .Where(t => courseIds.Contains(t.CourseId) && t.CurrentState == 1
+                         && t.Deadline.HasValue && t.Deadline > now)
+                .OrderBy(t => t.Deadline).Take(8).ToListAsync();
+
+            var assignments = await _db.Assignments
+                .Where(a => courseIds.Contains(a.CourseId) && a.CurrentState == 1 && a.Deadline > now)
+                .Include(a => a.Submissions.Where(s => s.StudentId == student.Id))
+                .OrderBy(a => a.Deadline).Take(8).ToListAsync();
+
+            var items = exams.Select(e => new
+            {
+                title = e.Title,
+                course = courseNames.GetValueOrDefault(e.CourseId, "Unknown"),
+                type = "exam",
+                deadline = e.Deadline!.Value.ToString("MMM dd, yyyy"),
+                daysLeft = (int)(e.Deadline.Value - now).TotalDays
+            }).Cast<object>()
+            .Concat(assignments.Where(a => !a.Submissions.Any()).Select(a => new
+            {
+                title = a.Title,
+                course = courseNames.GetValueOrDefault(a.CourseId, "Unknown"),
+                type = "assignment",
+                deadline = a.Deadline.ToString("MMM dd, yyyy"),
+                daysLeft = (int)(a.Deadline - now).TotalDays
+            }).Cast<object>())
+            .OrderBy(x => ((dynamic)x).daysLeft)
+            .ToList();
+
+            return Ok(items);
+        }
+
+        // ── Request DTOs ───────────────────────────────────────────────────────
+        public record ChatRequest(string Message, string? FileId, string? SessionId);
+        public record FileIdRequest(string FileId);
+        public record AiActionRequest(string Action, string FileId);
+    }
 }

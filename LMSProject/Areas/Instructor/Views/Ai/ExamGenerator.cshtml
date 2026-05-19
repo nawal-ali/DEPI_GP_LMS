@@ -399,225 +399,92 @@
 </div>
 
 @section Scripts {
-    <script>
-        var selectedFileId   = null;
-        var pendingFiles     = [];
+    @* <script>
+        // ── n8n-powered Exam Generator ────────────────────────────────────────
+        // File stays in browser memory. Sent directly to n8n per generation.
+        var selectedFile     = null;
+        var selectedFileName = '';
 
-        // Auto-select the first file if files already exist on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            var firstRadio = document.querySelector('input[name="selectedFile"]');
-            if (firstRadio) {
-                firstRadio.checked = true;
-                firstRadio.dispatchEvent(new Event('change'));
-            }
-        });
-
-        // ── Drop zone ─────────────────────────────────────────────────────────────
+        // ── Drop zone ─────────────────────────────────────────────────────
         var dz = document.getElementById('dropZone');
-        dz.addEventListener('dragover',  function(e){ e.preventDefault(); dz.classList.add('drag-over'); });
-        dz.addEventListener('dragleave', function()  { dz.classList.remove('drag-over'); });
-        dz.addEventListener('drop', function(e) {
-            e.preventDefault(); dz.classList.remove('drag-over');
-            handleFiles(e.dataTransfer.files);
-        });
+        if (dz) {
+            dz.addEventListener('dragover',  function(e){ e.preventDefault(); dz.classList.add('drag-over'); });
+            dz.addEventListener('dragleave', function()  { dz.classList.remove('drag-over'); });
+            dz.addEventListener('drop', function(e) {
+                e.preventDefault(); dz.classList.remove('drag-over');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
 
         function handleFiles(fileList) {
             if (!fileList || !fileList.length) return;
-            pendingFiles = Array.from(fileList);
-            renderQueue();
-            document.getElementById('uploadBtn').style.display = 'block';
-        }
-
-        function renderQueue() {
-            var q = document.getElementById('uploadQueue');
-            q.innerHTML = pendingFiles.map(function(f, i) {
-                var icon = f.name.match(/\.pdf$/i)  ? 'fa-file-pdf'  :
-                           f.name.match(/\.docx?$/i)? 'fa-file-word' : 'fa-file-image';
-                var col  = f.name.match(/\.pdf$/i)  ? '#E13468' :
-                           f.name.match(/\.docx?$/i)? '#29B9E7'  : '#F48C06';
-                var kb   = Math.round(f.size / 1024);
-                return '<div class="file-queue-item" id="qi_' + i + '">' +
-                       '<div class="file-type-icon" style="background:' + col + '18;color:' + col + ';"><i class="fas ' + icon + '"></i></div>' +
-                       '<div style="flex:1;min-width:0;">' +
-                       '<div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(f.name) + '</div>' +
-                       '<div style="font-size:.68rem;color:#9ca3af;">' + kb + ' KB</div>' +
-                       '<div class="file-progress-bar"><div class="file-progress-fill" id="fp_' + i + '" style="width:0%"></div></div>' +
-                       '<span class="file-status upload" id="fs_' + i + '">Ready to upload</span>' +
-                       '</div>' +
-                       '<button type="button" onclick="removeFromQueue(' + i + ')" class="btn-close" style="font-size:.6rem;flex-shrink:0;"></button>' +
-                       '</div>';
-            }).join('');
-        }
-
-        function removeFromQueue(i) {
-            pendingFiles.splice(i, 1);
-            if (!pendingFiles.length) document.getElementById('uploadBtn').style.display = 'none';
-            renderQueue();
-        }
-
-        // ── Upload all pending files ───────────────────────────────────────────────
-        // FIX: use a single FormData with all files — server accepts List<IFormFile> files
-        async function startUpload() {
-            if (!pendingFiles.length) return;
-
-            var btn = document.getElementById('uploadBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="gen-spinner"></span> Uploading…';
-
-            // Upload each file individually so we can show per-file progress
-            for (var i = 0; i < pendingFiles.length; i++) {
-                await uploadSingle(pendingFiles[i], i);
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload All Files';
-
-            // Clear queue and refresh file list
-            pendingFiles = [];
-            document.getElementById('uploadQueue').innerHTML = '';
-            document.getElementById('uploadBtn').style.display = 'none';
-            await loadFiles();
-        }
-
-        function uploadSingle(file, idx) {
-            return new Promise(function(resolve) {
-                var fd     = new FormData();
-                var bar    = document.getElementById('fp_' + idx);
-                var status = document.getElementById('fs_' + idx);
-
-                fd.append('files', file);
-
-                status.textContent = 'Uploading...';
-                status.className   = 'file-status upload';
-                bar.style.width    = '5%';
-
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '/Instructor/Ai/Upload');
-                // NO antiforgery header needed: [IgnoreAntiforgeryToken] is on the action
-
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        var pct = Math.round(e.loaded / e.total * 85);
-                        bar.style.width    = pct + '%';
-                        status.textContent = 'Uploading ' + pct + '%';
-                    }
-                };
-
-                xhr.onload = function() {
-                    bar.style.width = '100%';
-                    if (xhr.status === 200) {
-                        try {
-                            var d = JSON.parse(xhr.responseText);
-                            var r = (d.results && d.results[0]) ? d.results[0] : d;
-                            if (r.fileId || r.ok === true) {
-                                status.textContent = 'Done!';
-                                status.className   = 'file-status ok';
-                            } else {
-                                status.textContent = 'Error: ' + (r.message || r.error || 'Failed');
-                                status.className   = 'file-status err';
-                                bar.style.background = '#E13468';
-                            }
-                        } catch(e) {
-                            status.textContent = 'Parse error';
-                            status.className   = 'file-status err';
-                        }
-                    } else {
-                        status.textContent = 'HTTP ' + xhr.status + ' error';
-                        status.className   = 'file-status err';
-                        bar.style.background = '#E13468';
-                        console.error('Upload response:', xhr.responseText);
-                    }
-                    resolve();
-                };
-
-                xhr.onerror = function() {
-                    status.textContent   = 'Network error';
-                    status.className     = 'file-status err';
-                    bar.style.background = '#E13468';
-                    resolve();
-                };
-
-                xhr.send(fd);
-            });
-        }
-
-        // ── Load stored files ─────────────────────────────────────────────────────
-        async function loadFiles() {
-            try {
-                var resp  = await fetch('/Instructor/Ai/Files');
-                var files = await resp.json();
-                renderStoredFiles(files);
-                document.getElementById('fileCountBadge').textContent = files.length;
-                // Auto-select first file so Generate is immediately usable
-                if (files && files.length && !selectedFileId) {
-                    selectFile(files[0].id, files[0].originalName);
-                }
-            } catch(e) { console.error('loadFiles error:', e); }
-        }
-
-        function renderStoredFiles(files) {
-            var el = document.getElementById('storedFiles');
-            if (!files || !files.length) {
-                el.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:.8rem;padding:1.5rem 0;">' +
-                               '<i class="fas fa-folder-open d-block mb-2" style="font-size:1.5rem;opacity:.3;"></i>' +
-                               'No files uploaded yet.</div>';
+            var file = fileList[0];
+            if (!file.name.match(/\.(pdf|docx?|jpe?g|png)$/i)) {
+                showStatus('❌ Only PDF, DOCX, JPG, PNG allowed', 'err');
                 return;
             }
-            el.innerHTML = files.map(function(f) {
-                var kb = Math.round(f.fileSizeBytes / 1024);
-                return '<label class="stored-file" id="sf_' + f.id + '">' +
-                       '<input type="radio" name="selectedFile" value="' + f.id +
-                       '" onchange="selectFile(\'' + f.id + '\', \'' + esc(f.originalName) + '\')" />' +
-                       '<div style="width:32px;height:32px;border-radius:8px;background:rgba(91,114,238,.1);' +
-                       'display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-                       '<i class="fas fa-file-alt" style="color:var(--accent-purple,#5B72EE);font-size:.82rem;"></i></div>' +
-                       '<div style="flex:1;min-width:0;">' +
-                       '<div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(f.originalName) + '</div>' +
-                       '<div style="font-size:.68rem;color:#9ca3af;">' + kb + ' KB · ' + f.chunkCount + ' chunks</div>' +
-                       '</div>' +
-                       '<button type="button" class="btn-close" style="font-size:.6rem;" onclick="deleteFile(\'' + f.id + '\', event)"></button>' +
-                       '</label>';
-            }).join('');
-        }
-
-        // ── Select / deselect file ────────────────────────────────────────────────
-        function selectFile(id, name) {
-            selectedFileId = id;
-            document.querySelectorAll('.stored-file').forEach(function(el) { el.classList.remove('selected'); });
-            var el = document.getElementById('sf_' + id);
-            if (el) el.classList.add('selected');
-            document.getElementById('selectedFileLabel').textContent = name;
-            document.getElementById('selectedFileName').textContent  = name;
-            document.getElementById('selectedFileBanner').style.display = 'flex';
+            selectedFile     = file;
+            selectedFileName = file.name;
+            renderFile();
+            document.getElementById('uploadBtn').style.display = 'none';
+            showStatus('✅ ' + file.name + ' loaded — ready to generate!', 'ok');
             document.getElementById('genBtn').disabled = false;
             document.getElementById('genEmpty').style.display = 'none';
+            document.getElementById('selectedFileBanner').style.display = 'flex';
+            document.getElementById('selectedFileName').textContent = file.name;
+            document.getElementById('selectedFileLabel').textContent = file.name;
         }
 
-        // ── Delete file ────────────────────────────────────────────────────────────
-        async function deleteFile(id, e) {
-            e.preventDefault(); e.stopPropagation();
-            if (!confirm('Delete this file?')) return;
-            await fetch('/Instructor/Ai/DeleteFile', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ fileId: id })
-            });
-            if (selectedFileId === id) {
-                selectedFileId = null;
-                document.getElementById('genBtn').disabled = true;
-                document.getElementById('selectedFileBanner').style.display = 'none';
-                document.getElementById('selectedFileLabel').textContent = 'Select a file from the left panel';
-            }
-            await loadFiles();
-        }
+        // Allow input[type=file] change
+        document.getElementById('fileInput')?.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
 
-        // ── Generate exam ─────────────────────────────────────────────────────────
-        async function generateExam() {
-            if (!selectedFileId) {
-                showGenError('Please select a file from the left panel first.');
+        function renderFile() {
+            var el = document.getElementById('storedFiles');
+            if (!selectedFile) {
+                el.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:.8rem;padding:1.5rem 0;">' +
+                               '<i class="fas fa-folder-open d-block mb-2" style="font-size:1.5rem;opacity:.3;"></i>' +
+                               'No file loaded yet.</div>';
+                document.getElementById('fileCountBadge').textContent = '0';
                 return;
             }
+            var kb = Math.round(selectedFile.size / 1024);
+            el.innerHTML = '<label class="stored-file selected" id="sf_current">' +
+                '<div style="width:32px;height:32px;border-radius:8px;background:rgba(91,114,238,.1);' +
+                'display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                '<i class="fas fa-file-alt" style="color:var(--accent-purple,#5B72EE);font-size:.82rem;"></i></div>' +
+                '<div style="flex:1;min-width:0;">' +
+                '<div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(selectedFileName) + '</div>' +
+                '<div style="font-size:.68rem;color:#9ca3af;">' + kb + ' KB · ready</div>' +
+                '</div>' +
+                '<button type="button" class="btn-close" style="font-size:.6rem;" onclick="clearFile()"></button>' +
+                '</label>';
+            document.getElementById('fileCountBadge').textContent = '1';
+        }
 
+        function clearFile() {
+            selectedFile = null; selectedFileName = '';
+            renderFile();
+            document.getElementById('genBtn').disabled = true;
+            document.getElementById('selectedFileBanner').style.display = 'none';
+            document.getElementById('selectedFileLabel').textContent = 'Select a file from the left panel';
+            document.getElementById('genEmpty').style.display = 'block';
+            document.getElementById('genResultWrap').style.display = 'none';
+        }
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('instrUploadStatus');
+            if (!el) return;
+            el.innerHTML = '<span style="color:' + (type === 'ok' ? '#16a34a' : '#E13468') + ';">' + esc(msg) + '</span>';
+        }
+
+        // ── Generate exam via n8n ─────────────────────────────────────────
+        async function generateExam() {
+            if (!selectedFile) {
+                showGenError('Please load a file first (drag & drop or click the upload area).');
+                return;
+            }
             var mcq = parseInt(document.getElementById('mcqCount').value) || 5;
             var tf  = parseInt(document.getElementById('tfCount').value)  || 3;
             var btn = document.getElementById('genBtn');
@@ -627,35 +494,33 @@
             document.getElementById('genSpinner').style.display    = 'block';
             document.getElementById('genResultWrap').style.display = 'none';
             document.getElementById('genEmpty').style.display      = 'none';
-            document.getElementById('genError').style.display      = 'none';
+            document.getElementById('genError')?.style && (document.getElementById('genError').style.display = 'none');
+
+            // var fd = new FormData();
+            // fd.append('file',     selectedFile, selectedFileName);
+            // fd.append('mcqCount', mcq);
+            // fd.append('tfCount',  tf);
 
             try {
-                var resp = await fetch('/Instructor/Ai/Generate', {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ fileId: selectedFileId, mcqCount: mcq, tfCount: tf })
-                });
+                var resp = await fetch('/api/ai/generate-exam', { method: 'POST', body: fd });
+                var raw  = await resp.text();
 
-                var text = await resp.text(); // read as text first
-                var d;
-                try { d = JSON.parse(text); } catch(e) {
-                    showGenError('Server returned invalid response. Check the application logs.');
+                console.log('n8n raw response:', raw);
+
+                // Controller already extracts the output text — raw IS the answer
+                var result = raw ? raw.trim() : '';
+                if (!result) {
+                    showGenError('Empty response. Make sure n8n workflow is Active and webhook URL is correct.');
                     return;
                 }
 
                 if (!resp.ok) {
-                    showGenError(d.error || 'Server error ' + resp.status);
+                    showGenError(result || 'Server error ' + resp.status);
                     return;
                 }
 
-                if (d.error) {
-                    showGenError(d.error);
-                    return;
-                }
-
-                document.getElementById('genResultText').textContent   = d.result || 'No content generated.';
+                document.getElementById('genResultText').textContent   = result;
                 document.getElementById('genResultWrap').style.display = 'block';
-
             } catch(e) {
                 showGenError('Network error: ' + e.message);
             } finally {
@@ -667,29 +532,388 @@
 
         function showGenError(msg) {
             var el = document.getElementById('genError');
-            el.textContent = '⚠ ' + msg;
-            el.style.display = 'block';
+            if (el) { el.textContent = '⚠ ' + msg; el.style.display = 'block'; }
             document.getElementById('genSpinner').style.display = 'none';
-            document.getElementById('genBtn').disabled = false;
-            document.getElementById('genBtn').innerHTML = '<i class="fas fa-magic me-2"></i>Generate Exam';
+            var btn = document.getElementById('genBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-magic me-2"></i>Generate Exam';
         }
 
         function copyResult() {
-            var text = document.getElementById('genResultText').textContent;
-            navigator.clipboard.writeText(text)
-                .then(function() { alert('Copied to clipboard!'); });
+            navigator.clipboard.writeText(document.getElementById('genResultText').textContent)
+                .then(function() { alert('Copied!'); });
         }
-
         function clearResult() {
             document.getElementById('genResultWrap').style.display = 'none';
-            document.getElementById('genEmpty').style.display      = 'block';
+            document.getElementById('genEmpty').style.display = 'block';
         }
-
         function esc(s) {
             return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
-    </script>
 
-    @* Antiforgery token for XHR requests *@
-    @Html.AntiForgeryToken()
+        // Auto-render on load
+        renderFile();
+    </script> *@
+    <script>
+                // ── AI Exam Generator ───────────────────────────────────────────────
+
+        var selectedFileId = null;
+        var selectedFileName = '';
+
+        // ── Drop zone styling only ──────────────────────────────────────────
+        var dz = document.getElementById('dropZone');
+
+        if (dz) {
+            dz.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                dz.classList.add('drag-over');
+            });
+
+            dz.addEventListener('dragleave', function () {
+                dz.classList.remove('drag-over');
+            });
+
+            dz.addEventListener('drop', function (e) {
+                e.preventDefault();
+                dz.classList.remove('drag-over');
+
+                // Prevent local fake rendering
+                // Use actual upload endpoint instead
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        // ── File input ──────────────────────────────────────────────────────
+        document.getElementById('fileInput')?.addEventListener('change', function () {
+            handleFiles(this.files);
+        });
+
+        // ── Upload files to backend ─────────────────────────────────────────
+        async function handleFiles(fileList) {
+
+            if (!fileList || !fileList.length)
+                return;
+
+            var allowed = /\.(pdf|docx?|jpe?g|png)$/i;
+
+            var files = Array.from(fileList);
+
+            for (var f of files) {
+                if (!allowed.test(f.name)) {
+                    showGenError('Only PDF, DOCX, JPG, PNG files are allowed.');
+                    return;
+                }
+            }
+
+            try {
+
+                document.getElementById('uploadBtn').style.display = 'none';
+
+                var fd = new FormData();
+
+                files.forEach(f => {
+                    fd.append('files', f);
+                });
+
+                var resp = await fetch('/Instructor/Ai/Upload', {
+                    method: 'POST',
+                    body: fd
+                });
+
+                var data = await resp.json();
+
+                if (!resp.ok) {
+                    showGenError(data.error || 'Upload failed.');
+                    return;
+                }
+
+                await loadFiles();
+
+            } catch (e) {
+                showGenError('Upload failed: ' + e.message);
+            }
+        }
+
+        // ── Load uploaded files ─────────────────────────────────────────────
+        async function loadFiles() {
+
+            try {
+
+                var resp = await fetch('/Instructor/Ai/Files');
+
+                var files = await resp.json();
+
+                var container = document.getElementById('storedFiles');
+
+                if (!files || !files.length) {
+
+                    container.innerHTML =
+                        '<div style="text-align:center;color:#9ca3af;font-size:.8rem;padding:1.5rem 0;">' +
+                        '<i class="fas fa-folder-open d-block mb-2" style="font-size:1.5rem;opacity:.3;"></i>' +
+                        'No files uploaded yet.' +
+                        '</div>';
+
+                    document.getElementById('fileCountBadge').textContent = '0';
+
+                    return;
+                }
+
+                document.getElementById('fileCountBadge').textContent = files.length;
+
+                container.innerHTML = '';
+
+                files.forEach(function (f) {
+
+                    var kb = Math.round(f.fileSizeBytes / 1024);
+
+                    container.innerHTML += `
+                        <label class="stored-file">
+                            <input type="radio"
+                                   name="selectedFile"
+                                   value="${f.id}"
+                                   onchange="selectFile('${f.id}', '${esc(f.originalName)}')" />
+
+                            <div style="width:32px;height:32px;border-radius:8px;
+                                background:rgba(91,114,238,.1);
+                                display:flex;align-items:center;
+                                justify-content:center;flex-shrink:0;">
+
+                                <i class="fas fa-file-alt"
+                                   style="color:var(--accent-purple,#5B72EE);font-size:.82rem;"></i>
+                            </div>
+
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-weight:600;font-size:.8rem;
+                                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    ${esc(f.originalName)}
+                                </div>
+
+                                <div style="font-size:.68rem;color:#9ca3af;">
+                                    ${kb} KB · ${f.chunkCount} chunks
+                                </div>
+                            </div>
+
+                            <button type="button"
+                                    class="btn-close"
+                                    style="font-size:.6rem;"
+                                    onclick="deleteFile('${f.id}', event)">
+                            </button>
+                        </label>
+                    `;
+                });
+
+            } catch (e) {
+                console.error(e);
+                showGenError('Failed to load files.');
+            }
+        }
+
+        // ── Select file ─────────────────────────────────────────────────────
+        function selectFile(fileId, fileName) {
+
+            selectedFileId = fileId;
+            selectedFileName = fileName;
+
+            document.querySelectorAll('.stored-file')
+                .forEach(x => x.classList.remove('selected'));
+
+            var selectedRadio = document.querySelector(
+                `input[name="selectedFile"][value="${fileId}"]`
+            );
+
+            if (selectedRadio) {
+                selectedRadio.closest('.stored-file')
+                    .classList.add('selected');
+            }
+
+            document.getElementById('genBtn').disabled = false;
+
+            document.getElementById('genEmpty').style.display = 'none';
+
+            document.getElementById('selectedFileBanner').style.display = 'flex';
+
+            document.getElementById('selectedFileName').textContent = fileName;
+
+            document.getElementById('selectedFileLabel').textContent = fileName;
+        }
+
+        // ── Delete file ─────────────────────────────────────────────────────
+        async function deleteFile(fileId, ev) {
+
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            if (!confirm('Delete this file?'))
+                return;
+
+            try {
+
+                var resp = await fetch('/Instructor/Ai/DeleteFile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fileId: fileId
+                    })
+                });
+
+                var data = await resp.json();
+
+                if (!resp.ok) {
+                    showGenError(data.error || 'Delete failed.');
+                    return;
+                }
+
+                if (selectedFileId === fileId) {
+
+                    selectedFileId = null;
+                    selectedFileName = '';
+
+                    document.getElementById('genBtn').disabled = true;
+
+                    document.getElementById('selectedFileBanner').style.display = 'none';
+
+                    document.getElementById('selectedFileLabel').textContent =
+                        'Select a file from the left panel';
+
+                    document.getElementById('genResultWrap').style.display = 'none';
+
+                    document.getElementById('genEmpty').style.display = 'block';
+                }
+
+                await loadFiles();
+
+            } catch (e) {
+                showGenError('Delete failed: ' + e.message);
+            }
+        }
+
+        // ── Generate exam ───────────────────────────────────────────────────
+        async function generateExam() {
+
+            if (!selectedFileId) {
+                showGenError('Please select a file first.');
+                return;
+            }
+
+            var mcq = parseInt(document.getElementById('mcqCount').value) || 5;
+            var tf = parseInt(document.getElementById('tfCount').value) || 3;
+
+            var btn = document.getElementById('genBtn');
+
+            btn.disabled = true;
+
+            btn.innerHTML =
+                '<span class="gen-spinner d-inline-block me-2"></span>Generating...';
+
+            document.getElementById('genSpinner').style.display = 'block';
+
+            document.getElementById('genResultWrap').style.display = 'none';
+
+            document.getElementById('genEmpty').style.display = 'none';
+
+            document.getElementById('genError').style.display = 'none';
+
+            try {
+
+                var resp = await fetch('/Instructor/Ai/Generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fileId: selectedFileId,
+                        mcqCount: mcq,
+                        tfCount: tf
+                    })
+                });
+
+                var data = await resp.json();
+
+                console.log('Generate response:', data);
+
+                if (!resp.ok) {
+                    showGenError(data.error || 'Generation failed.');
+                    return;
+                }
+
+                var result = data.result || '';
+
+                if (!result.trim()) {
+                    showGenError('No content generated.');
+                    return;
+                }
+
+                document.getElementById('genResultText').textContent = result;
+
+                document.getElementById('genResultWrap').style.display = 'block';
+
+            } catch (e) {
+
+                console.error(e);
+
+                showGenError('Network error: ' + e.message);
+
+            } finally {
+
+                document.getElementById('genSpinner').style.display = 'none';
+
+                btn.disabled = false;
+
+                btn.innerHTML =
+                    '<i class="fas fa-magic me-2"></i>Generate Exam';
+            }
+        }
+
+        // ── Error UI ────────────────────────────────────────────────────────
+        function showGenError(msg) {
+
+            var el = document.getElementById('genError');
+
+            el.textContent = '⚠ ' + msg;
+
+            el.style.display = 'block';
+
+            document.getElementById('genSpinner').style.display = 'none';
+
+            var btn = document.getElementById('genBtn');
+
+            btn.disabled = false;
+
+            btn.innerHTML =
+                '<i class="fas fa-magic me-2"></i>Generate Exam';
+        }
+
+        // ── Copy result ─────────────────────────────────────────────────────
+        function copyResult() {
+
+            navigator.clipboard.writeText(
+                document.getElementById('genResultText').textContent
+            ).then(function () {
+                alert('Copied!');
+            });
+        }
+
+        // ── Clear result ────────────────────────────────────────────────────
+        function clearResult() {
+
+            document.getElementById('genResultWrap').style.display = 'none';
+
+            document.getElementById('genEmpty').style.display = 'block';
+        }
+
+        // ── Escape HTML ─────────────────────────────────────────────────────
+        function esc(s) {
+
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // ── Initial load ────────────────────────────────────────────────────
+        loadFiles();
+    </script>
 }

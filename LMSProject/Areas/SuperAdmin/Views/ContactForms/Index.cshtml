@@ -1,0 +1,228 @@
+﻿@using MLSCore.Models
+@model List<TbContactForm>
+@{
+    ViewData["Title"] = "Contact Forms";
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    int unreadCount = ViewBag.UnreadCount;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4 anim">
+    <div>
+        <h5 style="font-weight:700;color:var(--primary);margin:0;">
+            <i class="fas fa-envelope-open-text me-2" style="color:var(--secondary);"></i>
+            Contact Forms
+            @if (unreadCount > 0)
+            {
+                <span class="ms-2 badge rounded-pill"
+                      style="background:#E13468;color:white;font-size:.72rem;">
+                    @unreadCount new
+                </span>
+            }
+        </h5>
+        <small style="color:#9ca3af;">Guest registration &amp; inquiry submissions</small>
+    </div>
+    @if (unreadCount > 0)
+    {
+        <form asp-action="MarkAllRead" method="post" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-sm rounded-3"
+                    style="background:rgba(0,203,184,.1);color:var(--secondary);
+                font-family:Poppins,sans-serif;font-size:.8rem;">
+                <i class="fas fa-check-double me-1"></i>Mark All Read
+            </button>
+        </form>
+    }
+</div>
+
+<!-- Filters -->
+<form method="get" asp-action="Index" class="mb-4 anim">
+    <div class="d-flex gap-2 flex-wrap">
+        <div style="position:relative;flex:1;min-width:200px;">
+            <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:.82rem;"></i>
+            <input name="search" class="sa-form-control" style="padding-left:2.2rem;"
+                   placeholder="Search name, email, message…" value="@ViewBag.Search" />
+        </div>
+        <select name="unread" class="sa-form-control" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Forms</option>
+            <option value="true" selected="@(ViewBag.Unread == true ? "selected" : null)">Unread Only</option>
+        </select>
+        <button type="submit" class="btn btn-primary rounded-3 px-4"
+                style="font-family:Poppins,sans-serif;">
+            <i class="fas fa-filter me-1"></i>Filter
+        </button>
+        <a asp-action="Index" class="btn rounded-3 px-3"
+           style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+            <i class="fas fa-times"></i>
+        </a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="sa-card p-5 text-center anim" style="color:#9ca3af;">
+        <i class="fas fa-inbox fa-3x d-block mb-3 opacity-25"></i>
+        <p style="margin:0;">No contact forms found.</p>
+    </div>
+}
+else
+{
+    <div class="sa-card anim">
+        <div class="table-responsive">
+            <table class="sa-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Message</th>
+                        <th>Submitted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model)
+                    {
+                        <tr style="@(!f.IsRead ? "background:rgba(225,52,104,.03);" : "")">
+                            <td>
+                                @if (!f.IsRead)
+                                {
+                                    <span class="sa-badge" style="background:rgba(225,52,104,.12);color:#E13468;">
+                                        <i class="fas fa-circle me-1" style="font-size:.5rem;"></i>New
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="sa-badge sa-badge-active">Read</span>
+                                }
+                            </td>
+                            <td style="font-weight:600;font-size:.87rem;">@f.FullName</td>
+                            <td>
+                                <!-- mailto: link for direct email reply -->
+                                <a href="mailto:@f.Email?subject=Re: TOTC Inquiry"
+                                   style="color:var(--secondary);font-weight:600;font-size:.84rem;text-decoration:none;"
+                                   title="Click to reply via email">
+                                    <i class="fas fa-envelope me-1" style="font-size:.72rem;"></i>@f.Email
+                                </a>
+                            </td>
+                            <td style="font-size:.83rem;color:#6c757d;">@(f.Phone ?? "—")</td>
+                            <td style="max-width:260px;">
+                                <div style="font-size:.82rem;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;"
+                                     title="@f.Message">
+                                    @f.Message
+                                </div>
+                                <button class="btn btn-link p-0 mt-1"
+                                        style="font-size:.72rem;color:var(--accent-purple);"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#msgModal_@f.Id">
+                                    Read full message
+                                </button>
+                            </td>
+                            <td style="font-size:.8rem;color:#9ca3af;white-space:nowrap;">
+                                @f.SubmittedAt.ToString("MMM dd, yyyy")<br />
+                                <small>@f.SubmittedAt.ToString("hh:mm tt")</small>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    @if (!f.IsRead)
+                                    {
+                                        <form asp-action="MarkRead" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@f.Id" />
+                                            <button type="submit" class="sa-btn-icon sa-btn-view" title="Mark as read">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <a href="mailto:@f.Email?subject=Re: TOTC Inquiry&body=Dear @f.FullName,"
+                                       class="sa-btn-icon" title="Reply via email"
+                                       style="background:rgba(0,203,184,.12);color:var(--secondary);">
+                                        <i class="fas fa-reply"></i>
+                                    </a>
+                                    <form asp-action="Delete" method="post" style="display:inline;"
+                                          onsubmit="return confirm('Delete this contact form?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@f.Id" />
+                                        <button type="submit" class="sa-btn-icon sa-btn-delete" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Full message modal -->
+                        <div class="modal fade" id="msgModal_@f.Id" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+                                <div class="modal-content" style="border-radius:18px;border:none;">
+                                    <div class="sa-modal-header d-flex align-items-center justify-content-between">
+                                        <h6 style="color:white;font-weight:700;margin:0;">
+                                            <i class="fas fa-envelope me-2"></i>Message from @f.FullName
+                                        </h6>
+                                        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <div class="d-flex gap-3 mb-3 flex-wrap">
+                                            <div>
+                                                <small style="color:#9ca3af;font-weight:600;">EMAIL</small><br />
+                                                <a href="mailto:@f.Email" style="color:var(--secondary);font-weight:600;font-size:.88rem;">@f.Email</a>
+                                            </div>
+                                            @if (f.Phone != null)
+                                            {
+                                                <div>
+                                                    <small style="color:#9ca3af;font-weight:600;">PHONE</small><br />
+                                                    <span style="font-weight:600;font-size:.88rem;">@f.Phone</span>
+                                                </div>
+                                            }
+                                            <div>
+                                                <small style="color:#9ca3af;font-weight:600;">DATE</small><br />
+                                                <span style="font-weight:600;font-size:.88rem;">@f.SubmittedAt.ToString("MMM dd, yyyy hh:mm tt")</span>
+                                            </div>
+                                        </div>
+                                        <div style="background:#f8f9ff;border-radius:12px;padding:1.1rem;
+                                            font-size:.88rem;line-height:1.8;color:#374151;
+                                            border-left:3px solid var(--secondary);">
+                                            @f.Message
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                                        <a href="mailto:@f.Email?subject=Re: TOTC Inquiry&body=Dear @f.FullName,"
+                                           class="btn btn-primary rounded-3 px-4"
+                                           style="font-family:Poppins,sans-serif;">
+                                            <i class="fas fa-reply me-2"></i>Reply by Email
+                                        </a>
+                                        <button class="btn rounded-3 px-4" data-bs-dismiss="modal"
+                                                style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="sa-pagination mt-3">
+            <a asp-action="Index" asp-route-page="@(page - 1)" asp-route-search="@ViewBag.Search"
+               class="sa-page-btn @(page == 1 ? "disabled" : "")">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <a asp-action="Index" asp-route-page="@i" asp-route-search="@ViewBag.Search"
+                   class="sa-page-btn @(i == page ? "active" : "")">@i</a>
+            }
+            <a asp-action="Index" asp-route-page="@(page + 1)" asp-route-search="@ViewBag.Search"
+               class="sa-page-btn @(page == totalPages ? "disabled" : "")">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    }
+}

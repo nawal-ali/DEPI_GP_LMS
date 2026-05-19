@@ -61,6 +61,16 @@
             <i class="fas fa-server stat-icon"></i>
         </div>
     </div>
+    <div class="col-6 col-xl-3">
+        <a asp-area="SuperAdmin" asp-controller="ContactForms" asp-action="Index"
+           style="text-decoration:none;">
+            <div class="sa-stat-card" style="background:linear-gradient(135deg,#E13468,#f48c06);">
+                <p>Contact Forms</p>
+                <h3>@(ViewBag.UnreadContactForms ?? 0) <small style="font-size:.6em;opacity:.8">new</small></h3>
+                <i class="fas fa-envelope-open-text stat-icon"></i>
+            </div>
+        </a>
+    </div>
 </div>
 
 <!-- Main content row -->
@@ -97,49 +107,64 @@
             </div>
             <div class="sa-card-body d-flex flex-column gap-2">
                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Students"
-                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
-                       style="background:rgba(91,114,238,0.07);color:var(--dark);transition:background .15s;"
-                       onmouseover="this.style.background='rgba(91,114,238,0.14)'" onmouseout="this.style.background='rgba(91,114,238,0.07)'">
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(91,114,238,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(91,114,238,0.14)'" onmouseout="this.style.background='rgba(91,114,238,0.07)'">
                     <i class="fas fa-user-graduate" style="color:var(--accent-purple);width:20px;"></i>
                     <span style="font-size:0.87rem;font-weight:500;">Manage Students</span>
                     <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
                 </a>
                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Teachers"
-                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
-                       style="background:rgba(41,185,231,0.07);color:var(--dark);transition:background .15s;"
-                       onmouseover="this.style.background='rgba(41,185,231,0.14)'" onmouseout="this.style.background='rgba(41,185,231,0.07)'">
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(41,185,231,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(41,185,231,0.14)'" onmouseout="this.style.background='rgba(41,185,231,0.07)'">
                     <i class="fas fa-chalkboard-teacher" style="color:var(--accent-blue);width:20px;"></i>
                     <span style="font-size:0.87rem;font-weight:500;">Manage Teachers</span>
                     <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
                 </a>
                 <a asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Index"
-                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
-                       style="background:rgba(0,203,184,0.07);color:var(--dark);transition:background .15s;"
-                       onmouseover="this.style.background='rgba(0,203,184,0.14)'" onmouseout="this.style.background='rgba(0,203,184,0.07)'">
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(0,203,184,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(0,203,184,0.14)'" onmouseout="this.style.background='rgba(0,203,184,0.07)'">
                     <i class="fas fa-bullhorn" style="color:var(--secondary);width:20px;"></i>
                     <span style="font-size:0.87rem;font-weight:500;">Send Announcement</span>
                     <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
                 </a>
                 <a asp-area="SuperAdmin" asp-controller="Tickets" asp-action="Index"
-                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
-                       style="background:rgba(225,52,104,0.07);color:var(--dark);transition:background .15s;"
-                       onmouseover="this.style.background='rgba(225,52,104,0.14)'" onmouseout="this.style.background='rgba(225,52,104,0.07)'">
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(225,52,104,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(225,52,104,0.14)'" onmouseout="this.style.background='rgba(225,52,104,0.07)'">
                     <i class="fas fa-headset" style="color:var(--accent-pink);width:20px;"></i>
                     <span style="font-size:0.87rem;font-weight:500;">View Tickets</span>
                     <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
                 </a>
                 <a asp-area="SuperAdmin" asp-controller="Statistics" asp-action="Index"
-                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
-                       style="background:rgba(244,140,6,0.07);color:var(--dark);transition:background .15s;"
-                       onmouseover="this.style.background='rgba(244,140,6,0.14)'" onmouseout="this.style.background='rgba(244,140,6,0.07)'">
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(244,140,6,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(244,140,6,0.14)'" onmouseout="this.style.background='rgba(244,140,6,0.07)'">
                     <i class="fas fa-chart-pie" style="color:var(--orange);width:20px;"></i>
                     <span style="font-size:0.87rem;font-weight:500;">View Statistics</span>
                     <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
                 </a>
+                <a asp-area="SuperAdmin" asp-controller="ContactForms" asp-action="Index"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(225,52,104,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(225,52,104,0.14)'" onmouseout="this.style.background='rgba(225,52,104,0.07)'">
+                    <i class="fas fa-envelope-open-text" style="color:var(--accent-pink);width:20px;"></i>
+                    <span style="font-size:0.87rem;font-weight:500;">Contact Forms</span>
+                    @if ((ViewBag.UnreadContactForms ?? 0) > 0)
+                    {
+                        <span class="badge rounded-pill ms-auto" style="background:#E13468;color:white;font-size:.65rem;">@ViewBag.UnreadContactForms</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>
+                    }
+                </a>
                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="Admins"
-                       class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
-                       style="background:rgba(47,50,125,0.07);color:var(--dark);transition:background .15s;"
-                       onmouseover="this.style.background='rgba(47,50,125,0.14)'" onmouseout="this.style.background='rgba(47,50,125,0.07)'">
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:rgba(47,50,125,0.07);color:var(--dark);transition:background .15s;"
+                   onmouseover="this.style.background='rgba(47,50,125,0.14)'" onmouseout="this.style.background='rgba(47,50,125,0.07)'">
                     <i class="fas fa-user-cog" style="color:var(--primary);width:20px;"></i>
                     <span style="font-size:0.87rem;font-weight:500;">Manage Admins</span>
                     <i class="fas fa-chevron-right ms-auto" style="font-size:0.7rem;opacity:.4;"></i>

@@ -139,6 +139,17 @@ namespace LMSProject.Controllers
                         link = "/SuperAdmin/Support/Index",
                         count = forwarded
                     });
+                var newContacts = await _db.ContactForms.CountAsync(f => !f.IsRead);
+                if (newContacts > 0)
+                    items.Add(new
+                    {
+                        icon = "fa-envelope-open-text",
+                        color = "#E13468",
+                        bg = "rgba(225,52,104,.1)",
+                        text = $"{newContacts} new contact form{(newContacts > 1 ? "s" : "")}",
+                        link = "/SuperAdmin/ContactForms/Index",
+                        count = newContacts
+                    });
             }
 
             if (role == "Instructor")
@@ -217,11 +228,15 @@ namespace LMSProject.Controllers
                 ? await _db.Tickets.CountAsync(t => t.Status == "Open" && !t.IsForwarded && t.CurrentState == 1)
                 : 0;
 
+            var contactForms = (role == "SuperAdmin")
+                ? await _db.ContactForms.CountAsync(f => !f.IsRead)
+                : 0;
             return Ok(new
             {
                 announcements = annCount,
                 tickets = ticketCount,
-                adminTickets = adminTickets
+                adminTickets = adminTickets,
+                contactForms = contactForms
             });
         }
 

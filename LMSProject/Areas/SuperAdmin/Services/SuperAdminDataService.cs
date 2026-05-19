@@ -553,6 +553,37 @@ namespace LMSProject.Areas.SuperAdmin.Services
             if (a != null) { a.CurrentState = 0; _context.SaveChanges(); }
         }
 
+        public LMSProject.Areas.SuperAdmin.ViewModels.EditSAAnnouncementVM? GetAnnouncementForEdit(int id)
+        {
+            var a = _context.Announcements.Find(id);
+            if (a == null) return null;
+            return new LMSProject.Areas.SuperAdmin.ViewModels.EditSAAnnouncementVM
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Content = a.Content,
+                Description = a.Description,
+                TargetAudience = a.TargetAudience,
+                Priority = a.Priority ?? "Medium",
+                Category = a.Category ?? "General",
+                IsPinned = a.IsPinned,
+                ExpiryDate = a.ExpiryDate
+            };
+        }
+
+        public void UpdateAnnouncement(LMSProject.Areas.SuperAdmin.ViewModels.EditSAAnnouncementVM vm)
+        {
+            var a = _context.Announcements.Find(vm.Id);
+            if (a == null) return;
+            a.Title = vm.Title; a.Content = vm.Content;
+            a.Description = vm.Description ?? "";
+            a.TargetAudience = vm.TargetAudience;
+            a.Priority = vm.Priority; a.Category = vm.Category;
+            a.IsPinned = vm.IsPinned; a.ExpiryDate = vm.ExpiryDate;
+            a.UpdatedBy = "SuperAdmin"; a.UpdatedDate = DateTime.Now;
+            _context.SaveChanges();
+        }
+
         // ── Tickets (no DB model — kept as empty stubs) ────────────────────
         private static readonly List<TicketItemVM> _tickets = new();
 

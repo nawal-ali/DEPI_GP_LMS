@@ -26,45 +26,70 @@
 }
 
 
+/* ── Scroll-triggered animations (IntersectionObserver adds .visible) ── */
 .fade-up,
-.fade-left {
-  opacity: 0;
-  animation-duration: 1s;
-  animation-fill-mode: forwards;
+.reveal-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity .7s ease, transform .7s ease;
 }
 
-
-.fade-up {
-  transform: translateY(40px);
-  animation-name: fadeUp;
+.fade-left,
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-45px);
+    transition: opacity .7s ease, transform .7s ease;
 }
 
-.fade-left {
-  transform: translateX(40px);
-  animation-name: fadeLeft;
+.reveal-right {
+    opacity: 0;
+    transform: translateX(45px);
+    transition: opacity .7s ease, transform .7s ease;
 }
 
-
-@keyframes fadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.reveal-fade {
+    opacity: 0;
+    transition: opacity .7s ease;
+}
+    /* Triggered state — JS adds .visible and .revealed */
+    .fade-up.visible, .fade-up.revealed,
+    .fade-left.visible, .fade-left.revealed,
+    .reveal-up.visible, .reveal-left.visible,
+    .reveal-right.visible, .reveal-fade.visible {
+        opacity: 1;
+        transform: none;
+    }
+/* Stagger delays */
+.delay-1 {
+    transition-delay: 0.1s;
 }
 
-@keyframes fadeLeft {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.delay-2 {
+    transition-delay: 0.2s;
 }
 
+.delay-3 {
+    transition-delay: 0.3s;
+}
 
-.delay-1 { animation-delay: 0.2s; }
-.delay-2 { animation-delay: 0.4s; }
-.delay-3 { animation-delay: 0.6s; }
-.delay-4 { animation-delay: 0.8s; }
-.delay-5 { animation-delay: 1s; } */
+.delay-4 {
+    transition-delay: 0.4s;
+}
+
+.delay-5 {
+    transition-delay: 0.5s;
+}
+/* scroll-reveal compat */
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity .65s ease, transform .65s ease;
+}
+
+    .scroll-reveal.revealed {
+        opacity: 1;
+        transform: none;
+    }
 
 .hero {
     background: linear-gradient(135deg, var(--secondary), var(--accent-blue));

@@ -103,6 +103,13 @@
             </div>
             <div class="d-flex gap-2 flex-shrink-0">
                 <span class="sa-badge" style="background:rgba(255,255,255,0.2);color:white;">@a.Status</span>
+                @if (a.Author != "Admin" && !((a.Author ?? "").StartsWith("admin", System.StringComparison.OrdinalIgnoreCase)))
+                {
+                    <a asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Edit" asp-route-id="@a.Id"
+                       class="sa-btn-icon sa-btn-edit" title="Edit Announcement">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                }
                 <form asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Delete" method="post" onsubmit="return confirm('Delete this announcement?')">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@a.Id" />

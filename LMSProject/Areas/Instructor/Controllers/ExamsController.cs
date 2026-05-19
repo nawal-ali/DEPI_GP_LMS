@@ -52,6 +52,15 @@ namespace LMSProject.Areas.Instructor.Controllers
             var instructorId = await GetInstructorIdAsync();
             if (instructorId == null) return NotFound();
 
+            // Guard: instructor has no assigned courses
+            var hasCourses = await _context.Courses
+                .AnyAsync(c => c.InstructorId == instructorId.Value && c.CurrentState == 1);
+            if (!hasCourses)
+            {
+                ViewData["Title"] = "Exams";
+                return View("~/Areas/Instructor/Views/Shared/_NoCourseAccess.cshtml", "Exams");
+            }
+
             var courseIds = await GetMyCourseIdsAsync(instructorId.Value);
             var courseNames = await _context.Courses
                 .Where(c => courseIds.Contains(c.Id))

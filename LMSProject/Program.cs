@@ -137,6 +137,8 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
+app.MapControllers();   // ← required for [Route] attribute controllers like AiProxyController
+
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");

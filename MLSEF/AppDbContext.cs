@@ -87,6 +87,7 @@ namespace MLSEF
         public DbSet<TbAssignment> Assignments { get; set; }
         public DbSet<TbAssignmentSubmission> AssignmentSubmissions { get; set; }
         public DbSet<TbTicket> Tickets { get; set; }
+        public DbSet<MLSCore.Models.TbContactForm> ContactForms { get; set; }
         public DbSet<TbTicketReply> TicketReplies { get; set; }
     }
 }

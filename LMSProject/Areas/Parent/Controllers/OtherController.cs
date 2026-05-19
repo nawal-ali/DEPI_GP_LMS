@@ -68,9 +68,11 @@ namespace LMSProject.Areas.Parent.Controllers
     {
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _um;
+        private readonly LMSProject.AI.Services.GithubAiService _ai;
 
-        public ReportController(AppDbContext db, UserManager<ApplicationUser> um)
-        { _db = db; _um = um; }
+        public ReportController(AppDbContext db, UserManager<ApplicationUser> um,
+            LMSProject.AI.Services.GithubAiService ai)
+        { _db = db; _um = um; _ai = ai; }
 
         private async Task<MLSCore.Models.TbParent?> GetParent()
         {
@@ -167,15 +169,136 @@ namespace LMSProject.Areas.Parent.Controllers
                     OverallAvg = Math.Round(avg, 1),
                     SubmittedThisWeek = weekSubs,
                     MissingWork = missing,
-                    PerformanceSummary = avg switch
-                    {
-                        >= 85 => "Excellent performance this period. Keep up the great work!",
-                        >= 70 => "Good academic progress. Minor areas to strengthen.",
-                        >= 50 => "Average performance. Needs more focus and practice.",
-                        _ => "Requires immediate attention and additional support."
-                    }
+                    PerformanceSummary = "PENDING_AI"  // replaced below
                 };
             }).ToList();
+
+            // Generate AI plain-language summary for each child
+            foreach (var child in childReports)
+            {
+                try
+                {
+                    // ── Smart context: compare submitted vs published ──────────
+                    int totalPublishedAssignments = child.Assignments.Count;
+                    int totalSubmitted = child.Assignments.Count(a => a.IsSubmitted);
+                    int totalPublishedExams = child.ExamResults.Count; // exams taken
+                    // Count all tests published for student courses (need from childReports context)
+                    // We pass counts directly so AI doesn't wrongly accuse with empty data
+
+                    bool hasPublishedAssignments = totalPublishedAssignments > 0;
+                    bool hasExams = totalPublishedExams > 0;
+                    bool submittedBelowHalf = hasPublishedAssignments &&
+                                                   totalSubmitted < totalPublishedAssignments / 2.0;
+
+                    var examSummary = hasExams
+                        ? string.Join("; ", child.ExamResults.Take(5).Select(e =>
+                            $"{e.ExamTitle}: {e.Score}/{e.TotalMarks} " +
+                            $"({(e.TotalMarks > 0 ? e.Score / e.TotalMarks * 100 : 0):F0}%)"))
+                        : "none";
+
+                    var missingList = child.Assignments
+                        .Where(a => !a.IsSubmitted && a.IsExpired)
+                        .Select(a => a.Title).Take(3).ToList();
+
+                    var pendingList = child.Assignments
+                        .Where(a => !a.IsSubmitted && !a.IsExpired)
+                        .Select(a => a.Title).Take(3).ToList();
+
+                    // Build situation-aware prompt
+                    var situation = new System.Text.StringBuilder();
+                    situation.AppendLine($"Child: {child.FullName} | Grade: {child.Grade}");
+
+                    if (!hasPublishedAssignments && !hasExams)
+                    {
+                        situation.AppendLine("No assignments or exams have been published yet for this student.");
+                        situation.AppendLine("Write a brief encouraging message saying the week has no academic tasks yet.");
+                    }
+                    else
+                    {
+                        if (hasExams)
+                            situation.AppendLine($"Exams taken: {examSummary} | Average: {child.OverallAvg}%");
+                        else
+                            situation.AppendLine("No exams have been given yet this period.");
+
+                        if (hasPublishedAssignments)
+                        {
+                            situation.AppendLine($"Published assignments: {totalPublishedAssignments} | Submitted: {totalSubmitted}");
+                            if (missingList.Any())
+                                situation.AppendLine($"Overdue/missing: {string.Join(", ", missingList)}");
+                            if (pendingList.Any())
+                                situation.AppendLine($"Still pending (not due yet): {string.Join(", ", pendingList)}");
+                        }
+                        else
+                        {
+                            situation.AppendLine("No assignments have been published yet.");
+                        }
+
+                        situation.AppendLine($"Submitted this week: {child.SubmittedThisWeek}");
+                        situation.AppendLine();
+
+                        if (!hasPublishedAssignments && !hasExams)
+                            situation.AppendLine("Rule: Do NOT mention missing work or low scores — nothing has been assigned yet.");
+                        else if (!submittedBelowHalf && !missingList.Any())
+                            situation.AppendLine("Rule: The child is on track. Be positive and encouraging.");
+                        else if (submittedBelowHalf || missingList.Any())
+                            situation.AppendLine("Rule: Gently flag the missing/low submission rate and encourage the parent to follow up.");
+                    }
+
+                    situation.AppendLine("Write 2-3 warm plain-language sentences. No bullet points. No lists.");
+
+                    child.PerformanceSummary = await _ai.ChatAsync(
+                        new List<(string, string)> { ("user", situation.ToString()) },
+                        "You are a school assistant writing parent academic summaries. " +
+                        "NEVER mention missing assignments or low performance if no work has been published. " +
+                        "Only flag issues when the data actually shows them. Be warm, factual, and concise.");
+                }
+                catch
+                {
+                    child.PerformanceSummary = child.OverallAvg switch
+                    {
+                        >= 85 => "Excellent performance this period. Keep up the great work!",
+                        >= 70 => "Good progress. A few areas could use more attention.",
+                        >= 50 => "Average performance. Encourage more regular study.",
+                        _ => "This period needs more focus. Please check in with the teacher."
+                    };
+                }
+            }
+
+
+            // AI: generate plain-language summary per child
+            foreach (var child in childReports)
+            {
+                try
+                {
+                    var examSummary = child.ExamResults.Any()
+                        ? string.Join("; ", child.ExamResults.Take(5)
+                            .Select(e => $"{e.ExamTitle}: {e.Score}/{e.TotalMarks}"))
+                        : "no exams taken";
+                    var missingTitles = child.Assignments.Where(a => !a.IsSubmitted && a.IsExpired).Select(a => a.Title).Take(3);
+                    var pendingTitles = child.Assignments.Where(a => !a.IsSubmitted && !a.IsExpired).Select(a => a.Title).Take(3);
+                    var prompt =
+                        $"Write 2-3 warm plain-language sentences for a parent about their child's school week.\n" +
+                        $"Child: {child.FullName} | Grade: {child.Grade} | Average: {child.OverallAvg}%\n" +
+                        $"Exams: {examSummary}\n" +
+                        $"Missing: {(missingTitles.Any() ? string.Join(", ", missingTitles) : "none")}\n" +
+                        $"Pending: {(pendingTitles.Any() ? string.Join(", ", pendingTitles) : "none")}\n" +
+                        $"Submitted this week: {child.SubmittedThisWeek}\n" +
+                        "Be direct and supportive. Plain sentences only, no lists.";
+                    child.PerformanceSummary = await _ai.ChatAsync(
+                        new List<(string, string)> { ("user", prompt) },
+                        "You are a school assistant writing brief academic summaries for parents. Be warm and factual. Maximum 3 sentences.");
+                }
+                catch
+                {
+                    child.PerformanceSummary = child.OverallAvg switch
+                    {
+                        >= 85 => "Excellent performance this period. Keep it up!",
+                        >= 70 => "Good overall progress with some room to improve.",
+                        >= 50 => "Average performance — encourage more regular study.",
+                        _ => "This period needs more attention. Consider speaking with the teacher."
+                    };
+                }
+            }
 
             return new WeeklyReportVM
             {

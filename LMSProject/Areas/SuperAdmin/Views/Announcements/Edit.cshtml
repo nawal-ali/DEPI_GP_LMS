@@ -1,0 +1,118 @@
+﻿@using LMSProject.Areas.SuperAdmin.ViewModels
+@model EditSAAnnouncementVM
+@{
+    ViewData["Title"] = "Edit Announcement";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="sa-card anim">
+            <div class="sa-modal-header" style="border-radius:16px 16px 0 0;
+                display:flex;align-items:center;gap:.9rem;padding:1.3rem 1.6rem;">
+                <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.15);
+                    display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-edit" style="color:white;"></i>
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;">Edit Announcement</h5>
+                    <small style="color:rgba(255,255,255,.7);font-size:.75rem;">Update announcement details</small>
+                </div>
+            </div>
+
+            <div class="sa-card-body">
+                <form asp-area="SuperAdmin" asp-controller="Announcements"
+                      asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                Title <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Title" class="sa-form-control" placeholder="Announcement title" />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                                Content <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="Content" class="sa-form-control" rows="5"
+                                      placeholder="Full announcement content..."></textarea>
+                            <span asp-validation-for="Content" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Short Description</label>
+                            <input asp-for="Description" class="sa-form-control" placeholder="Brief summary (optional)" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Target Audience</label>
+                            <select asp-for="TargetAudience" class="sa-form-control">
+                                <option value="All">All</option>
+                                <option value="Students">Students</option>
+                                <option value="Instructors">Instructors</option>
+                                <option value="Parents">Parents</option>
+                                <option value="Admins">Admins</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Priority</label>
+                            <select asp-for="Priority" class="sa-form-control">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Category</label>
+                            <select asp-for="Category" class="sa-form-control">
+                                <option value="General">General</option>
+                                <option value="Academic">Academic</option>
+                                <option value="Administrative">Administrative</option>
+                                <option value="Event">Event</option>
+                                <option value="Holiday">Holiday</option>
+                                <option value="Urgent">Urgent Notice</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Expiry Date</label>
+                            <input type="date" asp-for="ExpiryDate" class="sa-form-control" />
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-end">
+                            <label class="d-flex align-items-center gap-2 mb-2" style="cursor:pointer;">
+                                <input type="checkbox"
+                                       asp-for="IsPinned"
+                                       style="width:18px;height:18px;accent-color:var(--secondary);" />
+                                <span style="font-weight:600;font-size:.84rem;">
+                                    <i class="fas fa-thumbtack me-1" style="color:var(--secondary);"></i>
+                                    Pin this announcement
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <a asp-area="SuperAdmin" asp-controller="Announcements" asp-action="Index"
+                           class="btn rounded-3 flex-grow-1"
+                           style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary rounded-3 flex-grow-1"
+                                style="font-family:Poppins,sans-serif;">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

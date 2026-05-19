@@ -1,0 +1,362 @@
+﻿@{
+    ViewData["Title"] = "AI Study Planner";
+    Layout = "~/Areas/Student/Views/Shared/_StudentLayout.cshtml";
+}
+
+<style>
+    @@keyframes fadeSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px)
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    }
+
+    .plan-anim {
+        animation: fadeSlideUp .4s ease;
+    }
+
+    .plan-hero {
+        background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .plan-hero::after {
+            content: '📅';
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 5rem;
+            opacity: .15;
+        }
+
+        .plan-hero h4 {
+            font-weight: 800;
+            margin-bottom: .5rem;
+            font-size: 1.4rem;
+        }
+
+        .plan-hero p {
+            opacity: .8;
+            margin: 0;
+            font-size: .92rem;
+        }
+
+    .info-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: rgba(255,255,255,.15);
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: .8rem;
+        margin-right: .5rem;
+        margin-top: .75rem;
+    }
+
+    .plan-output {
+        background: white;
+        border-radius: 16px;
+        border: 1.5px solid rgba(47,50,125,.08);
+        padding: 2rem;
+        min-height: 200px;
+        box-shadow: 0 4px 20px rgba(47,50,125,.06);
+        white-space: pre-wrap;
+        line-height: 1.9;
+        font-size: .9rem;
+        color: #374151;
+    }
+
+    .day-block {
+        background: #f8f9ff;
+        border-left: 4px solid var(--secondary);
+        border-radius: 0 12px 12px 0;
+        padding: .9rem 1.2rem;
+        margin-bottom: .85rem;
+    }
+
+        .day-block strong {
+            color: var(--primary);
+            font-size: .92rem;
+        }
+
+    .deadline-card {
+        background: white;
+        border-radius: 14px;
+        border: 1.5px solid rgba(0,0,0,.06);
+        padding: 1rem 1.2rem;
+        margin-bottom: .65rem;
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+    }
+
+    .deadline-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .9rem;
+        flex-shrink: 0;
+    }
+
+    .deadline-title {
+        font-weight: 600;
+        font-size: .86rem;
+    }
+
+    .deadline-meta {
+        font-size: .75rem;
+        color: #9ca3af;
+    }
+
+    .deadline-due {
+        font-size: .78rem;
+        font-weight: 700;
+        margin-left: auto;
+    }
+
+    .urgency-high {
+        color: #E13468;
+    }
+
+    .urgency-medium {
+        color: #F48C06;
+    }
+
+    .urgency-low {
+        color: #16a34a;
+    }
+</style>
+
+<div class="row g-4">
+
+    <!-- Left: generate panel -->
+    <div class="col-lg-7">
+        <div class="plan-hero plan-anim">
+            <h4><i class="fas fa-calendar-alt me-2"></i>AI Study Planner</h4>
+            <p>Your personalized 7-day study schedule based on your actual deadlines and courses.</p>
+            <div>
+                <span class="info-chip"><i class="fas fa-database"></i> Live from your dashboard</span>
+                <span class="info-chip"><i class="fas fa-robot"></i> GPT-4o-mini</span>
+            </div>
+        </div>
+
+        <div class="st-card plan-anim" style="animation-delay:.08s;">
+            <div class="st-card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 style="font-weight:700;color:var(--primary);margin:0;">
+                        <i class="fas fa-magic me-2" style="color:var(--secondary);"></i>
+                        Your 7-Day Plan
+                    </h6>
+                    <div class="d-flex gap-2" id="planActions" style="display:none!important;">
+                        <button onclick="copyPlan()" class="btn btn-sm rounded-3"
+                                style="background:rgba(0,203,184,.1);color:var(--secondary);font-family:Poppins,sans-serif;font-size:.76rem;">
+                            <i class="fas fa-copy me-1"></i>Copy
+                        </button>
+                        <button onclick="generatePlan()" class="btn btn-sm rounded-3"
+                                style="background:rgba(91,114,238,.1);color:var(--accent-purple);font-family:Poppins,sans-serif;font-size:.76rem;">
+                            <i class="fas fa-sync-alt me-1"></i>Regenerate
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div id="planEmpty" style="text-align:center;padding:3rem 1rem;color:#9ca3af;">
+                    <i class="fas fa-calendar-alt d-block mb-3" style="font-size:3rem;opacity:.2;"></i>
+                    <p style="margin:0;font-size:.9rem;">Click the button below to generate your personalized study plan.</p>
+                </div>
+
+                <!-- Loading -->
+                <div id="planLoading" style="display:none;text-align:center;padding:3rem;">
+                    <div class="spinner-border" style="color:var(--secondary);width:2.5rem;height:2.5rem;"></div>
+                    <div style="margin-top:1rem;color:#9ca3af;font-size:.88rem;">
+                        Analyzing your deadlines and building your plan…
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div id="planResult" style="display:none;">
+                    <div class="plan-output" id="planText"></div>
+                </div>
+
+                <!-- Error -->
+                <div id="planError" style="display:none;background:rgba(225,52,104,.07);
+                    border-left:4px solid #E13468;border-radius:0 12px 12px 0;
+                    padding:.9rem 1.1rem;font-size:.85rem;color:#E13468;font-weight:600;">
+                </div>
+            </div>
+            <div class="st-card-body" style="border-top:1px solid rgba(0,0,0,.06);padding-top:1.25rem;">
+                <button onclick="generatePlan()" id="generateBtn"
+                        class="btn btn-primary w-100 rounded-3"
+                        style="font-family:Poppins,sans-serif;font-size:.92rem;padding:.8rem;">
+                    <i class="fas fa-magic me-2"></i>Generate My Study Plan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: upcoming deadlines sidebar -->
+    <div class="col-lg-5">
+        <div class="st-card plan-anim" style="animation-delay:.12s;">
+            <div style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));
+                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;">
+                <h6 style="color:white;font-weight:700;margin:0;font-size:.9rem;">
+                    <i class="fas fa-clock me-2"></i>Your Upcoming Deadlines
+                </h6>
+            </div>
+            <div class="st-card-body" id="deadlinesList"
+                 style="max-height:520px;overflow-y:auto;">
+                <div style="text-align:center;color:#9ca3af;padding:2rem;font-size:.85rem;">
+                    <div class="spinner-border spinner-border-sm me-2" style="color:var(--secondary);"></div>
+                    Loading deadlines…
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Load deadlines on page load ────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', loadDeadlines);
+
+        function loadDeadlines() {
+            fetch('/Student/Ai/Deadlines')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var el = document.getElementById('deadlinesList');
+                if (!data.length) {
+                    el.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:2rem;font-size:.85rem;">' +
+                        '<i class="fas fa-check-circle d-block mb-2" style="font-size:1.8rem;color:#16a34a;opacity:.5;"></i>' +
+                        'No upcoming deadlines!</div>';
+                    return;
+                }
+                el.innerHTML = data.map(function(d) {
+                    var urgency = d.daysLeft <= 2 ? 'urgency-high' :
+                                 d.daysLeft <= 7 ? 'urgency-medium' : 'urgency-low';
+                    var icon    = d.type === 'exam'
+                        ? '<i class="fas fa-file-alt" style="color:var(--accent-purple);"></i>'
+                        : '<i class="fas fa-tasks" style="color:var(--secondary);"></i>';
+                    var bg      = d.type === 'exam'
+                        ? 'rgba(91,114,238,.1)' : 'rgba(0,203,184,.1)';
+                    return '<div class="deadline-card">' +
+                        '<div class="deadline-icon" style="background:' + bg + ';">' + icon + '</div>' +
+                        '<div style="flex:1;min-width:0;">' +
+                        '<div class="deadline-title">' + esc(d.title) + '</div>' +
+                        '<div class="deadline-meta">' + esc(d.course) + ' · ' + (d.type === 'exam' ? 'Exam' : 'Assignment') + '</div>' +
+                        '</div>' +
+                        '<div class="deadline-due ' + urgency + '">' +
+                        (d.daysLeft === 0 ? 'Today!' : d.daysLeft === 1 ? 'Tomorrow' : d.daysLeft + ' days') +
+                        '</div></div>';
+                }).join('');
+            })
+            .catch(function() {
+                document.getElementById('deadlinesList').innerHTML =
+                    '<div style="color:#9ca3af;padding:1rem;font-size:.82rem;">Could not load deadlines.</div>';
+            });
+        }
+
+        // ── Generate study plan ────────────────────────────────────────────
+        async function generatePlan() {
+            var btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating…';
+
+            document.getElementById('planEmpty').style.display   = 'none';
+            document.getElementById('planLoading').style.display = 'block';
+            document.getElementById('planResult').style.display  = 'none';
+            document.getElementById('planError').style.display   = 'none';
+
+            try {
+                var resp = await fetch('/Student/Ai/StudyPlan', { method: 'POST' });
+                var d    = await resp.json();
+
+                document.getElementById('planLoading').style.display = 'none';
+
+                if (!resp.ok || d.error) {
+                    document.getElementById('planError').textContent = d.error || 'Generation failed.';
+                    document.getElementById('planError').style.display = 'block';
+                } else {
+                    document.getElementById('planText').innerHTML    = formatPlan(d.result);
+                    document.getElementById('planResult').style.display = 'block';
+                    document.getElementById('planActions').style.removeProperty('display');
+                }
+            } catch(e) {
+                document.getElementById('planLoading').style.display = 'none';
+                document.getElementById('planError').textContent = 'Network error: ' + e.message;
+                document.getElementById('planError').style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Regenerate Plan';
+            }
+        }
+
+        function copyPlan() {
+            navigator.clipboard.writeText(document.getElementById('planText').textContent)
+                .then(function() { alert('Plan copied to clipboard!'); });
+        }
+
+        function esc(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function formatPlan(text) {
+            if (!text) return '';
+            // Split into lines and format
+            var lines = text.split('\n');
+            var html  = '';
+            var inDay = false;
+
+            lines.forEach(function(line) {
+                var t = line.trim();
+                if (!t) { if (inDay) html += '</div>'; inDay = false; return; }
+
+                // Day header: 📅 Day N — Monday
+                if (t.match(/^[📅🗓️]?\s*Day\s*\d/i) || t.match(/^\*\*Day/)) {
+                    if (inDay) html += '</div>';
+                    var clean = t.replace(/^\*\*|\*\*$/g,'').replace(/^[📅🗓️]\s*/,'');
+                    html += '<div class="day-block"><strong>📅 ' + esc(clean) + '</strong><ul style="margin:.5rem 0 0;padding-left:1.2rem;">';
+                    inDay = true;
+                }
+                // Bullet point
+                else if (t.startsWith('•') || t.startsWith('-') || t.startsWith('*')) {
+                    var content = t.replace(/^[•\-\*]\s*/, '');
+                    if (inDay) html += '<li style="margin-bottom:.3rem;">' + esc(content) + '</li>';
+                    else html += '<p style="margin:.3rem 0;">• ' + esc(content) + '</p>';
+                }
+                // Tips section
+                else if (t.match(/^💡|^Tips|^\*\*Tips/i)) {
+                    if (inDay) { html += '</ul></div>'; inDay = false; }
+                    html += '<div style="background:rgba(0,203,184,.07);border-left:3px solid var(--secondary);' +
+                            'border-radius:0 12px 12px 0;padding:.9rem 1.1rem;margin-top:1rem;">' +
+                            '<strong style="color:var(--secondary);">💡 Tips</strong><ul style="margin:.5rem 0 0;padding-left:1.2rem;">';
+                }
+                // Numbered heading (1. 2. etc)
+                else if (t.match(/^\d+\./)) {
+                    var content = t.replace(/^\d+\.\s*/, '');
+                    html += '<li style="margin-bottom:.4rem;">' + esc(content) + '</li>';
+                }
+                // Regular text
+                else {
+                    if (inDay) html += '</ul><p style="margin:.3rem 0;font-size:.85rem;color:#9ca3af;">' + esc(t) + '</p><ul style="padding-left:1.2rem;">';
+                    else html += '<p style="margin:.4rem 0;">' + esc(t) + '</p>';
+                }
+            });
+            if (inDay) html += '</ul></div>';
+            return html || '<p>' + esc(text) + '</p>';
+        }
+    </script>
+}

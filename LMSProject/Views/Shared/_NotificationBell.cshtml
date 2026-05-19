@@ -311,9 +311,10 @@
                         el.style.display = 'none';
                     }
                 }
-                setBadge('sidebar-ann-badge',    d.announcements);
-                setBadge('sidebar-ticket-badge', d.tickets);
+                setBadge('sidebar-ann-badge',        d.announcements);
+                setBadge('sidebar-ticket-badge',     d.tickets);
                 setBadge('sidebar-admin-ticket-badge', d.adminTickets);
+                setBadge('sidebar-contact-badge',    d.contactForms || 0);
             })
             .catch(function() {});
     })();

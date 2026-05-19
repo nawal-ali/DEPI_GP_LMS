@@ -1,104 +1,275 @@
 ﻿@{
     ViewData["Title"] = "My Profile";
+    Layout = "~/Areas/Instructor/Views/Shared/_InstructorLayout.cshtml";
     var user = ViewBag.User as MLSCore.IdentityModel.ApplicationUser;
     var instructor = ViewBag.Instructor as MLSCore.Models.TbInstructor;
     var fullName = instructor?.FullName ?? user?.FullName ?? User.Identity?.Name ?? "Instructor";
     var email = user?.Email ?? "";
     var phone = user?.PhoneNumber ?? "";
+    var spec = instructor?.Specialization ?? "";
+    var bio = instructor?.Bio ?? "";
     var initials = fullName.Length >= 2 ? fullName[..2].ToUpper() : fullName.ToUpper();
     var imageNm = instructor?.ImageName;
+}
+
+<style>
+    .prof-hero {
+        background: linear-gradient(135deg, var(--primary) 0%, #5B72EE 60%, var(--secondary) 100%);
+        border-radius: 20px 20px 0 0;
+        padding: 2rem 2rem 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .prof-hero::before {
+            content: '';
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.05);
+            top: -70px;
+            right: -70px;
+        }
+
+    .prof-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,.4);
+        overflow: hidden;
+        background: rgba(255,255,255,.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 800;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    }
+
+    .prof-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 30px rgba(47,50,125,.1);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .prof-body {
+        padding: 1.8rem;
+    }
+
+    .prof-field label {
+        font-size: .76rem;
+        font-weight: 700;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .3rem;
+        display: block;
+    }
+
+    .prof-input {
+        width: 100%;
+        border: 1.5px solid rgba(47,50,125,.12);
+        border-radius: 11px;
+        padding: .65rem .95rem;
+        font-size: .875rem;
+        font-family: Poppins,sans-serif;
+        color: #374151;
+        outline: none;
+        transition: border-color .15s,box-shadow .15s;
+        background: white;
+    }
+
+        .prof-input:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(0,203,184,.12);
+        }
+
+        .prof-input:disabled {
+            background: #f9fafb;
+            color: #9ca3af;
+        }
+
+    .prof-textarea {
+        width: 100%;
+        border: 1.5px solid rgba(47,50,125,.12);
+        border-radius: 11px;
+        padding: .65rem .95rem;
+        font-size: .875rem;
+        font-family: Poppins,sans-serif;
+        color: #374151;
+        outline: none;
+        transition: border-color .15s,box-shadow .15s;
+        resize: vertical;
+        min-height: 90px;
+    }
+
+        .prof-textarea:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(0,203,184,.12);
+        }
+
+    .prof-save-btn {
+        background: linear-gradient(135deg,var(--primary),#5B72EE);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: .7rem 2rem;
+        font-size: .875rem;
+        font-weight: 700;
+        font-family: Poppins,sans-serif;
+        cursor: pointer;
+        transition: opacity .15s,transform .15s;
+    }
+
+        .prof-save-btn:hover {
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+    .pw-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 30px rgba(47,50,125,.1);
+        overflow: hidden;
+    }
+
+    .pw-header {
+        background: linear-gradient(135deg,var(--secondary),#29B9E7);
+        padding: 1.1rem 1.6rem;
+        display: flex;
+        align-items: center;
+        gap: .8rem;
+    }
+
+    .info-strip {
+        background: rgba(91,114,238,.06);
+        border: 1px solid rgba(91,114,238,.15);
+        border-radius: 12px;
+        padding: .75rem 1rem;
+        font-size: .78rem;
+        color: #555;
+        line-height: 1.65;
+    }
+</style>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success rounded-3 anim mb-3" style="font-size:.85rem;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger rounded-3 anim mb-3" style="font-size:.85rem;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+    </div>
 }
 
 <div class="row g-4 justify-content-center">
     <div class="col-lg-8">
 
-        <!-- Profile card -->
-        <div class="iact-card anim mb-4">
-            <div style="background:linear-gradient(135deg,var(--primary),var(--secondary));
-                border-radius:16px 16px 0 0;padding:1.75rem 2rem;
-                display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
-                <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;
-                    background:rgba(255,255,255,.2);display:flex;align-items:center;
-                    justify-content:center;color:white;font-size:1.4rem;font-weight:700;flex-shrink:0;">
-                    @if (!string.IsNullOrEmpty(imageNm))
-                    {
-                        <img src="~/@imageNm" style="width:100%;height:100%;object-fit:cover;" />
-                    }
-                    else
-                    {
+        <div class="prof-card anim">
+            <div class="prof-hero">
+                <div style="display:flex;align-items:center;gap:1.2rem;position:relative;z-index:1;">
+                    <div class="prof-avatar">
+                        @if (!string.IsNullOrEmpty(imageNm))
+                        {
+                            <img src="~/@imageNm" style="width:100%;height:100%;object-fit:cover;" alt="@fullName" />
+                        }
+                        else
+                        {
 
-                        @initials
-                    }
-                </div>
-                <div>
-                    <h5 style="color:white;font-weight:700;margin:0;">@fullName</h5>
-                    <span style="background:rgba(255,255,255,.2);color:white;border-radius:20px;
-                        padding:2px 12px;font-size:.75rem;font-weight:600;">
-                        <i class="fas fa-chalkboard-teacher me-1"></i>Instructor
-                    </span>
-                </div>
-            </div>
-            <div class="iact-card-body">
-                <form asp-area="Instructor" asp-controller="Profile" asp-action="Edit"
-                      method="post" enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Full Name</label>
-                            <input name="FullName" value="@fullName" class="iact-form-control" />
+                            @initials
+                        }
+                    </div>
+                    <div>
+                        <h4 style="color:white;font-weight:800;margin:0;font-size:1.2rem;">@fullName</h4>
+                        <div style="display:flex;gap:.5rem;margin-top:.4rem;flex-wrap:wrap;">
+                            <span style="background:rgba(255,255,255,.2);color:white;border-radius:20px;padding:3px 12px;font-size:.72rem;font-weight:600;">
+                                <i class="fas fa-chalkboard-teacher me-1"></i>Instructor
+                            </span>
+                            @if (!string.IsNullOrEmpty(spec))
+                            {
+                                <span style="background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border-radius:20px;padding:3px 12px;font-size:.72rem;">@spec</span>
+                            }
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Phone</label>
-                            <input name="Phone" value="@phone" class="iact-form-control" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Email</label>
-                            <input value="@email" class="iact-form-control" disabled
-                                   style="background:rgba(0,0,0,.03);" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Specialization</label>
-                            <input name="Specialization" value="@instructor?.Specialization"
-                                   class="iact-form-control" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Bio</label>
-                            <textarea name="Bio" rows="3" class="iact-form-control"
-                                      style="resize:vertical;">@instructor?.Bio</textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" style="font-weight:600;font-size:.84rem;">Profile Photo</label>
-                            <input type="file" name="Image" class="iact-form-control" accept="image/*" />
+                        <div style="margin-top:.4rem;font-size:.76rem;color:rgba(255,255,255,.65);">
+                            <i class="fas fa-envelope me-1"></i>@email
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="prof-body">
+                <form asp-area="Instructor" asp-controller="Profile" asp-action="Edit" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-3">
+                        <div class="col-md-6 prof-field">
+                            <label>Full Name</label>
+                            <input name="FullName" value="@fullName" class="prof-input" required />
+                        </div>
+                        <div class="col-md-6 prof-field">
+                            <label>Phone</label>
+                            <input name="Phone" value="@phone" class="prof-input" placeholder="+20 10 xxxx xxxx" />
+                        </div>
+                        <div class="col-md-6 prof-field">
+                            <label>Email</label>
+                            <input value="@email" class="prof-input" disabled />
+                        </div>
+                        <div class="col-md-6 prof-field">
+                            <label>Specialization</label>
+                            <input name="Specialization" value="@spec" class="prof-input" placeholder="e.g. Mathematics, Science..." />
+                        </div>
+                        <div class="col-12 prof-field">
+                            <label>Bio</label>
+                            <textarea name="Bio" class="prof-textarea" placeholder="Tell students about yourself...">@bio</textarea>
+                        </div>
+                        <div class="col-md-6 prof-field">
+                            <label>Profile Photo</label>
+                            <input type="file" name="Image" class="prof-input" accept="image/*" style="padding:.5rem;" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(imageNm))
+                        {
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div style="display:flex;align-items:center;gap:.75rem;">
+                                    <img src="~/@imageNm" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(0,203,184,.3);" />
+                                    <span style="font-size:.75rem;color:#9ca3af;">Current photo</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary rounded-3 px-4"
-                                style="font-family:Poppins,sans-serif;">
-                            <i class="fas fa-save me-2"></i>Save Profile
-                        </button>
+                        <button type="submit" class="prof-save-btn"><i class="fas fa-save me-2"></i>Save Profile</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Password change -->
-        <div class="iact-card anim">
-            <div style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));
-                border-radius:16px 16px 0 0;padding:1.1rem 1.5rem;">
-                <h5 style="color:white;font-weight:700;margin:0;">
-                    <i class="fas fa-lock me-2"></i>Change Password
-                </h5>
+        <div class="pw-card anim">
+            <div class="pw-header">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-lock" style="color:white;font-size:.9rem;"></i>
+                </div>
+                <h5 style="color:white;font-weight:700;margin:0;">Change Password</h5>
             </div>
-            <div class="iact-card-body">
+            <div style="padding:1.5rem;">
+                <div class="info-strip mb-3">
+                    <i class="fas fa-info-circle me-2" style="color:var(--accent-purple);"></i>
+                    Choose a strong password (min. 8 characters). Your current password is required to confirm changes.
+                </div>
                 @await Html.PartialAsync("_PasswordChange", new ViewDataDictionary(ViewData) {
-                    { "PwArea",       "Instructor" },
-                    { "PwController", "Profile" },
-                    { "PwAction",     "ChangePassword" },
-                    { "PwFormId",     "instructorPwForm" },
-                    { "InputClass",   "iact-form-control" }
+                    { "PwArea", "Instructor" }, { "PwController", "Profile" },
+                    { "PwAction", "ChangePassword" }, { "PwFormId", "instructorPwForm" },
+                    { "InputClass", "prof-input" }
                 })
             </div>
         </div>
-
     </div>
 </div>

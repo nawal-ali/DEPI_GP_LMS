@@ -43,5 +43,27 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
             TempData["Success"] = "Announcement deleted.";
             return RedirectToAction("Index");
         }
+
+        [HttpGet]
+        public IActionResult Edit(int id)
+        {
+            ViewData["Title"] = "Edit Announcement";
+            var vm = _data.GetAnnouncementForEdit(id);
+            if (vm == null) return NotFound();
+            return View("~/Areas/SuperAdmin/Views/Announcements/Edit.cshtml", vm);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult Edit(LMSProject.Areas.SuperAdmin.ViewModels.EditSAAnnouncementVM vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewData["Title"] = "Edit Announcement";
+                return View("~/Areas/SuperAdmin/Views/Announcements/Edit.cshtml", vm);
+            }
+            _data.UpdateAnnouncement(vm);
+            TempData["Success"] = "Announcement updated.";
+            return RedirectToAction("Index");
+        }
     }
 }

@@ -22,6 +22,11 @@
    class="st-nav-item @(Is("Assignments") ? "active" : "")">
     <i class="fas fa-tasks"></i><span>Assignments</span>
 </a>
+<a asp-area="Student" asp-controller="Ai" asp-action="StudyPlannerPage"
+   class="st-nav-item">
+    <i class="fas fa-calendar-alt"></i>
+    <span>AI Study Planner</span>
+</a>
 
 <p class="st-group-label mt-3">Communication</p>
 <a asp-area="Student" asp-controller="Announcements" asp-action="Index"

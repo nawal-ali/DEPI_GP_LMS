@@ -38,9 +38,11 @@ namespace LMSProject.AI.Services
         private readonly AppDbContext _db;
         private readonly EmailService _email;
         private readonly N8nService _n8n;
+        private readonly GithubAiService _ai;
 
-        public WeeklyReportService(AppDbContext db, EmailService email, N8nService n8n)
-        { _db = db; _email = email; _n8n = n8n; }
+        public WeeklyReportService(AppDbContext db, EmailService email,
+            N8nService n8n, GithubAiService ai)
+        { _db = db; _email = email; _n8n = n8n; _ai = ai; }
 
         public async Task SendAllReportsAsync()
         {
@@ -168,6 +170,29 @@ namespace LMSProject.AI.Services
                 }
                 sb.Append("</ul>");
             }
+
+            // AI narrative analysis
+            try
+            {
+                var aiPrompt =
+                    $"Write a 3-sentence plain-language weekly academic summary for a parent.\n" +
+                    $"Student average: {avg:F1}%\n" +
+                    $"Exams taken this week: {examResults.Count}\n" +
+                    $"Missing assignments: {missing.Count}\n" +
+                    $"Submitted assignments: {submitted.Count}\n\n" +
+                    "Be warm, honest and direct. No bullet points. Plain sentences only.";
+
+                var narrative = await _ai.ChatAsync(
+                    new List<(string, string)> { ("user", aiPrompt) },
+                    "You are a school assistant writing parent summaries. Be warm and factual.");
+
+                sb.Append("<div style='background:#f8f9ff;border-left:4px solid #5B72EE;" +
+                          "border-radius:0 12px 12px 0;padding:1rem 1.25rem;margin-top:1rem;'>" +
+                          "<strong style='color:#2F327D;'>📊 AI Analysis</strong><br/>" +
+                          $"<span style='font-size:.9rem;color:#374151;line-height:1.8;'>{System.Net.WebUtility.HtmlEncode(narrative)}</span>" +
+                          "</div>");
+            }
+            catch { /* AI optional — don't block email on failure */ }
 
             return sb.ToString();
         }

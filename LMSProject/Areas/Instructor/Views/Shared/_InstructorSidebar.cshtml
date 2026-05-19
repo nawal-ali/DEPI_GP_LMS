@@ -68,3 +68,12 @@
     <i class="fas fa-bullhorn"></i>
     <span>Announcements</span><span id="sidebar-ann-badge" style="display:none;background:#E13468;color:white;border-radius:20px;padding:1px 7px;font-size:.65rem;font-weight:700;margin-left:auto;flex-shrink:0;"></span>
 </a>
+
+<p class="sa-group-label mt-3">Account</p>
+<a asp-area="Instructor"
+   asp-controller="Profile"
+   asp-action="Index"
+   class="sa-nav-item @(Is("Profile") ? "active" : "")">
+    <i class="fas fa-user-circle"></i>
+    <span>My Profile</span>
+</a>

@@ -163,26 +163,43 @@ namespace LMSProject.AI.Services
                 .Take(10)
                 .ToListAsync();
 
-            var examLines = exams.Select(e =>
-                $"- {e.Title} ({courseNames.GetValueOrDefault(e.CourseId, "Unknown")}) — Due {e.Deadline:MMM dd, yyyy}");
+            // Build enrolled courses — ALWAYS included so AI doesn't invent subjects
+            var enrolledCourseNames = courseNames.Values.ToList();
 
-            var assignLines = assignments
-                .Where(a => !a.Submissions.Any())
-                .Select(a =>
-                    $"- {a.Title} ({courseNames.GetValueOrDefault(a.CourseId, "Unknown")}) — Due {a.Deadline:MMM dd, yyyy}");
+            var examLines = exams.Select(e =>
+                $"• {e.Title} [{courseNames.GetValueOrDefault(e.CourseId, "?")}] — Due {e.Deadline:MMM dd, yyyy} ({Math.Max(0, (int)(e.Deadline!.Value - DateTime.Now).TotalDays)} days left)");
+
+            var pendingAssign = assignments.Where(a => !a.Submissions.Any()).ToList();
+            var assignLines = pendingAssign.Select(a =>
+                $"• {a.Title} [{courseNames.GetValueOrDefault(a.CourseId, "?")}] — Due {a.Deadline:MMM dd, yyyy} ({Math.Max(0, (int)(a.Deadline - DateTime.Now).TotalDays)} days left)");
 
             var context =
                 $"Student: {student.FullName}\n" +
-                $"Grade: {student.Grade?.Name ?? "Unknown"}\n\n" +
-                $"Upcoming Exams:\n{string.Join("\n", examLines)}\n\n" +
-                $"Pending Assignments:\n{string.Join("\n", assignLines)}";
+                $"Grade: {student.Grade?.Name ?? "N/A"}\n" +
+                $"Enrolled Courses: {(enrolledCourseNames.Any() ? string.Join(", ", enrolledCourseNames) : "None")}\n\n" +
+                $"Upcoming Exams ({exams.Count}):\n{(exams.Any() ? string.Join("\n", examLines) : "None scheduled")}\n\n" +
+                $"Pending Assignments ({pendingAssign.Count}):\n{(pendingAssign.Any() ? string.Join("\n", assignLines) : "None pending")}\n\n" +
+                $"Submitted Assignments: {assignments.Count - pendingAssign.Count}";
+
+            var systemPrompt =
+                "You are a school academic advisor.\n" +
+                "Create a 7-day study plan using ONLY the student's ACTUAL enrolled courses above.\n" +
+                "Rules:\n" +
+                "- NEVER mention subjects not in the Enrolled Courses list.\n" +
+                "- If no deadlines: focus on reviewing enrolled courses.\n" +
+                "- Name each actual course and task explicitly.\n" +
+                "Format each day as:\n" +
+                "📅 Day N — [Weekday]\n" +
+                "• [Task with course name]\n" +
+                "• [Task]\n\n" +
+                "After Day 7, add:\n" +
+                "💡 Tips\n" +
+                "• [2-3 practical tips]\n" +
+                "Be concise and realistic.";
 
             return await _ai.ChatAsync(
-                new List<(string, string)> { ("user", context) },
-                "You are a professional academic advisor. " +
-                "Based on the student's upcoming deadlines, create a personalized 7-day study plan. " +
-                "Prioritize by urgency. Be specific about what to study each day. " +
-                "Format as a clear day-by-day schedule.");
+                new List<(string, string)> { ("user", $"Create a study plan for:\n\n{context}") },
+                systemPrompt);
         }
 
         // ── Helpers ────────────────────────────────────────────────────────

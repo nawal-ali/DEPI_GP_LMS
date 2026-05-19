@@ -4,6 +4,7 @@ using LMSProject.Areas.Admin.ViewModel;
 using LMSProject.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using LMSProject.AI.Services;
 using MLSCore;
 using MLSCore.IdentityModel;
 using MLSCore.Models;
@@ -16,15 +17,18 @@ namespace LMSProject.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly EmailService _email;
 
         public AccountController(IMapper mapper, IUnitOfWork unitOfWork,
                                  UserManager<ApplicationUser> usermanager,
-                                 SignInManager<ApplicationUser> signInManager)
+                                 SignInManager<ApplicationUser> signInManager,
+                                 EmailService email)
         {
             _usermanager = usermanager;
             _signInManager = signInManager;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _email = email;
         }
 
         // ── Register — disabled. Only SuperAdmin can create accounts. ─────────
@@ -107,14 +111,51 @@ namespace LMSProject.Controllers
 
             var user = await _usermanager.FindByEmailAsync(model.Email);
             if (user == null)
-                return RedirectToAction("ForgotPasswordConfirmation");
+            {
+                // Don't reveal that the user doesn't exist
+                TempData["ForgotSuccess"] = "If this email exists, a temporary password has been sent.";
+                return RedirectToAction("Login");
+            }
 
+            // Generate a random temporary password
+            var tempPassword = "Temp@" + Guid.NewGuid().ToString("N")[..8].ToUpper() + "1!";
+
+            // Reset to the temporary password
             var token = await _usermanager.GeneratePasswordResetTokenAsync(user);
-            var resetLink = Url.Action("ResetPassword", "Account",
-                new { token, email = user.Email }, Request.Scheme);
+            var result = await _usermanager.ResetPasswordAsync(user, token, tempPassword);
 
-            ViewBag.ResetLink = resetLink;
-            return View("ForgotPasswordConfirmation");
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("", "Could not reset password. Please try again.");
+                return View(model);
+            }
+
+            // Send the temp password by email
+            try
+            {
+                var name = user.FullName ?? user.Email ?? "User";
+                var html = "<h2 style='color:#2F327D;'>🔐 Temporary Password</h2>" +
+                           "<p>Hi <strong>" + System.Net.WebUtility.HtmlEncode(name) + "</strong>,</p>" +
+                           "<p>Your temporary password for TOTC LMS is:</p>" +
+                           "<div style='background:#f4f6fb;border:2px solid #5B72EE;border-radius:12px;" +
+                           "padding:1rem 1.5rem;font-size:1.3rem;font-weight:700;color:#2F327D;" +
+                           "letter-spacing:2px;text-align:center;margin:1rem 0;'>" +
+                           System.Net.WebUtility.HtmlEncode(tempPassword) + "</div>" +
+                           "<p>Please log in with this password and <strong>change it immediately</strong> from your profile for security.</p>" +
+                           "<p style='color:#9ca3af;font-size:.85rem;'>If you did not request this, contact your administrator.</p>";
+
+                await _email.SendAsync(user.Email!, name,
+                    "TOTC LMS — Your Temporary Password", html);
+            }
+            catch
+            {
+                // Email failed — still show success but warn
+                TempData["ForgotSuccess"] = "Password reset. Email could not be sent — contact your administrator.";
+                return RedirectToAction("Login");
+            }
+
+            TempData["ForgotSuccess"] = "A temporary password has been sent to your email. Please log in and change it.";
+            return RedirectToAction("Login");
         }
 
         // ── Reset Password ───────────────────────────────────────────────────

@@ -166,6 +166,22 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
         public string Initials => Name.Length >= 2 ? Name.Substring(0, 2).ToUpper() : Name.ToUpper();
     }
 
+    // ── Edit Announcement ─────────────────────────────────────────────────────
+    public class EditSAAnnouncementVM
+    {
+        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.MaxLength(200)]
+        public string Title { get; set; } = "";
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Content { get; set; } = "";
+        public string? Description { get; set; }
+        public string TargetAudience { get; set; } = "All";
+        public string Priority { get; set; } = "Medium";
+        public string Category { get; set; } = "General";
+        public bool IsPinned { get; set; }
+        public DateTime? ExpiryDate { get; set; }
+    }
+
     // ── User Profile (View) ──────────────────────────────────────────────────
     public class UserProfileVM
     {

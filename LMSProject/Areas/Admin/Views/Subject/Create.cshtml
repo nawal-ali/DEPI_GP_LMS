@@ -1,41 +1,63 @@
 ﻿@using LMSProject.Areas.Admin.ViewModel
 @model SubjectVM
-@{{
+@{
     ViewData["Title"] = "Add Subject";
-}}
+}
 
 <style>
-@@keyframes fadeSlideUp {{
-    from {{ opacity: 0; transform: translateY(20px); }}
-    to   {{ opacity: 1; transform: translateY(0); }}
-}}
-.create-card {{ animation: fadeSlideUp .4s ease; }}
-.preview-icon {{
-    width: 72px; height: 72px; border-radius: 18px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 2rem; font-weight: 800; color: white;
-    background: linear-gradient(135deg,var(--orange),var(--yellow)); transition: all .3s; text-transform: uppercase;
-}}
+    @@keyframes fadeSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .create-card {
+        animation: fadeSlideUp .4s ease;
+    }
+
+    .preview-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, var(--orange), var(--yellow));
+        transition: all .3s;
+        text-transform: uppercase;
+    }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-lg-6 col-md-8">
         <div class="sa-card create-card">
-            <div style="background:linear-gradient(135deg,var(--orange),var(--yellow));border-radius:16px 16px 0 0;
-                        padding:1.5rem 2rem;display:flex;align-items:center;gap:1rem;">
+            <div style="background:linear-gradient(135deg,var(--orange),var(--yellow));
+                border-radius:16px 16px 0 0;
+                padding:1.5rem 2rem;display:flex;align-items:center;gap:1rem;">
                 <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.15);
-                            display:flex;align-items:center;justify-content:center;">
+                    display:flex;align-items:center;justify-content:center;">
                     <i class="fas fa-book" style="color:white;font-size:1.2rem;"></i>
                 </div>
                 <div>
                     <h5 style="color:white;font-weight:700;margin:0;">Add New Subject</h5>
-                    <small style="color:rgba(255,255,255,.7);font-size:.78rem;">e.g. Mathematics, Science, English…</small>
+                    <small style="color:rgba(255,255,255,.7);font-size:.78rem;">
+                        e.g. Mathematics, Science, English…
+                    </small>
                 </div>
             </div>
 
             <div class="sa-card-body">
                 <form asp-area="Admin" asp-controller="Subject" asp-action="Create" method="post">
-                    @@Html.AntiForgeryToken()
+                    @Html.AntiForgeryToken()
 
                     <div class="text-center mb-4">
                         <div class="preview-icon mx-auto" id="previewIcon">?</div>
@@ -44,24 +66,25 @@
                         </small>
                     </div>
 
-                    
-
                     <div class="mb-4">
                         <label class="form-label" style="font-weight:600;font-size:.84rem;">
                             Subject Name <span class="text-danger">*</span>
                         </label>
                         <input asp-for="Name" class="sa-form-control"
-                               placeholder="e.g. Mathematics, Science, English…" id="nameInput" autocomplete="off" />
+                               placeholder="e.g. Mathematics, Science, English…"
+                               id="nameInput" autocomplete="off" />
                         <span asp-validation-for="Name" class="text-danger small"></span>
                     </div>
 
                     <div class="d-flex gap-3">
-                        <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 flex-grow-1">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 flex-grow-1"
+                                style="font-family:Poppins,sans-serif;">
                             <i class="fas fa-plus-circle me-2"></i>Create Subject
                         </button>
                         <a asp-area="Admin" asp-controller="Subject" asp-action="Index"
                            class="btn rounded-3 px-4 py-2"
-                           style="background:rgba(47,50,125,.07);color:var(--primary);font-weight:600;">
+                           style="background:rgba(47,50,125,.07);color:var(--primary);
+                            font-weight:600;font-family:Poppins,sans-serif;">
                             Cancel
                         </a>
                     </div>
@@ -71,28 +94,31 @@
     </div>
 </div>
 
-@@section Scripts {{
-<script>
-var gradients = ['linear-gradient(135deg,#F48C06,#FDCB6E)',
-    'linear-gradient(135deg,#E13468,#F48C06)',
-    'linear-gradient(135deg,#FDCB6E,#29B9E7)',
-    'linear-gradient(135deg,#29B9E7,#00CBB8)',
-    'linear-gradient(135deg,#5B72EE,#E13468)',
-    'linear-gradient(135deg,#00CBB8,#5B72EE)'];
-var input   = document.getElementById('nameInput');
-var preview = document.getElementById('previewIcon');
-function updatePreview() {{
-    var val = input.value.trim();
-    if (val) {{
-        var ch = val[0].toUpperCase();
-        preview.textContent      = ch;
-        preview.style.background = gradients[ch.charCodeAt(0) % gradients.length];
-    }} else {{
-        preview.textContent      = '?';
-        preview.style.background = gradients[0];
-    }}
-}}
-input.addEventListener('input', updatePreview);
-updatePreview();
-</script>
-}}
+@section Scripts {
+    <script>
+        var gradients = [
+            'linear-gradient(135deg,#F48C06,#FDCB6E)',
+            'linear-gradient(135deg,#E13468,#F48C06)',
+            'linear-gradient(135deg,#FDCB6E,#29B9E7)',
+            'linear-gradient(135deg,#29B9E7,#00CBB8)',
+            'linear-gradient(135deg,#5B72EE,#E13468)',
+            'linear-gradient(135deg,#00CBB8,#5B72EE)'
+        ];
+        var input   = document.getElementById('nameInput');
+        var preview = document.getElementById('previewIcon');
+
+        function updatePreview() {
+            var val = input.value.trim();
+            if (val) {
+                var ch = val[0].toUpperCase();
+                preview.textContent      = ch;
+                preview.style.background = gradients[ch.charCodeAt(0) % gradients.length];
+            } else {
+                preview.textContent      = '?';
+                preview.style.background = gradients[0];
+            }
+        }
+        input.addEventListener('input', updatePreview);
+        updatePreview();
+    </script>
+}

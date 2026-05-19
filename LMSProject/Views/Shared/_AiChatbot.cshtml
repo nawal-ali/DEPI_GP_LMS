@@ -884,3 +884,179 @@
         }
     </script>
 }
+<script>
+     // ── n8n-powered AI chatbot ────────────────────────────────────────────
+     // Files stay in browser memory — sent to n8n per question (no server upload)
+     var currentFile    = null;   // File object held in memory
+     var currentFileName= '';
+
+     // ── Toggle panel ────────────────────────────────────────────────────
+     function toggleAiPanel() {
+         var panel = document.getElementById('aiPanel');
+         panel.classList.toggle('open');
+         if (panel.classList.contains('open'))
+             setTimeout(function() { document.getElementById('aiInput').focus(); }, 100);
+     }
+
+     // ── Tab switching ─────────────────────────────────────────────────
+     function switchTab(name, btn) {
+         document.querySelectorAll('.ai-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+         document.querySelectorAll('.ai-tab').forEach(function(b) { b.classList.remove('active'); });
+         var pane = document.getElementById('tab-' + name);
+         if (pane) pane.classList.add('active');
+         btn.classList.add('active');
+     }
+
+     // ── Send message ─────────────────────────────────────────────────
+     function sendMessage() {
+         var input   = document.getElementById('aiInput');
+         var sendBtn = document.getElementById('aiSendBtn');
+         var text    = input.value.trim();
+         if (!text) return;
+         input.value = ''; input.style.height = 'auto';
+         sendBtn.disabled = true;
+
+         appendMsg(text, 'user');
+         var thinking = appendMsg('Thinking…', 'bot thinking');
+
+         var fd = new FormData();
+         fd.append('question', text);
+         if (currentFile) fd.append('file', currentFile, currentFileName);
+
+         fetch('/api/ai/chat', { method: 'POST', body: fd })
+         .then(function(r) { return r.text(); })
+         .then(function(raw) {
+             thinking.remove();
+             var answer = raw;
+             try {
+                 var d = JSON.parse(raw);
+                 answer = d.output || d.text || d.answer || d.result || raw;
+             } catch(e) {}
+             appendMsg(answer, 'bot');
+             sendBtn.disabled = false;
+         })
+         .catch(function(e) {
+             thinking.remove();
+             appendMsg('Connection error: ' + e.message, 'bot');
+             sendBtn.disabled = false;
+         });
+     }
+
+     function sendSuggestion(text) {
+         switchTab('chat', document.querySelector('.ai-tab'));
+         document.getElementById('aiInput').value = text;
+         sendMessage();
+     }
+
+     function handleKey(e) {
+         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+     }
+     function autoResize(el) {
+         el.style.height = 'auto';
+         el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+     }
+
+     function appendMsg(text, type) {
+         var msgs = document.getElementById('aiMessages');
+         var div  = document.createElement('div');
+         div.className = 'ai-msg ' + (type.includes('user') ? 'ai-msg-user' : 'ai-msg-bot') +
+                         (type.includes('thinking') ? ' thinking' : '');
+         if (type.includes('thinking')) {
+             div.innerHTML = '<span class="ai-spinner"></span> ' + escHtml(text);
+         } else {
+             div.innerHTML = '<pre>' + escHtml(text) + '</pre>';
+         }
+         msgs.appendChild(div);
+         msgs.scrollTop = msgs.scrollHeight;
+         return div;
+     }
+
+     // ── File handling — stays in browser memory ──────────────────────
+     function uploadFile(input) {
+         if (!input.files.length) return;
+         var file = input.files[0];
+         var stat = document.getElementById('uploadStatus');
+         var allowed = ['application/pdf',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/msword', 'image/jpeg', 'image/png'];
+         if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|docx?|jpe?g|png)$/i)) {
+             stat.innerHTML = '<span style="color:#E13468;">❌ Only PDF, DOCX, JPG, PNG allowed</span>';
+             return;
+         }
+         if (file.size > 20 * 1024 * 1024) {
+             stat.innerHTML = '<span style="color:#E13468;">❌ File too large (max 20 MB)</span>';
+             return;
+         }
+         currentFile     = file;
+         currentFileName = file.name;
+         stat.innerHTML  = '<span style="color:#16a34a;">✅ ' + escHtml(file.name) + ' ready — ask your question!</span>';
+         renderFilesList();
+         input.value = '';
+     }
+
+     function renderFilesList() {
+         var el = document.getElementById('filesList');
+         var sel= document.getElementById('toolFileSelect');
+         if (!currentFile) {
+             el.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:.78rem;padding:1.5rem 0;">' +
+                            '<i class="fas fa-folder-open d-block mb-2" style="font-size:1.5rem;opacity:.3;"></i>' +
+                            'No file loaded yet.</div>';
+             sel.innerHTML= '<option value="">— No file loaded —</option>';
+             return;
+         }
+         var kb = Math.round(currentFile.size / 1024);
+         el.innerHTML = '<div class="ai-file-item">' +
+             '<div class="ai-file-icon"><i class="fas fa-file-alt"></i></div>' +
+             '<div style="flex:1;min-width:0;">' +
+             '<div class="ai-file-name">' + escHtml(currentFileName) + '</div>' +
+             '<div class="ai-file-meta">' + kb + ' KB · ready for questions</div></div>' +
+             '<button class="ai-file-del" onclick="clearFile()" title="Remove"><i class="fas fa-times"></i></button>' +
+             '</div>';
+         sel.innerHTML= '<option value="current">' + escHtml(currentFileName) + '</option>';
+     }
+
+     function clearFile() {
+         currentFile = null; currentFileName = '';
+         document.getElementById('uploadStatus').innerHTML = '';
+         renderFilesList();
+     }
+
+     // ── Tools ─────────────────────────────────────────────────────────
+     function runTool(action) {
+         var questions = {
+             'summarize':  'Please summarize this document in clear bullet points.',
+             'mcq':        'Generate 5 multiple choice questions (A/B/C/D) from this document. Mark the correct answer.',
+             'keypoints':  'Extract the 10 most important key points from this document as a numbered list.',
+             'studyplan':  'Create a 7-day personalized study plan based on this document's content.'
+         };
+         var q = questions[action];
+         if (!q) return;
+         if (!currentFile && action !== 'studyplan') {
+             document.getElementById('toolResult').innerHTML =
+                 '<div class="ai-msg ai-msg-bot">⚠️ Please upload a file first in the Files tab.</div>';
+             return;
+         }
+         var result = document.getElementById('toolResult');
+         result.innerHTML = '<div class="ai-msg ai-msg-bot thinking"><span class="ai-spinner"></span> Generating…</div>';
+
+         var fd = new FormData();
+         fd.append('question', q);
+         if (currentFile) fd.append('file', currentFile, currentFileName);
+
+         fetch('/api/ai/chat', { method: 'POST', body: fd })
+         .then(function(r) { return r.text(); })
+         .then(function(raw) {
+             var answer = raw;
+             try { var d = JSON.parse(raw); answer = d.output || d.text || d.answer || d.result || raw; } catch(e) {}
+             result.innerHTML = '<div class="ai-msg ai-msg-bot"><pre>' + escHtml(answer) + '</pre></div>';
+         })
+         .catch(function(e) {
+             result.innerHTML = '<div class="ai-msg ai-msg-bot">Error: ' + escHtml(e.message) + '</div>';
+         });
+     }
+
+     function escHtml(t) {
+         return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+     }
+</script>
+}

@@ -1,0 +1,568 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "About TOTC";
+}
+
+@section Styles {
+    <style>
+        /* ── Page header ─────────────────────────────────────── */
+        .about-hero {
+            background: linear-gradient(135deg, #2F327D 0%, #5B72EE 60%, #00CBB8 100%);
+            padding: 6rem 0 4rem;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .about-hero::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.04)" d="M0,192L48,186.7C96,181,192,171,288,181.3C384,192,480,224,576,213.3C672,203,768,149,864,138.7C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom/cover no-repeat;
+            }
+
+            .about-hero h1 {
+                font-size: 3rem;
+                font-weight: 800;
+                margin-bottom: .75rem;
+            }
+
+            .about-hero p {
+                font-size: 1.1rem;
+                opacity: .85;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+        /* ── Mission / Vision cards ──────────────────────────── */
+        .mv-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.25rem;
+            height: 100%;
+            box-shadow: 0 4px 30px rgba(47,50,125,.08);
+            border-top: 4px solid;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+            .mv-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 12px 40px rgba(47,50,125,.14);
+            }
+
+            .mv-card.mission {
+                border-color: #00CBB8;
+            }
+
+            .mv-card.vision {
+                border-color: #5B72EE;
+            }
+
+            .mv-card.goals {
+                border-color: #F48C06;
+            }
+
+        .mv-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .mv-card h4 {
+            font-weight: 700;
+            color: #2F327D;
+            margin-bottom: .75rem;
+        }
+
+        .mv-card p {
+            color: #555;
+            font-size: .9rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        /* ── Team cards ──────────────────────────────────────── */
+        .team-card {
+            background: white;
+            border-radius: 18px;
+            padding: 1.75rem;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(47,50,125,.07);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+            .team-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 36px rgba(47,50,125,.13);
+            }
+
+        .team-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            margin: 0 auto 1rem;
+        }
+
+        .team-card h6 {
+            font-weight: 700;
+            color: #2F327D;
+            margin-bottom: 2px;
+        }
+
+        .team-card small {
+            color: #9ca3af;
+            font-size: .78rem;
+        }
+
+        /* ── Stats ───────────────────────────────────────────── */
+        .about-stat {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(47,50,125,.07);
+        }
+
+            .about-stat h3 {
+                font-size: 2.2rem;
+                font-weight: 800;
+                margin-bottom: 4px;
+            }
+
+        /* ── Service cards ───────────────────────────────────── */
+        .service-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.75rem;
+            height: 100%;
+            box-shadow: 0 4px 20px rgba(47,50,125,.07);
+            transition: transform .2s;
+        }
+
+            .service-card:hover {
+                transform: translateY(-4px);
+            }
+
+        .service-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-card h6 {
+            font-weight: 700;
+            color: #2F327D;
+            margin-bottom: .4rem;
+        }
+
+        .service-card p {
+            color: #6b7280;
+            font-size: .84rem;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* ── Timeline ────────────────────────────────────────── */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+            .timeline::before {
+                content: '';
+                position: absolute;
+                left: 8px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: linear-gradient(to bottom, #5B72EE, #00CBB8);
+                border-radius: 2px;
+            }
+
+        .tl-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: -2rem;
+            top: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #5B72EE;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #5B72EE;
+        }
+
+        .tl-year {
+            font-weight: 800;
+            color: #5B72EE;
+            font-size: .9rem;
+            margin-bottom: .2rem;
+        }
+
+        .tl-title {
+            font-weight: 700;
+            color: #2F327D;
+            font-size: .95rem;
+            margin-bottom: .3rem;
+        }
+
+        .tl-text {
+            color: #6b7280;
+            font-size: .84rem;
+            line-height: 1.6;
+        }
+
+        /* ── Reveal animations ───────────────────────────────── */
+        .reveal-up, .reveal-left, .reveal-right, .reveal-fade {
+            opacity: 0;
+            transition: opacity .7s ease, transform .7s ease;
+        }
+
+        .reveal-up {
+            transform: translateY(40px);
+        }
+
+        .reveal-left {
+            transform: translateX(-45px);
+        }
+
+        .reveal-right {
+            transform: translateX(45px);
+        }
+
+        .reveal-fade {
+            transform: none;
+        }
+
+            .reveal-up.visible, .reveal-left.visible,
+            .reveal-right.visible, .reveal-fade.visible {
+                opacity: 1;
+                transform: none;
+            }
+    </style>
+}
+
+<!-- ── Hero ──────────────────────────────────────────────────────── -->
+<section class="about-hero">
+    <div class="container position-relative">
+        <span class="badge rounded-pill px-4 py-2 mb-3 d-inline-block"
+              style="background:rgba(255,255,255,.15);color:white;font-size:.85rem;">
+            About TOTC
+        </span>
+        <h1>Empowering Education<br>Through Technology</h1>
+        <p>TOTC is a next-generation Learning Management System built to bring students, instructors, and parents together in one seamless platform.</p>
+        <div class="d-flex gap-3 justify-content-center mt-4 flex-wrap">
+            <a href="#mission" onclick="document.getElementById('mission')?.scrollIntoView({behavior:'smooth'});return false;" class="btn btn-light rounded-pill px-4 fw-semibold"
+               style="color:#2F327D;">Our Mission</a>
+            <a href="/#contact" class="btn btn-outline-light rounded-pill px-4 fw-semibold">
+                Get in Touch
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ── Stats ──────────────────────────────────────────────────────── -->
+<section class="py-5" style="background:linear-gradient(135deg,#f8f9ff,white);">
+    <div class="container">
+        <div class="row g-4 reveal-up">
+            @{
+                var stats = new[] {
+                    new { Num = "15K+", Label = "Students Enrolled",  Color = "#5B72EE", Icon = "fa-graduation-cap" },
+                    new { Num = "500+", Label = "Courses Available",  Color = "#00CBB8", Icon = "fa-book-open"      },
+                    new { Num = "120+", Label = "Expert Instructors", Color = "#F48C06", Icon = "fa-chalkboard-teacher" },
+                    new { Num = "98%",  Label = "Satisfaction Rate",  Color = "#E13468", Icon = "fa-heart"          },
+                };
+            }
+            @foreach (var s in stats)
+            {
+                <div class="col-6 col-md-3">
+                    <div class="about-stat">
+                        <div style="width:46px;height:46px;border-radius:12px;background:@(s.Color)18;
+                            display:flex;align-items:center;justify-content:center;
+                            margin:0 auto .8rem;color:@s.Color;font-size:1rem;">
+                            <i class="fas @s.Icon"></i>
+                        </div>
+                        <h3 style="color:@s.Color;">@s.Num</h3>
+                        <p style="color:#6b7280;font-size:.82rem;margin:0;">@s.Label</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- ── Mission / Vision / Goals ───────────────────────────────────── -->
+<section class="py-5 bg-white" id="mission">
+    <div class="container">
+        <div class="text-center mb-5 reveal-up">
+            <span class="badge rounded-pill px-4 py-2 mb-3"
+                  style="background:rgba(91,114,238,.1);color:#5B72EE;font-size:.85rem;font-weight:600;">
+                Our Foundation
+            </span>
+            <h2 class="fw-bold" style="color:#2F327D;">Mission, Vision &amp; Goals</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 reveal-up" style="transition-delay:.0s;">
+                <div class="mv-card mission">
+                    <div class="mv-card-icon" style="background:rgba(0,203,184,.1);color:#00CBB8;">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h4>Our Mission</h4>
+                    <p>To provide every student with access to high-quality, personalized education through an intelligent, easy-to-use digital platform — empowering learners at every level to reach their full potential.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 reveal-up" style="transition-delay:.12s;">
+                <div class="mv-card vision">
+                    <div class="mv-card-icon" style="background:rgba(91,114,238,.1);color:#5B72EE;">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h4>Our Vision</h4>
+                    <p>To become the leading educational technology platform in the region — a place where every school, instructor, and family can trust technology to make learning more effective, transparent, and joyful.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 reveal-up" style="transition-delay:.24s;">
+                <div class="mv-card goals">
+                    <div class="mv-card-icon" style="background:rgba(244,140,6,.1);color:#F48C06;">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h4>Our Goals</h4>
+                    <p>Bridge the gap between home and school. Equip instructors with AI-powered tools. Provide parents real-time visibility. Help students stay motivated with structured, gamified learning paths.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Who We Are ─────────────────────────────────────────────────── -->
+<section class="py-5" style="background:#f8f9ff;">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 reveal-left">
+                <span class="badge rounded-pill px-4 py-2 mb-3 d-inline-block"
+                      style="background:rgba(0,203,184,.1);color:#00CBB8;font-size:.85rem;font-weight:600;">
+                    Who We Are
+                </span>
+                <h2 class="fw-bold mb-3" style="color:#2F327D;">
+                    A Platform Built for<br>Modern Education
+                </h2>
+                <p style="color:#555;font-size:.95rem;line-height:1.85;">
+                    TOTC was born from a simple belief: every student deserves a structured, supportive, and smart learning environment. We combine the power of AI with intuitive design to give students, instructors, admins, and parents everything they need in one place.
+                </p>
+                <p style="color:#555;font-size:.95rem;line-height:1.85;">
+                    Our multi-role platform adapts to each user — from a student taking a timed exam, to a parent reading their child's weekly report, to an instructor generating AI-powered practice questions.
+                </p>
+                <div class="d-flex flex-wrap gap-3 mt-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle" style="color:#00CBB8;"></i>
+                        <span style="font-size:.88rem;font-weight:600;color:#374151;">5 Role Dashboards</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle" style="color:#00CBB8;"></i>
+                        <span style="font-size:.88rem;font-weight:600;color:#374151;">AI-Powered Tools</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle" style="color:#00CBB8;"></i>
+                        <span style="font-size:.88rem;font-weight:600;color:#374151;">Weekly Parent Reports</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle" style="color:#00CBB8;"></i>
+                        <span style="font-size:.88rem;font-weight:600;color:#374151;">Real-time Notifications</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 reveal-right">
+                <!-- Visual: feature grid -->
+                <div class="row g-3">
+                    @{
+                        var features = new[] {
+                            new { I="fa-robot",         C="#5B72EE", B="rgba(91,114,238,.1)",  T="AI Assistant",      D="Smart RAG chatbot for students" },
+                            new { I="fa-file-alt",      C="#00CBB8", B="rgba(0,203,184,.1)",   T="Exam System",       D="Timed MCQ + text exams" },
+                            new { I="fa-bell",          C="#F48C06", B="rgba(244,140,6,.1)",   T="Notifications",     D="Real-time alerts for all roles" },
+                            new { I="fa-chart-line",    C="#E13468", B="rgba(225,52,104,.1)",  T="Progress Tracking", D="Grades, scores &amp; deadlines" },
+                        };
+                    }
+                    @foreach (var f in features)
+                    {
+                        <div class="col-6">
+                            <div class="service-card">
+                                <div class="service-icon" style="background:@f.B;color:@f.C;">
+                                    <i class="fas @f.I"></i>
+                                </div>
+                                <h6>@f.T</h6>
+                                <p>@Html.Raw(f.D)</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Services ───────────────────────────────────────────────────── -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="text-center mb-5 reveal-up">
+            <span class="badge rounded-pill px-4 py-2 mb-3"
+                  style="background:rgba(47,50,125,.08);color:#2F327D;font-size:.85rem;font-weight:600;">
+                What We Offer
+            </span>
+            <h2 class="fw-bold" style="color:#2F327D;">Our Services</h2>
+        </div>
+        <div class="row g-4 reveal-up">
+            @{
+                var services = new[] {
+                    new { I="fa-chalkboard-teacher", C="#5B72EE", B="rgba(91,114,238,.1)",  T="Course Management",    D="Full course lifecycle: create, publish, assign instructors, enroll students." },
+                    new { I="fa-brain",              C="#00CBB8", B="rgba(0,203,184,.1)",   T="AI Learning Tools",    D="Chatbot, exam generator, study planner, key points, and MCQ practice." },
+                    new { I="fa-users",              C="#F48C06", B="rgba(244,140,6,.1)",   T="Multi-Role Access",    D="Separate dashboards for students, instructors, parents, admins, and super admins." },
+                    new { I="fa-envelope",           C="#E13468", B="rgba(225,52,104,.1)",  T="Automated Reporting",  D="Weekly parent reports delivered via email every Friday, powered by n8n." },
+                    new { I="fa-headset",            C="#29B9E7", B="rgba(41,185,231,.1)",  T="Support Tickets",      D="Role-based ticketing with escalation from admin to superadmin." },
+                    new { I="fa-mobile-alt",         C="#2F327D", B="rgba(47,50,125,.1)",   T="Mobile-First Design",  D="Fully responsive across all devices — phone, tablet, and desktop." },
+                };
+            }
+            @foreach (var s in services)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="service-card">
+                        <div class="service-icon" style="background:@s.B;color:@s.C;">
+                            <i class="fas @s.I"></i>
+                        </div>
+                        <h6>@s.T</h6>
+                        <p>@s.D</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- ── Journey / Timeline ──────────────────────────────────────────── -->
+<section class="py-5" style="background:#f8f9ff;">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-5 reveal-left">
+                <span class="badge rounded-pill px-4 py-2 mb-3 d-inline-block"
+                      style="background:rgba(91,114,238,.1);color:#5B72EE;font-size:.85rem;font-weight:600;">
+                    Our Journey
+                </span>
+                <h2 class="fw-bold mb-4" style="color:#2F327D;">How TOTC Grew</h2>
+                <div class="timeline">
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year" data-i18n="2023">2023</div>
+                        <div class="tl-title" data-i18n="The Idea">The Idea</div>
+                        <div class="tl-text">TOTC was conceived as a graduation project to solve real problems in digital education management.</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot" style="background:#00CBB8;box-shadow:0 0 0 2px #00CBB8;"></div>
+                        <div class="tl-year" data-i18n="Early 2024">Early 2024</div>
+                        <div class="tl-title" data-i18n="Core Platform Built">Core Platform Built</div>
+                        <div class="tl-text" data-i18n="Course management, exams, assignments, and multi-role dashboards launched.">Course management, exams, assignments, and multi-role dashboards launched.</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot" style="background:#F48C06;box-shadow:0 0 0 2px #F48C06;"></div>
+                        <div class="tl-year" data-i18n="Late 2024">Late 2024</div>
+                        <div class="tl-title" data-i18n="AI Integration">AI Integration</div>
+                        <div class="tl-text" data-i18n="RAG chatbot, exam generator, study planner, and automated parent reports added.">RAG chatbot, exam generator, study planner, and automated parent reports added.</div>
+                    </div>
+                    <div class="tl-item" style="margin-bottom:0;">
+                        <div class="tl-dot" style="background:#E13468;box-shadow:0 0 0 2px #E13468;"></div>
+                        <div class="tl-year" data-i18n="2025">2025</div>
+                        <div class="tl-title" data-i18n="Full Platform Launch">Full Platform Launch</div>
+                        <div class="tl-text">Complete system with n8n automation, notifications, ticketing, and mobile-first design.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7 reveal-right">
+                <div style="background:linear-gradient(135deg,#2F327D,#5B72EE);border-radius:24px;padding:3rem 2.5rem;color:white;">
+                    <h3 style="font-weight:800;margin-bottom:1.5rem;" data-i18n="Built for Everyone">Built for Everyone</h3>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1.1rem;">
+                                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;"><i class="fas fa-user-graduate"></i></div>
+                                <div><div style="font-weight:700;font-size:.88rem;" data-i18n="Students">Students</div><div style="opacity:.75;font-size:.78rem;" data-i18n="Access courses, take exams, use AI tools">Access courses, take exams, use AI tools</div></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1.1rem;">
+                                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;"><i class="fas fa-chalkboard-teacher"></i></div>
+                                <div><div style="font-weight:700;font-size:.88rem;" data-i18n="Instructors">Instructors</div><div style="opacity:.75;font-size:.78rem;" data-i18n="Manage courses, grade, create with AI">Manage courses, grade, create with AI</div></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1.1rem;">
+                                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;"><i class="fas fa-user-shield"></i></div>
+                                <div><div style="font-weight:700;font-size:.88rem;" data-i18n="Admins">Admins</div><div style="opacity:.75;font-size:.78rem;" data-i18n="Monitor all activity, manage users">Monitor all activity, manage users</div></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1.1rem;">
+                                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;"><i class="fas fa-users-cog"></i></div>
+                                <div><div style="font-weight:700;font-size:.88rem;" data-i18n="Super Admins">Super Admins</div><div style="opacity:.75;font-size:.78rem;" data-i18n="Full system control, configuration">Full system control, configuration</div></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1.1rem;">
+                                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;"><i class="fas fa-user-friends"></i></div>
+                                <div><div style="font-weight:700;font-size:.88rem;" data-i18n="Parents">Parents</div><div style="opacity:.75;font-size:.78rem;" data-i18n="Monitor children, receive weekly reports">Monitor children, receive weekly reports</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────────────────────────── -->
+<section class="py-5 text-center bg-white reveal-up">
+    <div class="container">
+        <div style="background:linear-gradient(135deg,#2F327D,#5B72EE,#00CBB8);
+            border-radius:24px;padding:4rem 2rem;color:white;">
+            <h2 style="font-weight:800;margin-bottom:.75rem;">Ready to Get Started?</h2>
+            <p style="opacity:.85;max-width:500px;margin:0 auto 2rem;font-size:.95rem;">
+                Join thousands of students and educators already using TOTC. Contact us today.
+            </p>
+            <a href="/#contact" class="btn btn-light rounded-pill px-5 py-2 fw-bold"
+               style="color:#2F327D;font-family:Poppins,sans-serif;">
+                <i class="fas fa-paper-plane me-2"></i>Register with TOTC
+            </a>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function() {
+            var all = document.querySelectorAll('.reveal-up,.reveal-left,.reveal-right,.reveal-fade');
+            if (!all.length) return;
+            var io = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+            all.forEach(function(el) { io.observe(el); });
+        })();
+    </script>
+}
