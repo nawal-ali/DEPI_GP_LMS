@@ -286,7 +286,7 @@ n8n start
 
 ## 👨‍💻 Team
 
-**Graduation Project — TOTC LMS**
+** DEOI Graduation Project — TOTC LMS**
 
 Built with ❤️ using ASP.NET Core MVC, Entity Framework Core, MongoDB, and GitHub Models AI.
 
