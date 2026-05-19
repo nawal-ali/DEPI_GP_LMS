@@ -156,92 +156,94 @@ namespace LMSProject.Areas.Student.ViewModels
     {
         public int QuestionId { get; set; }
         public int ChoiceId { get; set; }
+        public string? TextAnswer { get; set; }
+    
     }
 
     // ── Assignments ────────────────────────────────────────────────────────
     public class AssignmentVM
-    {
-        public int AssignmentId { get; set; }
-        public string Title { get; set; } = "";
-        public string? Description { get; set; }
-        public string CourseName { get; set; } = "";
-        public int CourseId { get; set; }
-        public double TotalMarks { get; set; }
-        public DateTime Deadline { get; set; }
-        public SubmissionType SubType { get; set; }
+{
+    public int AssignmentId { get; set; }
+    public string Title { get; set; } = "";
+    public string? Description { get; set; }
+    public string CourseName { get; set; } = "";
+    public int CourseId { get; set; }
+    public double TotalMarks { get; set; }
+    public DateTime Deadline { get; set; }
+    public SubmissionType SubType { get; set; }
 
-        public bool IsSubmitted { get; set; }
-        public bool IsLate { get; set; }
-        public bool IsGraded { get; set; }
-        public double? Score { get; set; }
-        public string? Feedback { get; set; }
-        public DateTime? SubmittedAt { get; set; }
-        public string? FileUrl { get; set; }
-        public string? FileName { get; set; }
-        public string? TextAnswer { get; set; }
+    public bool IsSubmitted { get; set; }
+    public bool IsLate { get; set; }
+    public bool IsGraded { get; set; }
+    public double? Score { get; set; }
+    public string? Feedback { get; set; }
+    public DateTime? SubmittedAt { get; set; }
+    public string? FileUrl { get; set; }
+    public string? FileName { get; set; }
+    public string? TextAnswer { get; set; }
 
-        public bool IsExpired => !IsSubmitted && DateTime.Now > Deadline;
-        public string StatusLabel => IsSubmitted ? (IsGraded ? $"{Score}/{TotalMarks}" : "Submitted") : (IsExpired ? "Missing" : "Pending");
-        public string StatusColor => IsSubmitted ? (IsGraded ? "#16a34a" : "#29B9E7") : (IsExpired ? "#E13468" : "#F48C06");
-        public string BadgeClass => IsSubmitted ? (IsGraded ? "pb-green" : "pb-blue") : (IsExpired ? "pb-red" : "pb-orange");
-    }
+    public bool IsExpired => !IsSubmitted && DateTime.Now > Deadline;
+    public string StatusLabel => IsSubmitted ? (IsGraded ? $"{Score}/{TotalMarks}" : "Submitted") : (IsExpired ? "Missing" : "Pending");
+    public string StatusColor => IsSubmitted ? (IsGraded ? "#16a34a" : "#29B9E7") : (IsExpired ? "#E13468" : "#F48C06");
+    public string BadgeClass => IsSubmitted ? (IsGraded ? "pb-green" : "pb-blue") : (IsExpired ? "pb-red" : "pb-orange");
+}
 
-    public class SubmitAssignmentVM
-    {
-        [Required] public int AssignmentId { get; set; }
-        public string? TextAnswer { get; set; }
-        public IFormFile? File { get; set; }
-    }
+public class SubmitAssignmentVM
+{
+    [Required] public int AssignmentId { get; set; }
+    public string? TextAnswer { get; set; }
+    public IFormFile? File { get; set; }
+}
 
-    // ── Profile ────────────────────────────────────────────────────────────
-    public class StudentProfileVM
-    {
-        public int StudentId { get; set; }
-        public string FullName { get; set; } = "";
-        public string? Email { get; set; }
-        public string? Phone { get; set; }
-        public string? GradeName { get; set; }
-        public string? ImageName { get; set; }
-        public IFormFile? Image { get; set; }
-        public string Initials => FullName.Length >= 2 ? FullName[..2].ToUpper() : FullName.ToUpper();
+// ── Profile ────────────────────────────────────────────────────────────
+public class StudentProfileVM
+{
+    public int StudentId { get; set; }
+    public string FullName { get; set; } = "";
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? GradeName { get; set; }
+    public string? ImageName { get; set; }
+    public IFormFile? Image { get; set; }
+    public string Initials => FullName.Length >= 2 ? FullName[..2].ToUpper() : FullName.ToUpper();
 
-        public string? CurrentPassword { get; set; }
-        public string? NewPassword { get; set; }
-        public string? ConfirmPassword { get; set; }
-    }
+    public string? CurrentPassword { get; set; }
+    public string? NewPassword { get; set; }
+    public string? ConfirmPassword { get; set; }
+}
 
-    // ── Instructors ────────────────────────────────────────────────────────
-    public class InstructorCardVM
-    {
-        public int InstructorId { get; set; }
-        public string FullName { get; set; } = "";
-        public string? ImageName { get; set; }
-        public string? Specialization { get; set; }
-        public string? Bio { get; set; }
-        public int ExperienceYears { get; set; }
-        public string Initials => FullName.Length >= 2 ? FullName[..2].ToUpper() : FullName.ToUpper();
-        public List<string> CourseNames { get; set; } = new();
-    }
+// ── Instructors ────────────────────────────────────────────────────────
+public class InstructorCardVM
+{
+    public int InstructorId { get; set; }
+    public string FullName { get; set; } = "";
+    public string? ImageName { get; set; }
+    public string? Specialization { get; set; }
+    public string? Bio { get; set; }
+    public int ExperienceYears { get; set; }
+    public string Initials => FullName.Length >= 2 ? FullName[..2].ToUpper() : FullName.ToUpper();
+    public List<string> CourseNames { get; set; } = new();
+}
 
-    // ── Parent info ────────────────────────────────────────────────────────
-    public class StudentParentVM
-    {
-        public string? ParentName { get; set; }
-        public string? ParentEmail { get; set; }
-        public string? ParentPhone { get; set; }
-        public string? Relationship { get; set; }
-        public string? Occupation { get; set; }
-        public string? ImageName { get; set; }
-        public bool HasParent => !string.IsNullOrEmpty(ParentName);
-        public string Initials => HasParent ? (ParentName!.Length >= 2 ? ParentName[..2].ToUpper() : ParentName.ToUpper()) : "?";
-    }
+// ── Parent info ────────────────────────────────────────────────────────
+public class StudentParentVM
+{
+    public string? ParentName { get; set; }
+    public string? ParentEmail { get; set; }
+    public string? ParentPhone { get; set; }
+    public string? Relationship { get; set; }
+    public string? Occupation { get; set; }
+    public string? ImageName { get; set; }
+    public bool HasParent => !string.IsNullOrEmpty(ParentName);
+    public string Initials => HasParent ? (ParentName!.Length >= 2 ? ParentName[..2].ToUpper() : ParentName.ToUpper()) : "?";
+}
 
-    // ── Progress ───────────────────────────────────────────────────────────
-    public class ProgressVM
-    {
-        public double ExamAverage { get; set; }
-        public double AssignmentCompletion { get; set; }
-        public List<(string Course, double Avg)> CourseAverages { get; set; } = new();
-        public List<(string Label, double Score, double Total)> ExamHistory { get; set; } = new();
-    }
+// ── Progress ───────────────────────────────────────────────────────────
+public class ProgressVM
+{
+    public double ExamAverage { get; set; }
+    public double AssignmentCompletion { get; set; }
+    public List<(string Course, double Avg)> CourseAverages { get; set; } = new();
+    public List<(string Label, double Score, double Total)> ExamHistory { get; set; } = new();
+}
 }

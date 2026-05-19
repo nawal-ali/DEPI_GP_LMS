@@ -109,6 +109,12 @@ namespace LMSProject.Areas.Student.Controllers
             foreach (var ans in vm.Answers)
             {
                 var q = questions.FirstOrDefault(x => x.Id == ans.QuestionId);
+                if (q == null) continue;
+                if (q.QuestionType == MLSCore.Models.QuestionType.Text)
+                {
+                    // Text answers graded manually by instructor — auto score = 0
+                    continue;
+                }
                 var ch = q?.Choices?.FirstOrDefault(c => c.Id == ans.ChoiceId);
                 if (ch?.Correct == true) score += perQ;
             }

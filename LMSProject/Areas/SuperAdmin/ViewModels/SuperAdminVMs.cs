@@ -60,7 +60,8 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
 
     public class StudentItemVM
     {
-        public string Id { get; set; } = "";
+        public string Id { get; set; } = "";        // UserId (string)
+        public int StudentId { get; set; }        // TbStudent.Id (int) for edit
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
@@ -92,7 +93,8 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
 
     public class TeacherItemVM
     {
-        public string Id { get; set; } = "";
+        public string Id { get; set; } = "";         // UserId
+        public int InstructorDbId { get; set; }   // TbInstructor.Id for edit
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
@@ -123,7 +125,8 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
 
     public class ParentItemVM
     {
-        public string Id { get; set; } = "";
+        public string Id { get; set; } = "";        // UserId
+        public int ParentDbId { get; set; }      // TbParent.Id for edit/link
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";

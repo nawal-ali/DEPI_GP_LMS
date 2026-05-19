@@ -214,6 +214,38 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
             return RedirectToAction(vm.Role + "s");
         }
 
+        // ── Edit redirects — SA delegates to Admin area edit pages ──────
+        // Admin edit pages already have [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> EditStudent(int id)
+            => RedirectToAction("EditStudent", "Users", new { area = "Admin", id });
+
+        public async Task<IActionResult> EditTeacher(int id)
+            => RedirectToAction("EditInstructor", "Users", new { area = "Admin", id });
+
+        public async Task<IActionResult> EditParent(int id)
+            => RedirectToAction("EditParent", "Users", new { area = "Admin", id });
+
+        public async Task<IActionResult> EditAdmin(string userId)
+        {
+            // For admins just let SA edit their name/phone via identity
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+            ViewData["Title"] = "Edit Admin";
+            return View("~/Areas/SuperAdmin/Views/Users/EditAdmin.cshtml", user);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAdmin(string userId, string fullName, string phone)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+            user.FullName = fullName;
+            user.PhoneNumber = phone;
+            await _userManager.UpdateAsync(user);
+            TempData["Success"] = "Admin updated successfully.";
+            return RedirectToAction("Admins");
+        }
+
         // ── Delete user (POST) ────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         public IActionResult DeleteUser(string id, string role)

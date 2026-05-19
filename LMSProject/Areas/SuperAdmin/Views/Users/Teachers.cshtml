@@ -180,9 +180,9 @@
                         <td>
                             <div class="d-flex gap-1">
                                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile"
-                                   asp-route-id="@t.Id" asp-route-role="Teacher"
+                                   asp-route-id="@t.InstructorDbId" asp-route-role="Teacher"
                                    class="sa-btn-icon sa-btn-view" title="View Profile"><i class="fas fa-eye"></i></a>
-                                <a asp-area="SuperAdmin" asp-controller="Users" asp-action="ViewProfile" asp-route-id="@t.Id" asp-route-role="Teacher" class="sa-btn-icon sa-btn-edit" title="Edit Profile"><i class="fas fa-edit"></i></a>
+                                <a asp-area="SuperAdmin" asp-controller="Users" asp-action="EditTeacher" asp-route-id="@t.InstructorDbId" class="sa-btn-icon sa-btn-edit" title="Edit Teacher"><i class="fas fa-edit"></i></a>
                                 <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" style="display:inline;" onsubmit="return confirm('Delete @t.Name?')">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@t.Id" />

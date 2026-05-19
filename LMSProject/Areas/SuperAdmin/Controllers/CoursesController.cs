@@ -185,6 +185,87 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
             return Json(list);
         }
 
+
+        // ── Assign Instructor ──────────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> AssignInstructor(int courseId)
+        {
+            ViewData["Title"] = "Assign Instructor";
+            var course = await _db.Courses.Include(c => c.Instructor).FirstOrDefaultAsync(c => c.Id == courseId);
+            if (course is null) return NotFound();
+
+            ViewBag.Course = course;
+            ViewBag.Instructors = await _db.Instructors
+                .Where(i => i.CurrentState == 1)
+                .OrderBy(i => i.FullName)
+                .ToListAsync();
+            return View("~/Areas/SuperAdmin/Views/Courses/AssignInstructor.cshtml");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignInstructor(int courseId, int instructorId)
+        {
+            var course = await _db.Courses.FindAsync(courseId);
+            if (course is null) return NotFound();
+            course.InstructorId = instructorId;
+            course.UpdatedDate = DateTime.Now;
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Instructor assigned successfully.";
+            return RedirectToAction("Index");
+        }
+
+        // ── Enroll / Unenroll Students ─────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> Enroll(int courseId, string search = "")
+        {
+            ViewData["Title"] = "Enroll Students";
+            var course = await _db.Courses.Include(c => c.Grade).FirstOrDefaultAsync(c => c.Id == courseId);
+            if (course is null) return NotFound();
+
+            var enrolledIds = await _db.StudentCourses
+                .Where(sc => sc.CourseId == courseId)
+                .Select(sc => sc.StId).ToListAsync();
+
+            var studentsQ = _db.Students
+                .Include(s => s.Grade)
+                .Include(s => s.User)   // Email lives on ApplicationUser
+                .Where(s => s.CurrentState == 1);
+
+            if (!string.IsNullOrEmpty(search))
+                studentsQ = studentsQ.Where(s => s.FullName.Contains(search)
+                    || (s.User != null && s.User.Email != null && s.User.Email.Contains(search)));
+
+            var students = await studentsQ.OrderBy(s => s.FullName).ToListAsync();
+
+            ViewBag.Course = course;
+            ViewBag.EnrolledIds = enrolledIds;
+            ViewBag.Students = students;
+            ViewBag.Search = search;
+            return View("~/Areas/SuperAdmin/Views/Courses/Enroll.cshtml");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EnrollStudent(int courseId, int studentId)
+        {
+            var exists = await _db.StudentCourses.AnyAsync(sc => sc.CourseId == courseId && sc.StId == studentId);
+            if (!exists)
+            {
+                _db.StudentCourses.Add(new TbStudentCourse { CourseId = courseId, StId = studentId });
+                await _db.SaveChangesAsync();
+                TempData["Success"] = "Student enrolled.";
+            }
+            else TempData["Error"] = "Student is already enrolled.";
+            return RedirectToAction("Enroll", new { courseId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnenrollStudent(int courseId, int studentId)
+        {
+            var sc = await _db.StudentCourses.FirstOrDefaultAsync(x => x.CourseId == courseId && x.StId == studentId);
+            if (sc != null) { _db.StudentCourses.Remove(sc); await _db.SaveChangesAsync(); TempData["Success"] = "Student unenrolled."; }
+            return RedirectToAction("Enroll", new { courseId });
+        }
+
         // ── Helpers ────────────────────────────────────────────────────────
         private async Task<CreateCourseVM> BuildCreateVM(CreateCourseVM vm)
         {

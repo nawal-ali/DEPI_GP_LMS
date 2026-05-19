@@ -1,0 +1,123 @@
+﻿@{
+    ViewData["Title"] = "Enroll Students";
+    var course = ViewBag.Course as MLSCore.Models.TbCourse;
+    var students = ViewBag.Students as List<MLSCore.Models.TbStudent> ?? new();
+    var enrolledIds = ViewBag.EnrolledIds as List<int> ?? new();
+    var search = ViewBag.Search as string ?? "";
+}
+
+<div class="d-flex align-items-center gap-3 mb-4 anim">
+    <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index"
+       class="btn btn-sm rounded-3" style="background:rgba(47,50,125,.07);color:var(--primary);">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <div>
+        <h5 style="font-weight:700;color:var(--primary);margin:0;">
+            Enroll Students — <span style="color:var(--secondary);">@course?.Name</span>
+        </h5>
+        <small style="color:#9ca3af;">@enrolledIds.Count enrolled · @students.Count found</small>
+    </div>
+</div>
+
+<!-- Search filter -->
+<form method="get" asp-area="SuperAdmin" asp-controller="Courses" asp-action="Enroll" class="mb-4 anim">
+    <input type="hidden" name="courseId" value="@course?.Id" />
+    <div class="d-flex gap-2">
+        <div style="position:relative;flex:1;">
+            <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:.82rem;"></i>
+            <input name="search" class="sa-form-control" style="padding-left:2.2rem;"
+                   placeholder="Search by name or email…" value="@search" />
+        </div>
+        <button type="submit" class="btn btn-primary rounded-3 px-4" style="font-family:Poppins,sans-serif;">
+            Search
+        </button>
+    </div>
+</form>
+
+@if (!students.Any())
+{
+    <div class="sa-card p-5 text-center anim" style="color:#aaa;">
+        <i class="fas fa-users fa-3x d-block mb-3 opacity-25"></i>
+        No students found.
+    </div>
+}
+else
+{
+    <div class="sa-card anim">
+        <div class="table-responsive">
+            <table class="sa-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Grade</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in students)
+                    {
+                        bool enrolled = enrolledIds.Contains(s.Id);
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:.75rem;flex-shrink:0;">
+                                        @(s.FullName.Length >= 2 ? s.FullName[..2].ToUpper() : s.FullName.ToUpper())
+                                    </div>
+                                    <span style="font-weight:600;font-size:.87rem;">@s.FullName</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (s.Grade != null)
+                                {
+                                    <span class="sa-badge sa-badge-info">@s.Grade.Name</span>
+                                }
+                            </td>
+                            <td style="font-size:.83rem;color:#6c757d;">@(s.User?.Email ?? "—")</td>
+                            <td>
+                                @if (enrolled)
+                                {
+                                    <span class="sa-badge sa-badge-active">Enrolled</span>
+                                }
+                                else
+                                {
+
+                                    <span class="sa-badge sa-badge-inactive">Not Enrolled</span>
+                                }
+                            </td>
+                            <td>
+                                @if (enrolled)
+                                {
+                                    <form asp-area="SuperAdmin" asp-controller="Courses"
+                                          asp-action="UnenrollStudent" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="courseId" value="@course?.Id" />
+                                        <input type="hidden" name="studentId" value="@s.Id" />
+                                        <button type="submit" class="sa-btn-icon sa-btn-delete"
+                                                title="Unenroll"
+                                                onclick="return confirm('Unenroll @s.FullName from this course?')">
+                                            <i class="fas fa-user-minus"></i>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-area="SuperAdmin" asp-controller="Courses"
+                                          asp-action="EnrollStudent" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="courseId" value="@course?.Id" />
+                                        <input type="hidden" name="studentId" value="@s.Id" />
+                                        <button type="submit" class="sa-btn-icon sa-btn-add" title="Enroll">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

@@ -36,7 +36,7 @@ namespace LMSProject.Areas.Student.Controllers
         }
 
         // ── Send message ───────────────────────────────────────────────────
-        [HttpPost]
+        [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> Chat([FromBody] ChatRequest req)
         {
             if (string.IsNullOrWhiteSpace(req.Message))
@@ -50,7 +50,7 @@ namespace LMSProject.Areas.Student.Controllers
         }
 
         // ── Upload file ────────────────────────────────────────────────────
-        [HttpPost]
+        [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
             if (file == null) return BadRequest(new { error = "No file provided." });
@@ -62,7 +62,7 @@ namespace LMSProject.Areas.Student.Controllers
         }
 
         // ── Delete uploaded file ───────────────────────────────────────────
-        [HttpPost]
+        [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> DeleteFile([FromBody] FileIdRequest req)
         {
             await _docs.DeleteFileAsync(req.FileId, CurrentUserId);
@@ -70,7 +70,7 @@ namespace LMSProject.Areas.Student.Controllers
         }
 
         // ── AI actions (summarize / mcq / key points) ──────────────────────
-        [HttpPost]
+        [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> Action([FromBody] AiActionRequest req)
         {
             var result = req.Action switch

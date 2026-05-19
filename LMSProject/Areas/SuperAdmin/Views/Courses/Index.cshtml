@@ -1,4 +1,20 @@
-﻿@model List<LMSProject.Areas.Admin.ViewModels.CourseListVM>
+﻿<form method="get" asp-action="Index" class="mb-3 anim">
+    <div class="d-flex gap-2 flex-wrap">
+        <div style="position:relative;flex:1;min-width:180px;">
+            <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:.82rem;"></i>
+            <input name="search" class="sa-form-control" style="padding-left:2.2rem;" placeholder="Search courses…" value="@ViewBag.Search" />
+        </div>
+        <select name="grade" class="sa-form-control" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Grades</option>
+            @foreach (var g in (ViewBag.Grades as IEnumerable<dynamic> ?? new List<dynamic>()))
+            {
+                <option value="@g.Name" selected="@(ViewBag.Grade == g.Name ? "selected" : null)">@g.Name</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-primary rounded-3 px-4" style="font-family:Poppins,sans-serif;">Filter</button>
+    </div>
+</form>
+@model List<LMSProject.Areas.Admin.ViewModels.CourseListVM>
 @{
     ViewData["Title"] = "Course Management";
 }
@@ -86,6 +102,8 @@
                             <div class="d-flex gap-1 flex-wrap">
                                 <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id"
                                    class="sa-btn-icon sa-btn-edit" title="Edit"><i class="fas fa-edit"></i></a>
+                                <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="AssignInstructor" asp-route-courseId="@c.Id"
+                                   class="sa-btn-icon sa-btn-view" title="Assign Instructor" style="background:rgba(244,140,6,.12);color:var(--orange);"><i class="fas fa-user-tie"></i></a>
                                 <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Enroll" asp-route-courseId="@c.Id"
                                    class="sa-btn-icon sa-btn-add" title="Enroll Students"><i class="fas fa-user-plus"></i></a>
                                 <a asp-area="SuperAdmin" asp-controller="Monitor" asp-action="Materials" asp-route-courseId="@c.Id"

@@ -1,0 +1,320 @@
+﻿@*
+    Shared notification bell partial — include in every dashboard layout topbar.
+    Usage:  @await Html.PartialAsync("_NotificationBell")
+    Works for all roles — data adapts server-side via /api/notifications/bell
+*@
+
+<style>
+    .lms-bell-wrap {
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+    }
+
+        .lms-bell-wrap i {
+            font-size: 1.05rem;
+            color: var(--primary, #2F327D);
+        }
+
+    .lms-bell-badge {
+        position: absolute;
+        top: -5px;
+        right: -7px;
+        min-width: 17px;
+        height: 17px;
+        border-radius: 20px;
+        background: #E13468;
+        color: white;
+        font-size: .62rem;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        padding: 0 3px;
+        line-height: 1;
+    }
+
+        .lms-bell-badge.visible {
+            display: flex;
+        }
+
+    .lms-notif-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        width: 310px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(47,50,125,.15);
+        border: 1px solid rgba(0,0,0,.07);
+        z-index: 9999;
+        display: none;
+        overflow: hidden;
+    }
+
+        .lms-notif-panel.open {
+            display: block;
+            animation: notifSlide .2s ease;
+        }
+
+    @@keyframes notifSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .lms-notif-header {
+        padding: .75rem 1rem;
+        background: linear-gradient(135deg, var(--primary,#2F327D), var(--accent-purple,#5B72EE));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .lms-notif-header span {
+            color: white;
+            font-size: .85rem;
+            font-weight: 700;
+        }
+
+        .lms-notif-header small {
+            color: rgba(255,255,255,.7);
+            font-size: .72rem;
+        }
+
+    .lms-notif-body {
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    .lms-notif-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .7rem;
+        padding: .75rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,.05);
+        text-decoration: none;
+        color: inherit;
+        transition: background .15s;
+        cursor: pointer;
+    }
+
+        .lms-notif-item:hover {
+            background: rgba(47,50,125,.04);
+        }
+
+        .lms-notif-item:last-child {
+            border-bottom: none;
+        }
+
+    .lms-notif-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .82rem;
+        flex-shrink: 0;
+    }
+
+    .lms-notif-text {
+        font-size: .8rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .lms-notif-time {
+        font-size: .7rem;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+
+    .lms-notif-empty {
+        padding: 2rem;
+        text-align: center;
+        color: #9ca3af;
+        font-size: .82rem;
+    }
+
+        .lms-notif-empty i {
+            font-size: 1.8rem;
+            opacity: .2;
+            display: block;
+            margin-bottom: .5rem;
+        }
+
+    .lms-msg-icon {
+        position: relative;
+        cursor: pointer;
+    }
+
+        .lms-msg-icon i {
+            font-size: 1.05rem;
+            color: var(--primary,#2F327D);
+        }
+
+    .lms-msg-badge {
+        position: absolute;
+        top: -5px;
+        right: -7px;
+        min-width: 17px;
+        height: 17px;
+        border-radius: 20px;
+        background: #5B72EE;
+        color: white;
+        font-size: .62rem;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        padding: 0 3px;
+        line-height: 1;
+    }
+
+        .lms-msg-badge.visible {
+            display: flex;
+        }
+
+    @@media (max-width: 480px) {
+        .lms-notif-panel {
+            width: calc(100vw - 20px);
+            right: -40px;
+        }
+    }
+</style>
+
+<!-- Message icon → Tickets -->
+<a id="lmsTicketLink" href="#" style="position:relative;text-decoration:none;" title="Support Tickets">
+    <i class="fas fa-comment-dots" style="font-size:1.05rem;color:var(--primary,#2F327D);"></i>
+    <span class="lms-msg-badge" id="lmsMsgBadge"></span>
+</a>
+
+<!-- Bell icon with dropdown -->
+<div class="lms-bell-wrap" id="lmsBellWrap">
+    <i class="fas fa-bell"></i>
+    <span class="lms-bell-badge" id="lmsBellBadge"></span>
+
+    <div class="lms-notif-panel" id="lmsNotifPanel">
+        <div class="lms-notif-header">
+            <span><i class="fas fa-bell me-2"></i>Notifications</span>
+            <small id="lmsNotifCount">Loading…</small>
+        </div>
+        <div class="lms-notif-body" id="lmsNotifBody">
+            <div class="lms-notif-empty">
+                <i class="fas fa-spinner fa-spin"></i>Loading…
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        var loaded = false;
+        var wrap   = document.getElementById('lmsBellWrap');
+        var panel  = document.getElementById('lmsNotifPanel');
+        var badge  = document.getElementById('lmsBellBadge');
+        var msgBadge = document.getElementById('lmsMsgBadge');
+
+        // Toggle panel open/close
+        wrap.addEventListener('click', function(e) {
+            e.stopPropagation();
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open') && !loaded) {
+                loadNotifications();
+                loaded = true;
+            }
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function() {
+            panel.classList.remove('open');
+        });
+        panel.addEventListener('click', function(e) { e.stopPropagation(); });
+
+        // Load on page init (just for badge count)
+        fetch('/api/notifications/bell')
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.total > 0) {
+                    badge.textContent = d.total > 99 ? '99+' : d.total;
+                    badge.classList.add('visible');
+                }
+                // Message badge = ticket count
+                var ticketItem = (d.items || []).find(function(i) { return i.icon === 'fa-headset'; });
+                if (ticketItem) {
+                    msgBadge.textContent = ticketItem.count;
+                    msgBadge.classList.add('visible');
+                }
+            })
+            .catch(function() {});
+
+        function loadNotifications() {
+            fetch('/api/notifications/bell')
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    var body  = document.getElementById('lmsNotifBody');
+                    var count = document.getElementById('lmsNotifCount');
+                    count.textContent = d.total > 0 ? d.total + ' unread' : 'All caught up';
+
+                    if (!d.items || !d.items.length) {
+                        body.innerHTML =
+                            '<div class="lms-notif-empty">' +
+                            '<i class="fas fa-check-circle"></i>' +
+                            'Nothing new right now!</div>';
+                        return;
+                    }
+
+                    body.innerHTML = d.items.map(function(item) {
+                        return '<a href="' + (item.link || '#') + '" class="lms-notif-item">' +
+                            '<div class="lms-notif-icon" style="background:' + item.bg + ';color:' + item.color + ';">' +
+                            '<i class="fas ' + item.icon + '"></i></div>' +
+                            '<div><div class="lms-notif-text">' + item.text + '</div>' +
+                            '<div class="lms-notif-time">Just now</div></div>' +
+                            '</a>';
+                    }).join('');
+                })
+                .catch(function() {
+                    document.getElementById('lmsNotifBody').innerHTML =
+                        '<div class="lms-notif-empty"><i class="fas fa-exclamation-circle"></i>Could not load</div>';
+                });
+        }
+
+        // Set ticket link based on current URL
+        var path = window.location.pathname.toLowerCase();
+        var ticketLink = path.includes('/student') ? '/Student/Tickets/Index'
+                       : path.includes('/instructor') ? '/Instructor/Tickets/Index'
+                       : path.includes('/parent') ? '/Parent/Tickets/Index'
+                       : path.includes('/admin') ? '/Admin/AdminTickets/Index'
+                       : '#';
+        document.getElementById('lmsTicketLink').href = ticketLink;
+
+        // Sidebar badge counts
+        fetch('/api/notifications/badges')
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                function setBadge(id, count) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    if (count > 0) {
+                        el.textContent = count > 99 ? '99+' : count;
+                        el.style.display = 'inline-flex';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                }
+                setBadge('sidebar-ann-badge',    d.announcements);
+                setBadge('sidebar-ticket-badge', d.tickets);
+                setBadge('sidebar-admin-ticket-badge', d.adminTickets);
+            })
+            .catch(function() {});
+    })();
+</script>

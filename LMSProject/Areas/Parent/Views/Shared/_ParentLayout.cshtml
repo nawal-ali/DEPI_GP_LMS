@@ -608,12 +608,7 @@
                         <a href="#" class="topbar-nav-link">About</a>
                     </div>
                     <!-- Notification bell -->
-                    <a asp-area="Parent" asp-controller="Announcements" asp-action="Index"
-                       class="text-decoration-none" id="bell-link" title="Announcements"
-                       style="position:relative;color:var(--primary);font-size:1rem;">
-                        <i class="fas fa-bell"></i>
-                        <span id="bell-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--accent-pink);border-radius:50%;border:2px solid white;"></span>
-                    </a>
+                    @await Html.PartialAsync("_NotificationBell")
                     <a asp-area="Parent" asp-controller="Report" asp-action="Download"
                        class="btn btn-sm rounded-3 px-3"
                        style="background:rgba(0,203,184,.1);color:var(--secondary);font-weight:600;font-size:.8rem;">

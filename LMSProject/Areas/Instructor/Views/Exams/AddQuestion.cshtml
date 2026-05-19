@@ -62,21 +62,33 @@
                             <small class="text-muted d-block mb-2">Enter at least 2 choices and mark the correct one</small>
                         </div>
 
-                        @{
-                            var choices = new[] { ("A", "ChoiceA"), ("B", "ChoiceB"), ("C", "ChoiceC"), ("D", "ChoiceD") };
-                        }
-
-                        @foreach (var (letter, prop) in choices)
+                        @* FIXED: explicit name attributes — asp-for inside foreach with string var does not bind *@
+                        @foreach (var item in new[] {
+                            new { Letter = "A", Name = "ChoiceA", Req = "(required)"  },
+                            new { Letter = "B", Name = "ChoiceB", Req = "(required)"  },
+                            new { Letter = "C", Name = "ChoiceC", Req = "(optional)"  },
+                            new { Letter = "D", Name = "ChoiceD", Req = "(optional)"  }
+                        })
                         {
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <label class="d-flex align-items-center gap-2 cursor-pointer"
-                                       style="flex-shrink:0;width:36px;height:36px;border-radius:50%;border:2px solid rgba(47,50,125,0.15);justify-content:center;cursor:pointer;">
-                                    <input type="radio" name="CorrectChoice" value="@letter"
-                                           style="display:none;" onchange="highlightChoice('@letter')" />
-                                    <span id="dot_@letter" style="font-size:0.75rem;font-weight:700;color:var(--primary);">@letter</span>
+                                       style="flex-shrink:0;width:36px;height:36px;border-radius:50%;
+                                    border:2px solid rgba(47,50,125,0.15);
+                                    justify-content:center;cursor:pointer;"
+                                       id="lbl_@item.Letter">
+                                    <input type="radio" name="CorrectChoice" value="@item.Letter"
+                                           style="display:none;" onchange="highlightChoice('@item.Letter')" />
+                                    <span id="dot_@item.Letter"
+                                          style="font-size:0.75rem;font-weight:700;color:var(--primary);">
+                                        @item.Letter
+                                    </span>
                                 </label>
-                                <input asp-for="@prop" id="choice_@letter" class="sa-form-control"
-                                       placeholder="Choice @letter @(letter is "A" or "B" ? "(required)" : "(optional)")" />
+                                @* name="ChoiceA/B/C/D" must match the model property exactly *@
+                                <input type="text"
+                                       name="@item.Name"
+                                       id="choice_@item.Letter"
+                                       class="sa-form-control"
+                                       placeholder="Choice @item.Letter @item.Req" />
                             </div>
                         }
 
@@ -107,33 +119,33 @@
 </div>
 
 @section Scripts {
-<script>
-    function handleQType() {
-        const selected = document.querySelector('input[name="QuestionType"]:checked');
-        if (!selected) return;
-        const isText = parseInt(selected.value) === @((int)QuestionType.Text);
-        document.getElementById('mcqSection').style.display = isText ? 'none' : 'block';
-        document.getElementById('textSection').style.display = isText ? 'block' : 'none';
-        document.querySelectorAll('input[name="QuestionType"]').forEach(r => {
-            r.closest('label').style.borderColor = r.checked ? 'var(--secondary)' : 'rgba(47,50,125,0.12)';
-            r.closest('label').style.background = r.checked ? 'rgba(0,203,184,0.06)' : '';
-        });
-    }
+    <script>
+        function handleQType() {
+            const selected = document.querySelector('input[name="QuestionType"]:checked');
+            if (!selected) return;
+            const isText = parseInt(selected.value) === @((int)QuestionType.Text);
+            document.getElementById('mcqSection').style.display = isText ? 'none' : 'block';
+            document.getElementById('textSection').style.display = isText ? 'block' : 'none';
+            document.querySelectorAll('input[name="QuestionType"]').forEach(r => {
+                r.closest('label').style.borderColor = r.checked ? 'var(--secondary)' : 'rgba(47,50,125,0.12)';
+                r.closest('label').style.background = r.checked ? 'rgba(0,203,184,0.06)' : '';
+            });
+        }
 
-    function highlightChoice(letter) {
-        ['A','B','C','D'].forEach(l => {
-            const label = document.querySelector(`input[name="CorrectChoice"][value="${l}"]`)?.closest('label');
-            if (label) {
-                label.style.borderColor = l === letter ? '#16a34a' : 'rgba(47,50,125,0.15)';
-                label.style.background = l === letter ? 'rgba(51,239,160,0.12)' : '';
-                document.getElementById(`dot_${l}`).style.color = l === letter ? '#16a34a' : 'var(--primary)';
-            }
-        });
-    }
+        function highlightChoice(letter) {
+            ['A','B','C','D'].forEach(l => {
+                const label = document.querySelector(`input[name="CorrectChoice"][value="${l}"]`)?.closest('label');
+                if (label) {
+                    label.style.borderColor = l === letter ? '#16a34a' : 'rgba(47,50,125,0.15)';
+                    label.style.background = l === letter ? 'rgba(51,239,160,0.12)' : '';
+                    document.getElementById(`dot_${l}`).style.color = l === letter ? '#16a34a' : 'var(--primary)';
+                }
+            });
+        }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const first = document.querySelector('input[name="QuestionType"]');
-        if (first) { first.checked = true; handleQType(); }
-    });
-</script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const first = document.querySelector('input[name="QuestionType"]');
+            if (first) { first.checked = true; handleQType(); }
+        });
+    </script>
 }

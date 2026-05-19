@@ -821,11 +821,7 @@
                         <a href="#" class="topbar-nav-link">Blog</a>
                         <a href="#" class="topbar-nav-link">About</a>
                     </div>
-                    <a asp-area="Admin" asp-controller="AdminAnnouncements" asp-action="Index"
-                       class="sa-topbar-badge text-decoration-none" id="bell-link" title="Announcements">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge-dot" id="bell-dot"></span>
-                    </a>
+                    @await Html.PartialAsync("_NotificationBell")
                     <div class="sa-avatar-sm" style="width:34px;height:34px;font-size:0.78rem;">
                         @(User.Identity?.Name?.Length > 0 ? User.Identity.Name[0].ToString().ToUpper() : "A")
                     </div>
@@ -889,12 +885,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <script>
-        (function(){
-        fetch('/api/announcements/count').then(r=>r.json()).then(function(d){
-        if(d>0){var dot=document.getElementById('bell-dot');if(dot)dot.classList.add('has-notif');};
-        }).catch(function(){});
-        })();
-    </script>
+
 </body>
 </html>

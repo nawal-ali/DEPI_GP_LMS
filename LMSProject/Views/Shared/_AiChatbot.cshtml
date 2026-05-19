@@ -1,5 +1,4 @@
-﻿
-@using Microsoft.AspNetCore.Identity
+﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<MLSCore.IdentityModel.ApplicationUser> SM
 
 @if (SM.IsSignedIn(User) && User.IsInRole("Student"))
@@ -732,6 +731,9 @@
             return div;
         }
 
+        function escHtml(t) {
+            return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
         function esc(t) {
             return String(t)
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -745,63 +747,62 @@
         function uploadFile(input) {
             if (!input.files.length) return;
 
-            var fd       = new FormData();
-            var stat     = document.getElementById('uploadStatus');
-            var prog     = document.getElementById('uploadProgress');
-            var progBar  = document.getElementById('uploadProgressBar');
-            var progLbl  = document.getElementById('uploadProgressLabel');
+            var file    = input.files[0];
+            var stat    = document.getElementById('uploadStatus');
+            var prog    = document.getElementById('uploadProgress');
+            var progBar = document.getElementById('uploadProgressBar');
+            var progLbl = document.getElementById('uploadProgressLabel');
 
-            fd.append('file', input.files[0]);
-            stat.textContent = '';
+            var fd = new FormData();
+            fd.append('file', file); // must match parameter: IFormFile file
+
+            stat.innerHTML = '';
             prog.style.display = 'block';
-            progLbl.textContent = 'Uploading ' + input.files[0].name + '…';
-
-            // Animate progress bar (indeterminate)
-            var pct = 0;
-            var ticker = setInterval(function() {
-                pct = pct < 85 ? pct + 3 : pct;
-                progBar.style.width = pct + '%';
-            }, 120);
+            progBar.style.width = '5%';
+            progLbl.textContent = 'Uploading ' + file.name + '…';
 
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '/Student/Ai/Upload');
+            // No antiforgery token needed — [IgnoreAntiforgeryToken] on action
 
             xhr.upload.onprogress = function(e) {
                 if (e.lengthComputable) {
-                    var real = Math.round(e.loaded / e.total * 70);
-                    progBar.style.width = real + '%';
-                    progLbl.textContent = 'Uploading… ' + real + '%';
+                    var pct = Math.round(e.loaded / e.total * 80);
+                    progBar.style.width = pct + '%';
+                    progLbl.textContent = 'Uploading ' + pct + '%…';
                 }
             };
 
             xhr.onload = function() {
-                clearInterval(ticker);
                 progBar.style.width = '100%';
-                progLbl.textContent = 'Processing…';
-
-                try {
-                    var d = JSON.parse(xhr.responseText);
-                    setTimeout(function() {
-                        prog.style.display = 'none';
-                        progBar.style.width = '0%';
-                        if (d.error) {
-                            stat.innerHTML = '<span style="color:#E13468;">❌ ' + esc(d.error) + '</span>';
-                        } else {
-                            stat.innerHTML = '<span style="color:#16a34a;">✅ ' + esc(d.message) + '</span>';
-                            loadFiles();
-                        }
-                    }, 600);
-                } catch (e) {
+                progLbl.textContent = 'Done';
+                setTimeout(function() {
                     prog.style.display = 'none';
-                    stat.innerHTML = '<span style="color:#E13468;">❌ Server error</span>';
-                }
+                    progBar.style.width = '0%';
+
+                    if (xhr.status === 200) {
+                        try {
+                            var d = JSON.parse(xhr.responseText);
+                            if (d.fileId) {
+                                stat.innerHTML = '<span style="color:#16a34a;">✅ ' + escHtml(d.message || 'Uploaded!') + '</span>';
+                                loadFiles(); // refresh list
+                            } else {
+                                stat.innerHTML = '<span style="color:#E13468;">❌ ' + escHtml(d.error || 'Upload failed') + '</span>';
+                            }
+                        } catch(e) {
+                            stat.innerHTML = '<span style="color:#E13468;">❌ Bad response from server</span>';
+                        }
+                    } else {
+                        // Show HTTP error code so we can debug
+                        stat.innerHTML = '<span style="color:#E13468;">❌ HTTP ' + xhr.status + ' — ' + xhr.responseText.substring(0, 120) + '</span>';
+                    }
+                }, 400);
                 input.value = '';
             };
 
             xhr.onerror = function() {
-                clearInterval(ticker);
                 prog.style.display = 'none';
-                stat.innerHTML = '<span style="color:#E13468;">❌ Upload failed — check connection</span>';
+                stat.innerHTML = '<span style="color:#E13468;">❌ Network error</span>';
                 input.value = '';
             };
 

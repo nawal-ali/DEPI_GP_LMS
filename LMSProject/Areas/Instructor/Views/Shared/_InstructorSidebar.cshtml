@@ -58,7 +58,7 @@
    asp-action="Index"
    class="sa-nav-item @(Is("Tickets") ? "active" : "")">
     <i class="fas fa-headset"></i>
-    <span>Support Tickets</span>
+    <span>Support Tickets</span><span id="sidebar-ticket-badge" style="display:none;background:#5B72EE;color:white;border-radius:20px;padding:1px 7px;font-size:.65rem;font-weight:700;margin-left:auto;flex-shrink:0;"></span>
 </a>
 
 <a asp-area="Instructor"
@@ -66,5 +66,5 @@
    asp-action="Index"
    class="sa-nav-item @(Is("Announcements") ? "active" : "")">
     <i class="fas fa-bullhorn"></i>
-    <span>Announcements</span>
+    <span>Announcements</span><span id="sidebar-ann-badge" style="display:none;background:#E13468;color:white;border-radius:20px;padding:1px 7px;font-size:.65rem;font-weight:700;margin-left:auto;flex-shrink:0;"></span>
 </a>

@@ -661,15 +661,7 @@
                         <a href="#" class="topbar-nav-link">Blog</a>
                         <a href="#" class="topbar-nav-link">About</a>
                     </div>
-                    <!-- Notification bell -->
-                    <div class="bell-wrap" id="bellWrap" onclick="toggleNotif()">
-                        <i class="fas fa-bell" style="color:var(--primary);font-size:1rem;"></i>
-                        <span class="bell-dot" id="bellDot"></span>
-                        <div class="notif-dropdown" id="notifDropdown">
-                            <div class="notif-header"><i class="fas fa-bell me-2"></i>Notifications</div>
-                            <div id="notifList"><div class="notif-empty"><i class="fas fa-check-circle d-block mb-1" style="font-size:1.5rem;opacity:.3;"></i>You're all caught up!</div></div>
-                        </div>
-                    </div>
+                    @await Html.PartialAsync("_NotificationBell")
                     <div class="st-avatar" style="width:32px;height:32px;font-size:.72rem;">@initials</div>
                 </div>
             </div>

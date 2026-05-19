@@ -63,6 +63,14 @@ builder.Services.AddScoped<LMSProject.AI.Services.WeeklyReportService>();
 
 var app = builder.Build();
 
+// Allow large file uploads (up to 50 MB) for AI document processing
+app.Use(async (context, next) =>
+{
+    context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>()
+        ?.MaxRequestBodySize = 52_428_800; // 50 MB
+    await next();
+});
+
 // ── Seed roles + accounts ──────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {

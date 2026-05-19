@@ -17,6 +17,7 @@
             else if (await UserMgr.IsInRoleAsync(user, "Admin")) { dashUrl = "/Admin/Home/Index"; dashLabel = "Admin Panel"; }
             else if (await UserMgr.IsInRoleAsync(user, "Instructor")) { dashUrl = "/Instructor/Home/Index"; dashLabel = "Instructor Panel"; }
             else if (await UserMgr.IsInRoleAsync(user, "Parent")) { dashUrl = "/Parent/Home/Index"; dashLabel = "Parent Portal"; }
+            else if (await UserMgr.IsInRoleAsync(user, "Student")) { dashUrl = "/Student/Home/Index"; dashLabel = "Student Portal"; }
             else { dashUrl = "/"; dashLabel = "Dashboard"; }
         }
     }

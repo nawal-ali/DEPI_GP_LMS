@@ -1,25 +1,14 @@
-﻿using LMSProject.AI.Models;
+﻿using DocumentFormat.OpenXml.Packaging;
+using LMSProject.AI.Models;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
+using System.Text.RegularExpressions;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
-using DocumentFormat.OpenXml.Packaging;
+using System.Text.RegularExpressions;
 
 namespace LMSProject.AI.Services
 {
-    /// <summary>
-    /// RAG ingestion pipeline — FAST version.
-    ///
-    /// ROOT CAUSE of slow uploads:
-    ///   The previous version called _ai.EmbedAsync() for EVERY chunk synchronously.
-    ///   A 20-page PDF produces ~50 chunks → 50 sequential API calls → minutes of wait.
-    ///
-    /// FIX:
-    ///   Embeddings are skipped during upload entirely.
-    ///   Retrieval falls back to keyword matching (TF-style scoring) which is
-    ///   fast, accurate enough for a graduation project, and needs no API quota.
-    ///   Embeddings can be added as a background job later if needed.
-    /// </summary>
     public class DocumentProcessingService
     {
         private readonly MongoDbService _mongo;
@@ -61,8 +50,10 @@ namespace LMSProject.AI.Services
             if (existing != null)
                 return (false, "A file with this name already exists. Rename it or delete the old one.", null);
 
-            // Save to disk
-            var folder = Path.Combine(_env.WebRootPath, "Uploads", "AI", studentUserId);
+            // Save to disk — ensure parent directories exist
+            var aiRoot = Path.Combine(_env.WebRootPath, "Uploads", "AI");
+            var folder = Path.Combine(aiRoot, studentUserId);
+            Directory.CreateDirectory(aiRoot);
             Directory.CreateDirectory(folder);
             var storedName = $"{Guid.NewGuid()}{ext}";
             var fullPath = Path.Combine(folder, storedName);
@@ -98,21 +89,40 @@ namespace LMSProject.AI.Services
                 text = $"[Text extraction failed: {ex.Message}]";
             }
 
-            // Chunk text — NO embedding API calls (that was the bottleneck)
+            // If extracted text is empty → scanned/image PDF
+            //var cleanLen = text.Replace(" ", "").Replace("\r", "").Replace("\n", "").Length;
+            //bool isScanned = cleanLen < 30;
+            // Better scanned PDF detection
+            var cleanedText = CleanText(text);
+
+            bool isScanned =
+                string.IsNullOrWhiteSpace(cleanedText)
+                || cleanedText.Length < 10;
+            if (isScanned)
+            {
+                text = $"[This file ({upload.FileName}) appears to be a scanned image-based PDF. " +
+                       "No selectable text was found. Use a text-based PDF for AI features.]";
+            }
+
+            // Chunk text
             var chunks = ChunkText(text, fileRecord.Id, studentUserId, upload.FileName);
             if (chunks.Any())
                 await _mongo.Chunks.InsertManyAsync(chunks);
 
             // Mark processed
-            var update = Builders<UploadedFile>.Update
+            var upd = Builders<UploadedFile>.Update
                 .Set(f => f.IsProcessed, true)
                 .Set(f => f.ChunkCount, chunks.Count);
-            await _mongo.Files.UpdateOneAsync(f => f.Id == fileRecord.Id, update);
+            await _mongo.Files.UpdateOneAsync(f => f.Id == fileRecord.Id, upd);
 
             fileRecord.IsProcessed = true;
             fileRecord.ChunkCount = chunks.Count;
 
-            return (true, $"✅ \"{upload.FileName}\" ready — {chunks.Count} sections extracted.", fileRecord);
+            var resultMsg = isScanned
+                ? $"⚠️ \"{upload.FileName}\" — no text found. This PDF is likely scanned/image-based."
+                : $"✅ \"{upload.FileName}\" ready — {chunks.Count} sections indexed.";
+
+            return (true, resultMsg, fileRecord);
         }
 
         // ── Retrieve relevant chunks — keyword matching fallback ───────────
@@ -174,7 +184,7 @@ namespace LMSProject.AI.Services
         // ── Get student files list ─────────────────────────────────────────
         public async Task<List<UploadedFile>> GetStudentFilesAsync(string studentUserId)
             => await _mongo.Files
-                .Find(f => f.StudentUserId == studentUserId && f.IsProcessed)
+                .Find(f => f.StudentUserId == studentUserId)
                 .SortByDescending(f => f.UploadedAt)
                 .ToListAsync();
 
@@ -182,10 +192,80 @@ namespace LMSProject.AI.Services
         private static string ExtractPdf(string path)
         {
             using var pdf = PdfDocument.Open(path);
+
             var sb = new System.Text.StringBuilder();
+
             foreach (Page page in pdf.GetPages())
-                sb.AppendLine(page.Text);
-            return sb.ToString();
+            {
+                try
+                {
+                    // ===== Strategy 1: page.Text =====
+                    var pageText = page.Text ?? "";
+
+                    pageText = CleanText(pageText);
+
+                    if (!string.IsNullOrWhiteSpace(pageText) && pageText.Length > 10)
+                    {
+                        sb.AppendLine(pageText);
+                        continue;
+                    }
+
+                    // ===== Strategy 2: GetWords() =====
+                    try
+                    {
+                        var words = page.GetWords();
+
+                        var wordText = string.Join(" ",
+                            words.Select(w => w.Text));
+
+                        wordText = CleanText(wordText);
+
+                        if (!string.IsNullOrWhiteSpace(wordText) && wordText.Length > 10)
+                        {
+                            sb.AppendLine(wordText);
+                            continue;
+                        }
+                    }
+                    catch { }
+
+                    // ===== Strategy 3: Raw letters =====
+                    try
+                    {
+                        var letters = page.Letters;
+
+                        if (letters != null && letters.Any())
+                        {
+                            var raw = string.Concat(
+                                letters.Select(l => l.Value));
+
+                            raw = CleanText(raw);
+
+                            if (!string.IsNullOrWhiteSpace(raw) && raw.Length > 10)
+                            {
+                                sb.AppendLine(raw);
+                            }
+                        }
+                    }
+                    catch { }
+                }
+                catch { }
+            }
+
+            return CleanText(sb.ToString());
+        }
+
+        private static string CleanText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            // Remove invisible/control chars
+            text = Regex.Replace(text, @"\p{C}+", " ");
+
+            // Normalize spaces
+            text = Regex.Replace(text, @"\s+", " ");
+
+            return text.Trim();
         }
 
         private static string ExtractDocx(string path)

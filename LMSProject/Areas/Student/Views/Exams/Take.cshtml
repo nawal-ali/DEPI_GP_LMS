@@ -1,107 +1,195 @@
 ﻿@model TakeExamVM
+@using MLSCore.Models
 @{
     ViewData["Title"] = "Exam — " + Model.Exam.Title;
+    var hasText = Model.Questions.Any(q => q.QuestionType == QuestionType.Text);
 }
 
-<style>
-    .question-card {
-        background: white;
-        border-radius: 14px;
-        border: 1.5px solid rgba(0,0,0,.07);
-        padding: 1.4rem;
-        margin-bottom: 1rem;
-        transition: border-color .15s;
-    }
-
-        .question-card.answered {
-            border-color: var(--secondary);
+@section Styles {
+    <style>
+        .question-card {
+            background: white;
+            border-radius: 14px;
+            border: 1.5px solid rgba(0,0,0,.07);
+            padding: 1.4rem;
+            margin-bottom: 1rem;
+            transition: border-color .2s, box-shadow .2s;
         }
 
-    .choice-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        border-radius: 10px;
-        border: 1.5px solid rgba(0,0,0,.07);
-        cursor: pointer;
-        transition: all .15s;
-        font-size: .87rem;
-        font-weight: 500;
-        margin-bottom: .5rem;
-    }
+            .question-card.answered {
+                border-color: var(--secondary);
+                box-shadow: 0 2px 12px rgba(0,203,184,.1);
+            }
 
-        .choice-label:hover {
-            border-color: var(--secondary);
-            background: rgba(0,203,184,.05);
+        .choice-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(0,0,0,.07);
+            cursor: pointer;
+            transition: all .15s;
+            font-size: .87rem;
+            font-weight: 500;
+            margin-bottom: .5rem;
         }
 
-    input[type=radio]:checked + .choice-label {
-        border-color: var(--accent-purple);
-        background: rgba(91,114,238,.07);
-        color: var(--accent-purple);
-        font-weight: 600;
-    }
+            .choice-label:hover {
+                border-color: var(--secondary);
+                background: rgba(0,203,184,.05);
+            }
 
-    .timer-wrap {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        background: white;
-        border-radius: 12px;
-        border: 1.5px solid rgba(0,0,0,.07);
-        padding: .75rem 1.2rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 16px rgba(0,0,0,.07);
-    }
-
-    .timer-val {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: var(--primary);
-        font-variant-numeric: tabular-nums;
-    }
-
-        .timer-val.urgent {
-            color: var(--accent-pink);
-            animation: pulse 1s infinite;
+        input[type=radio]:checked + .choice-label {
+            border-color: var(--accent-purple);
+            background: rgba(91,114,238,.07);
+            color: var(--accent-purple);
+            font-weight: 600;
         }
 
-    @@keyframes pulse {
-        0%, 100% {
-            opacity: 1
+        .text-answer-area {
+            width: 100%;
+            border: 1.5px solid rgba(47,50,125,.14);
+            border-radius: 12px;
+            padding: .85rem 1rem;
+            font-size: .875rem;
+            font-family: Poppins, sans-serif;
+            line-height: 1.7;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
         }
 
-        50% {
-            opacity: .5
+            .text-answer-area:focus {
+                border-color: var(--secondary);
+                box-shadow: 0 0 0 3px rgba(0,203,184,.12);
+            }
+
+        .timer-wrap {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: white;
+            border-radius: 12px;
+            border: 1.5px solid rgba(0,0,0,.07);
+            padding: .75rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,.07);
         }
-    }
 
-    .progress-bar-exam {
-        height: 6px;
-        border-radius: 10px;
-        background: rgba(0,0,0,.07);
-        overflow: hidden;
-        flex: 1;
-        margin: 0 1rem;
-    }
+        .timer-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+        }
 
-    .progress-bar-fill {
-        height: 100%;
-        border-radius: 10px;
-        background: linear-gradient(90deg,var(--secondary),var(--accent-blue));
-        transition: width .4s ease;
-    }
-</style>
+            .timer-val.urgent {
+                color: var(--accent-pink);
+                animation: pulse 1s infinite;
+            }
 
-<!-- Sticky timer + progress -->
+        @@keyframes pulse {
+            0%, 100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .5
+            }
+        }
+
+        .progress-bar-exam {
+            height: 6px;
+            border-radius: 10px;
+            background: rgba(0,0,0,.07);
+            overflow: hidden;
+            flex: 1;
+            margin: 0 1rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg,var(--secondary),var(--accent-blue));
+            transition: width .4s ease;
+        }
+        /* Lock overlay */
+        .exam-nav-lock {
+            pointer-events: none !important;
+            opacity: .4 !important;
+        }
+    </style>
+}
+
+<!-- ── Navigation Lock Modal ───────────────────────────────────────── -->
+<div class="modal fade" id="navLockModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="border-radius:18px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+            <div style="background:linear-gradient(135deg,#E13468,#F48C06);border-radius:18px 18px 0 0;padding:1.2rem 1.5rem;">
+                <h5 style="color:white;font-weight:700;margin:0;">
+                    <i class="fas fa-lock me-2"></i>Exam In Progress
+                </h5>
+            </div>
+            <div style="padding:1.4rem 1.5rem;">
+                <p style="font-size:.9rem;color:#374151;line-height:1.75;margin:0;">
+                    You cannot navigate away while the exam is active.<br><br>
+                    Please <strong>submit the exam</strong> or wait for the timer to expire before leaving.
+                </p>
+            </div>
+            <div style="padding:.5rem 1.5rem 1.3rem;">
+                <button class="btn btn-primary w-100 rounded-3"
+                        style="font-family:Poppins,sans-serif;"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-2"></i>Return to Exam
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Submit Confirmation Modal ──────────────────────────────────── -->
+<div class="modal fade" id="submitConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+        <div class="modal-content" style="border-radius:18px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+            <div style="background:linear-gradient(135deg,var(--primary,#2F327D),var(--accent-purple,#5B72EE));border-radius:18px 18px 0 0;padding:1.2rem 1.5rem;">
+                <h5 style="color:white;font-weight:700;margin:0;">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Exam?
+                </h5>
+            </div>
+            <div style="padding:1.4rem 1.5rem;">
+                <div id="submitSummary" class="mb-3 p-3 rounded-3"
+                     style="background:rgba(91,114,238,.07);border:1.5px solid rgba(91,114,238,.15);">
+                    <div style="font-size:.85rem;font-weight:700;color:var(--primary,#2F327D);" id="submitAnsweredText"></div>
+                </div>
+                <p style="font-size:.87rem;color:#555;line-height:1.75;margin:0;">
+                    <i class="fas fa-exclamation-triangle me-1" style="color:#F48C06;"></i>
+                    Once submitted you <strong>cannot go back</strong> and change your answers.
+                </p>
+            </div>
+            <div style="padding:.5rem 1.5rem 1.3rem;display:flex;gap:.75rem;">
+                <button class="btn btn-secondary flex-grow-1 rounded-3"
+                        style="font-family:Poppins,sans-serif;" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button class="btn btn-primary flex-grow-1 rounded-3"
+                        style="font-family:Poppins,sans-serif;" id="confirmSubmitBtn">
+                    <i class="fas fa-paper-plane me-2"></i>Yes, Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Timer bar ──────────────────────────────────────────────────── -->
 <div class="timer-wrap anim">
     <div>
         <div style="font-size:.72rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Time Remaining</div>
-        <div class="timer-val" id="timerDisplay">@Model.Exam.DurationInMinutes:00</div>
+        <div class="timer-val" id="timerDisplay">@($"{Model.Exam.DurationInMinutes:D2}:00")</div>
     </div>
     <div class="progress-bar-exam">
         <div class="progress-bar-fill" id="progressBar" style="width:0%;"></div>
@@ -114,55 +202,92 @@
     </div>
 </div>
 
-<!-- Exam header -->
+<!-- ── Exam header ────────────────────────────────────────────────── -->
 <div class="st-card mb-4 anim">
     <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));border-radius:16px 16px 0 0;padding:1.2rem 1.5rem;">
         <h5 style="color:white;font-weight:700;margin:0;">@Model.Exam.Title</h5>
-        <small style="color:rgba(255,255,255,.75);">@Model.CourseName &nbsp;·&nbsp; @Model.Exam.DurationInMinutes min &nbsp;·&nbsp; @Model.Exam.TotalMarks marks</small>
+        <small style="color:rgba(255,255,255,.75);">
+            @Model.CourseName &nbsp;·&nbsp; @Model.Exam.DurationInMinutes min &nbsp;·&nbsp; @Model.Exam.TotalMarks marks
+        </small>
     </div>
     <div class="st-card-body" style="font-size:.87rem;color:#555;">@Model.Exam.Description</div>
 </div>
 
-<!-- Questions -->
-<form asp-area="Student" asp-controller="Exams" asp-action="Submit" method="post" id="examForm">
+<!-- ── Questions ──────────────────────────────────────────────────── -->
+<form asp-area="Student" asp-controller="Exams" asp-action="Submit"
+      method="post" id="examForm">
     @Html.AntiForgeryToken()
     <input type="hidden" name="ExamId" value="@Model.Exam.Id" />
 
     @for (int qi = 0; qi < Model.Questions.Count; qi++)
     {
         var q = Model.Questions[qi];
+        var isText = q.QuestionType == QuestionType.Text;
         <div class="question-card anim" id="qcard_@q.Id">
             <div class="d-flex gap-3 mb-3">
-                <div style="width:30px;height:30px;border-radius:8px;background:rgba(91,114,238,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;font-size:.85rem;color:var(--accent-purple);">@(qi + 1)</div>
-                <div style="font-weight:600;font-size:.9rem;padding-top:4px;">@q.Title</div>
+                <div style="width:30px;height:30px;border-radius:8px;background:rgba(91,114,238,.1);
+                    display:flex;align-items:center;justify-content:center;
+                    flex-shrink:0;font-weight:700;font-size:.85rem;color:var(--accent-purple);">
+                    @(qi + 1)
+                </div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:.9rem;padding-top:4px;">@q.Title</div>
+                    @if (isText)
+                    {
+                        <span class="pb pb-blue" style="font-size:.7rem;margin-top:4px;display:inline-block;">Text Answer</span>
+                    }
+                </div>
             </div>
+
             <div class="ps-5">
-                @foreach (var ch in q.Choices ?? new())
+                @if (isText)
                 {
-                    <div>
-                        <input type="radio" name="Answers[@qi].QuestionId" value="@q.Id" style="display:none;" />
-                        <input type="radio" name="Answers[@qi].ChoiceId" value="@ch.Id" id="ch_@ch.Id"
-                               style="display:none;" onchange="markAnswered(@q.Id, @qi)" />
-                        <label for="ch_@ch.Id" class="choice-label">
-                            <span style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;font-weight:700;">@("ABCD"[q.Choices!.IndexOf(ch)])</span>
-                            @ch.Title
-                        </label>
-                    </div>
+                    @* TEXT QUESTION — proper textarea *@
+                    <input type="hidden" name="Answers[@qi].QuestionId" value="@q.Id" />
+                    <textarea name="Answers[@qi].TextAnswer"
+                              class="text-answer-area"
+                              placeholder="Type your answer here…"
+                              rows="4"
+                              oninput="markAnsweredText(@q.Id)"></textarea>
+                }
+                else
+                {
+                    @* MCQ — radio choices *@
+                    @foreach (var ch in q.Choices ?? new())
+                    {
+                        <div>
+                            <input type="hidden" name="Answers[@qi].QuestionId" value="@q.Id" />
+                            <input type="radio"
+                                   name="Answers[@qi].ChoiceId"
+                                   value="@ch.Id"
+                                   id="ch_@ch.Id"
+                                   style="display:none;"
+                                   onchange="markAnswered(@q.Id, @qi)" />
+                            <label for="ch_@ch.Id" class="choice-label">
+                                <span style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.15);
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:.65rem;flex-shrink:0;font-weight:700;">
+                                    @("ABCD"[q.Choices!.IndexOf(ch)])
+                                </span>
+                                @ch.Title
+                            </label>
+                        </div>
+                    }
                 }
             </div>
         </div>
     }
 
-    <div class="d-flex justify-content-between mt-3">
-        <a asp-area="Student" asp-controller="Exams" asp-action="Index"
-           class="btn btn-sm rounded-3 px-4"
-           style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;"
-           onclick="return confirm('Are you sure you want to leave? Your answers will be lost.')">
-            Cancel
-        </a>
-        <button type="submit" class="btn btn-primary rounded-3 px-5"
+    <div class="d-flex justify-content-between mt-3 mb-5">
+        <!-- Cancel locked during exam -->
+        <button type="button" class="btn btn-sm rounded-3 px-4"
+                style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;"
+                onclick="showNavLock()">
+            <i class="fas fa-times me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-primary rounded-3 px-5"
                 style="font-family:Poppins,sans-serif;"
-                onclick="return confirm('Submit exam? You cannot change your answers after submission.')">
+                onclick="showSubmitModal()">
             <i class="fas fa-paper-plane me-2"></i>Submit Exam
         </button>
     </div>
@@ -174,31 +299,121 @@
         var remaining    = totalSeconds;
         var totalQ       = @Model.Questions.Count;
         var answered     = 0;
+        var examSubmitted = false;
 
+        // ── Mark answered (MCQ) ────────────────────────────────────────────
         function markAnswered(qId, qi) {
             var card = document.getElementById('qcard_' + qId);
             if (card && !card.classList.contains('answered')) {
                 card.classList.add('answered');
                 answered++;
-                document.getElementById('answeredCount').textContent = answered;
-                document.getElementById('progressBar').style.width = (answered / totalQ * 100) + '%';
+                updateProgress();
             }
-            // also set QuestionId hidden
-            var hiddenQ = document.querySelector('input[name="Answers[' + qi + '].QuestionId"]');
-            if (hiddenQ) hiddenQ.value = qId;
         }
 
+        // ── Mark answered (Text) ───────────────────────────────────────────
+        function markAnsweredText(qId) {
+            var card = document.getElementById('qcard_' + qId);
+            if (!card) return;
+            // Check if textarea has content
+            var ta = card.querySelector('textarea');
+            var hasContent = ta && ta.value.trim().length > 0;
+            if (hasContent && !card.classList.contains('answered')) {
+                card.classList.add('answered');
+                answered++;
+                updateProgress();
+            } else if (!hasContent && card.classList.contains('answered')) {
+                card.classList.remove('answered');
+                answered--;
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            document.getElementById('answeredCount').textContent = answered;
+            document.getElementById('progressBar').style.width = (answered / totalQ * 100) + '%';
+        }
+
+        // ── Timer ──────────────────────────────────────────────────────────
         var timer = setInterval(function() {
             remaining--;
-            if (remaining <= 0) { clearInterval(timer); document.getElementById('examForm').submit(); return; }
+            if (remaining <= 0) {
+                clearInterval(timer);
+                examSubmitted = true;
+                document.getElementById('examForm').submit();
+                return;
+            }
             var m = Math.floor(remaining / 60), s = remaining % 60;
             var display = document.getElementById('timerDisplay');
             display.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
             if (remaining <= 120) display.classList.add('urgent');
         }, 1000);
 
+        // ── Nav lock — intercept all sidebar/topbar navigation ─────────────
+        function showNavLock() {
+            new bootstrap.Modal(document.getElementById('navLockModal')).show();
+        }
+
+        // Lock all sidebar navigation links during exam
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lock sidebar links
+            document.querySelectorAll('.st-nav-item, .sa-nav-item, .pa-nav-item').forEach(function(link) {
+                var originalHref = link.getAttribute('href');
+                if (originalHref && originalHref !== '#') {
+                    link.addEventListener('click', function(e) {
+                        if (!examSubmitted) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            showNavLock();
+                        }
+                    }, true);
+                }
+            });
+            // Lock topbar links
+            document.querySelectorAll('.topbar-nav-link, .st-topbar a').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    if (!examSubmitted) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showNavLock();
+                    }
+                }, true);
+            });
+        });
+
+        // Lock browser back/forward
+        window.addEventListener('popstate', function(e) {
+            if (!examSubmitted) {
+                history.pushState(null, '', window.location.href);
+                showNavLock();
+            }
+        });
+        history.pushState(null, '', window.location.href);
+
+        // ── Submit modal ───────────────────────────────────────────────────
+        function showSubmitModal() {
+            var unanswered = totalQ - answered;
+            var text = answered + ' of ' + totalQ + ' question' + (totalQ > 1 ? 's' : '') + ' answered.';
+            if (unanswered > 0)
+                text += ' ' + unanswered + ' unanswered question' + (unanswered > 1 ? 's' : '') + ' will be left blank.';
+            document.getElementById('submitAnsweredText').textContent = text;
+            new bootstrap.Modal(document.getElementById('submitConfirmModal')).show();
+        }
+
+        document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
+            examSubmitted = true;
+            clearInterval(timer);
+            var modal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmModal'));
+            if (modal) modal.hide();
+            document.getElementById('examForm').submit();
+        });
+
+        // ── Prevent accidental close ───────────────────────────────────────
         window.addEventListener('beforeunload', function(e) {
-            if (answered > 0) { e.preventDefault(); e.returnValue = ''; }
+            if (!examSubmitted && answered > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
         });
     </script>
 }

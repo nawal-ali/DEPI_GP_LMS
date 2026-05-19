@@ -25,7 +25,12 @@ namespace LMSProject.AI.Services
                 .ToListAsync();
 
             if (!chunks.Any())
-                return "No content found. Please upload a document first.";
+                return "⚠️ No text content found in this file.\n\n" +
+                       "Possible reasons:\n" +
+                       "• The PDF is scanned/image-based (no text layer)\n" +
+                       "• The file is empty or corrupted\n\n" +
+                       "Solution: Upload a PDF with selectable text (not a scanned image). " +
+                       "Try opening the PDF and selecting text with your mouse — if you cannot select text, it is image-based.";
 
             var text = string.Join("\n\n", chunks.Select(c => c.Content));
 
@@ -64,7 +69,7 @@ namespace LMSProject.AI.Services
         public async Task<List<UploadedFile>> GetFilesAsync(string instructorUserId)
         {
             return await _mongo.Files
-                .Find(f => f.StudentUserId == instructorUserId && f.IsProcessed)
+                .Find(f => f.StudentUserId == instructorUserId)
                 .SortByDescending(f => f.UploadedAt)
                 .ToListAsync();
         }

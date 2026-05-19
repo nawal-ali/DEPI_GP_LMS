@@ -23,12 +23,15 @@ namespace LMSProject.AI.Services
             var chunks = await _docs.RetrieveAsync(question, studentUserId, fileId, topK: 5);
             var context = chunks.Any()
                 ? string.Join("\n\n---\n\n", chunks.Select(c => c.Content))
-                : "No specific document context available.";
+                : "";
 
-            var system = "You are a helpful AI study assistant for students. " +
-                         "Answer ONLY based on the provided context. " +
-                         "If the answer is not in the context, say so clearly. " +
-                         "Be concise, clear, and educational.";
+            var system = chunks.Any()
+                ? "You are a helpful AI study assistant. Answer based on the document context provided. " +
+                  "If the answer is not in the context, say so. Be concise and educational."
+                : "You are a helpful AI study assistant. " +
+                  "The student has not uploaded any documents yet, or no relevant content was found. " +
+                  "Answer general study questions from your knowledge. " +
+                  "Remind them they can upload PDF or DOCX files for document-specific help.";
 
             // Recent history (last 6 messages)
             var history = await _mongo.Messages
@@ -39,9 +42,13 @@ namespace LMSProject.AI.Services
 
             history.Reverse();
 
+            var userContent = chunks.Any()
+                ? $"Context from uploaded document:\n{context}\n\nQuestion: {question}"
+                : question;
+
             var messages = history
                 .Select(m => (m.Role, m.Content))
-                .Append(("user", $"Context:\n{context}\n\nQuestion: {question}"))
+                .Append(("user", userContent))
                 .ToList();
 
             var answer = await _ai.ChatAsync(messages, system);

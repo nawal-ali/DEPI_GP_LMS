@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Assign Instructor";
+    var course = ViewBag.Course as MLSCore.Models.TbCourse;
+    var instructors = ViewBag.Instructors as List<MLSCore.Models.TbInstructor> ?? new();
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="sa-card anim">
+            <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));border-radius:16px 16px 0 0;padding:1.3rem 1.5rem;">
+                <h5 style="color:white;font-weight:700;margin:0;">
+                    <i class="fas fa-user-tie me-2"></i>Assign Instructor
+                </h5>
+                <small style="color:rgba(255,255,255,.75);">@course?.Name</small>
+            </div>
+            <div class="sa-card-body">
+
+                @if (course?.Instructor != null)
+                {
+                    <div class="p-3 mb-3 rounded-3" style="background:rgba(0,203,184,.08);border:1.5px solid rgba(0,203,184,.2);">
+                        <small style="font-weight:700;color:var(--secondary);">Current Instructor</small>
+                        <div style="font-weight:600;margin-top:2px;">@course.Instructor.FullName</div>
+                    </div>
+                }
+
+                <form asp-area="SuperAdmin" asp-controller="Courses" asp-action="AssignInstructor"
+                      method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="courseId" value="@course?.Id" />
+
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;font-size:.84rem;">
+                            Select Instructor <span class="text-danger">*</span>
+                        </label>
+                        <!-- Search filter -->
+                        <input type="text" id="instrSearch" class="sa-form-control mb-2"
+                               placeholder="Search instructors…"
+                               oninput="filterInstructors(this.value)" />
+                        <div id="instrList" style="max-height:280px;overflow-y:auto;border:1.5px solid rgba(47,50,125,.12);border-radius:10px;">
+                            @foreach (var i in instructors)
+                            {
+                                bool isCurrent = course?.InstructorId == i.Id;
+                                <label class="d-flex align-items-center gap-2 px-3 py-2 instr-item"
+                                       style="cursor:pointer;border-bottom:1px solid rgba(0,0,0,.04);background:@(isCurrent ? "rgba(0,203,184,.07)" : "white");">
+                                    <input type="radio" name="instructorId" value="@i.Id"
+                                    @(isCurrent ? "checked" : "") style="accent-color:var(--secondary);" />
+                                    <div>
+                                        <div style="font-weight:600;font-size:.85rem;">@i.FullName</div>
+                                        @if (!string.IsNullOrEmpty(i.Specialization))
+                                        {
+                                            <small style="color:#9ca3af;font-size:.72rem;">@i.Specialization</small>
+                                        }
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                        @if (!instructors.Any())
+                        {
+                            <p class="text-muted small mt-2">No instructors found. Add instructors first.</p>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index"
+                           class="btn rounded-3 flex-grow-1"
+                           style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary rounded-3 flex-grow-1"
+                                style="font-family:Poppins,sans-serif;">
+                            <i class="fas fa-save me-2"></i>Assign
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterInstructors(q) {
+            document.querySelectorAll('.instr-item').forEach(function(el) {
+                el.style.display = el.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+            });
+        }
+    </script>
+}

@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "AI Exam Generator";
-    var files = ViewBag.Files as List<LMSProject.AI.Models.UploadedFile> ?? new();
+    var existingFiles = ViewBag.Files as List<LMSProject.AI.Models.UploadedFile> ?? new();
 }
 
 <style>
@@ -20,110 +20,378 @@
         animation: fadeSlideUp .4s ease;
     }
 
+    .anim2 {
+        animation: fadeSlideUp .4s .08s ease both;
+    }
+
+    .anim3 {
+        animation: fadeSlideUp .4s .16s ease both;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+        border: 2.5px dashed rgba(91,114,238,.25);
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all .2s;
+        background: rgba(91,114,238,.03);
+        position: relative;
+    }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--accent-purple, #5B72EE);
+            background: rgba(91,114,238,.07);
+        }
+
+        .drop-zone input[type=file] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+    .drop-icon {
+        font-size: 2.5rem;
+        color: var(--accent-purple, #5B72EE);
+        opacity: .5;
+        margin-bottom: .75rem;
+        display: block;
+    }
+
+    /* File queue items */
+    .file-queue-item {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        background: white;
+        border: 1.5px solid rgba(0,0,0,.07);
+        border-radius: 12px;
+        padding: .7rem .9rem;
+        margin-bottom: .5rem;
+    }
+
+    .file-type-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .9rem;
+        flex-shrink: 0;
+    }
+
+    .file-progress-bar {
+        height: 4px;
+        border-radius: 10px;
+        background: rgba(0,0,0,.07);
+        overflow: hidden;
+        margin-top: 4px;
+    }
+
+    .file-progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width .3s ease;
+        background: linear-gradient(90deg, var(--accent-purple,#5B72EE), var(--secondary,#00CBB8));
+    }
+
+    .file-status {
+        font-size: .7rem;
+        font-weight: 600;
+    }
+
+        .file-status.ok {
+            color: #16a34a;
+        }
+
+        .file-status.err {
+            color: #E13468;
+        }
+
+        .file-status.upload {
+            color: var(--accent-purple,#5B72EE);
+        }
+
+    /* Stored files list */
+    .stored-file {
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+        padding: .6rem .8rem;
+        border-radius: 11px;
+        background: #f8f9ff;
+        border: 1.5px solid rgba(91,114,238,.1);
+        margin-bottom: .5rem;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+
+        .stored-file:hover {
+            border-color: var(--accent-purple,#5B72EE);
+        }
+
+        .stored-file.selected {
+            border-color: var(--secondary,#00CBB8);
+            background: rgba(0,203,184,.06);
+        }
+
+        .stored-file input[type=radio] {
+            display: none;
+        }
+
+    /* Result area */
     .gen-result {
         white-space: pre-wrap;
         font-size: .87rem;
-        line-height: 1.75;
+        line-height: 1.8;
         background: #f8f9ff;
-        border-radius: 12px;
-        padding: 1.2rem;
-        border: 1.5px solid rgba(47,50,125,.1);
-        max-height: 60vh;
+        border-radius: 14px;
+        padding: 1.3rem 1.5rem;
+        border: 1.5px solid rgba(47,50,125,.08);
+        max-height: 55vh;
         overflow-y: auto;
+        font-family: 'Courier New', monospace;
+    }
+
+        .gen-result::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .gen-result::-webkit-scrollbar-thumb {
+            background: rgba(91,114,238,.2);
+            border-radius: 5px;
+        }
+
+    /* Spinner */
+    .gen-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid rgba(91,114,238,.2);
+        border-top-color: var(--accent-purple,#5B72EE);
+        animation: spin .6s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 </style>
 
 <div class="row g-4">
-    <!-- Upload panel -->
-    <div class="col-lg-4">
-        <div class="iact-card anim">
-            <div style="background:linear-gradient(135deg,var(--primary),var(--accent-purple));
-                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;">
-                <h5 style="color:white;font-weight:700;margin:0;font-size:.95rem;">
-                    <i class="fas fa-upload me-2"></i>Upload Material
-                </h5>
+
+    <!-- ── LEFT COLUMN: Upload + Files ──────────────────────────────── -->
+    <div class="col-lg-5">
+
+        <!-- Upload card -->
+        <div class="iact-card anim mb-4">
+            <div style="background:linear-gradient(135deg,var(--primary,#2F327D),var(--accent-purple,#5B72EE));
+                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;
+                display:flex;align-items:center;gap:.75rem;">
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);
+                    display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-upload" style="color:white;font-size:.95rem;"></i>
+                </div>
+                <div>
+                    <h6 style="color:white;font-weight:700;margin:0;font-size:.9rem;">Upload Materials</h6>
+                    <small style="color:rgba(255,255,255,.7);font-size:.72rem;">PDF, DOCX, JPG, PNG</small>
+                </div>
             </div>
             <div class="iact-card-body">
-                <label class="d-block w-100 text-center p-3 mb-3 rounded-3"
-                       style="background:rgba(91,114,238,.07);border:1.5px dashed rgba(91,114,238,.2);
-                    cursor:pointer;font-size:.84rem;font-weight:600;color:var(--primary);"
-                       for="instrFileInput">
-                    <i class="fas fa-file-arrow-up d-block mb-1" style="font-size:1.4rem;"></i>
-                    PDF, DOCX, or Image
-                </label>
-                <input type="file" id="instrFileInput" style="display:none;"
-                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                       onchange="instrUpload(this)" />
-                <div id="instrUploadStatus" style="font-size:.75rem;text-align:center;min-height:18px;"></div>
 
-                <div id="instrFileList" class="mt-3">
-                    @foreach (var f in files)
+                <!-- Drop zone -->
+                <div class="drop-zone" id="dropZone">
+                    <input type="file" id="fileInput"
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                           multiple
+                           onchange="handleFiles(this.files)" />
+                    <i class="fas fa-cloud-upload-alt drop-icon"></i>
+                    <div style="font-weight:700;color:var(--primary,#2F327D);font-size:.9rem;margin-bottom:.25rem;">
+                        Drag &amp; drop files here
+                    </div>
+                    <div style="font-size:.78rem;color:#9ca3af;">
+                        or click to browse &nbsp;·&nbsp; Multiple files supported
+                    </div>
+                </div>
+
+                <!-- Upload queue -->
+                <div id="uploadQueue" class="mt-3"></div>
+
+                <!-- Upload button -->
+                <button id="uploadBtn" onclick="startUpload()"
+                        class="btn btn-primary w-100 rounded-3 mt-2"
+                        style="font-family:Poppins,sans-serif;display:none;">
+                    <i class="fas fa-upload me-2"></i>Upload All Files
+                </button>
+            </div>
+        </div>
+
+        <!-- Stored files card -->
+        <div class="iact-card anim2">
+            <div style="background:linear-gradient(135deg,var(--secondary,#00CBB8),var(--accent-blue,#29B9E7));
+                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;
+                display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:.75rem;">
+                    <i class="fas fa-folder-open" style="color:white;font-size:1rem;"></i>
+                    <h6 style="color:white;font-weight:700;margin:0;font-size:.9rem;">
+                        My Files
+                        <span id="fileCountBadge" style="background:rgba(255,255,255,.2);color:white;
+                            border-radius:20px;padding:1px 8px;font-size:.7rem;margin-left:4px;">
+                            @existingFiles.Count
+                        </span>
+                    </h6>
+                </div>
+                <button onclick="loadFiles()" class="btn btn-sm"
+                        style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:8px;
+                    font-size:.75rem;font-family:Poppins,sans-serif;">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="iact-card-body" style="max-height:300px;overflow-y:auto;">
+                <div id="storedFiles">
+                    @if (!existingFiles.Any())
                     {
-                        <div class="d-flex align-items-center gap-2 p-2 mb-2 rounded-3"
-                             style="background:#f8f9ff;border:1.5px solid rgba(0,0,0,.06);"
-                             id="file_@f.Id">
-                            <i class="fas fa-file-alt" style="color:var(--accent-purple);font-size:.85rem;"></i>
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@f.OriginalName</div>
-                                <small style="color:#9ca3af;font-size:.68rem;">@f.ChunkCount chunks</small>
-                            </div>
+                        <div style="text-align:center;color:#9ca3af;font-size:.8rem;padding:1.5rem 0;">
+                            <i class="fas fa-folder-open d-block mb-2" style="font-size:1.5rem;opacity:.3;"></i>
+                            No files uploaded yet.
                         </div>
+                    }
+                    else
+                    {
+                        @foreach (var f in existingFiles)
+                        {
+                            <label class="stored-file">
+                                <input type="radio" name="selectedFile"
+                                       value="@f.Id" onchange="selectFile('@f.Id', '@f.OriginalName')" />
+                                <div style="width:32px;height:32px;border-radius:8px;
+                                    background:rgba(91,114,238,.1);display:flex;
+                                    align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="fas fa-file-alt" style="color:var(--accent-purple,#5B72EE);font-size:.82rem;"></i>
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                        @f.OriginalName
+                                    </div>
+                                    <div style="font-size:.68rem;color:#9ca3af;">
+                                        @(Math.Round(f.FileSizeBytes / 1024.0, 1)) KB
+                                        · @f.ChunkCount chunks
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" style="font-size:.6rem;"
+                                        onclick="deleteFile('@f.Id', event)"></button>
+                            </label>
+                        }
                     }
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Generator panel -->
-    <div class="col-lg-8">
-        <div class="iact-card anim">
-            <div style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));
-                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;">
-                <h5 style="color:white;font-weight:700;margin:0;font-size:.95rem;">
-                    <i class="fas fa-magic me-2"></i>Generate Exam
-                </h5>
+    <!-- ── RIGHT COLUMN: Generator ──────────────────────────────────── -->
+    <div class="col-lg-7">
+        <div class="iact-card anim3">
+            <div style="background:linear-gradient(135deg,var(--accent-purple,#5B72EE),var(--secondary,#00CBB8));
+                border-radius:16px 16px 0 0;padding:1.1rem 1.4rem;
+                display:flex;align-items:center;gap:.75rem;">
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);
+                    display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-magic" style="color:white;font-size:.95rem;"></i>
+                </div>
+                <div>
+                    <h6 style="color:white;font-weight:700;margin:0;font-size:.9rem;">Generate Exam</h6>
+                    <small id="selectedFileLabel" style="color:rgba(255,255,255,.7);font-size:.72rem;">
+                        Select a file from the left panel
+                    </small>
+                </div>
             </div>
             <div class="iact-card-body">
+
+                <!-- Selected file indicator -->
+                <div id="selectedFileBanner" style="display:none;background:rgba(0,203,184,.07);
+                    border:1.5px solid rgba(0,203,184,.2);border-radius:11px;
+                    padding:.65rem 1rem;margin-bottom:1.1rem;
+                    display:none;align-items:center;gap:.65rem;">
+                    <i class="fas fa-file-check" style="color:var(--secondary,#00CBB8);"></i>
+                    <span id="selectedFileName" style="font-size:.82rem;font-weight:600;"></span>
+                </div>
+
+                <!-- Options row -->
                 <div class="row g-3 mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label" style="font-weight:600;font-size:.83rem;">Source File</label>
-                        <select id="genFileSelect" class="iact-form-control">
-                            <option value="">— Select file —</option>
-                            @foreach (var f in files)
-                            {
-                                <option value="@f.Id">@f.OriginalName</option>
-                            }
-                        </select>
+                    <div class="col-sm-6">
+                        <label class="form-label" style="font-weight:600;font-size:.83rem;">
+                            <i class="fas fa-question-circle me-1" style="color:var(--accent-purple,#5B72EE);"></i>
+                            MCQ Questions
+                        </label>
+                        <input type="number" id="mcqCount" value="5" min="1" max="20"
+                               class="iact-form-control" />
+                        <small class="text-muted" style="font-size:.7rem;">Multiple choice (1–20)</small>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label" style="font-weight:600;font-size:.83rem;">MCQ Count</label>
-                        <input type="number" id="mcqCount" value="5" min="1" max="20" class="iact-form-control" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label" style="font-weight:600;font-size:.83rem;">T/F Count</label>
-                        <input type="number" id="tfCount" value="3" min="0" max="10" class="iact-form-control" />
+                    <div class="col-sm-6">
+                        <label class="form-label" style="font-weight:600;font-size:.83rem;">
+                            <i class="fas fa-check-circle me-1" style="color:var(--secondary,#00CBB8);"></i>
+                            True / False
+                        </label>
+                        <input type="number" id="tfCount" value="3" min="0" max="10"
+                               class="iact-form-control" />
+                        <small class="text-muted" style="font-size:.7rem;">T/F statements (0–10)</small>
                     </div>
                 </div>
 
-                <button onclick="generateExam()" class="btn btn-primary rounded-3 px-4 mb-4"
-                        style="font-family:Poppins,sans-serif;" id="genBtn">
+                <!-- Generate button -->
+                <button id="genBtn" onclick="generateExam()"
+                        class="btn btn-primary w-100 rounded-3 mb-4"
+                        style="font-family:Poppins,sans-serif;font-size:.9rem;padding:.75rem;" disabled>
                     <i class="fas fa-magic me-2"></i>Generate Exam
                 </button>
 
-                <div id="genSpinner" style="display:none;text-align:center;padding:2rem;color:#9ca3af;font-size:.88rem;">
-                    <div class="spinner-border spinner-border-sm me-2" style="color:var(--secondary);"></div>
-                    Generating exam questions…
+                <!-- Spinner -->
+                <div id="genSpinner" style="display:none;text-align:center;padding:2rem;color:#9ca3af;">
+                    <div class="gen-spinner d-inline-block me-2"></div>
+                    <span style="font-size:.88rem;">Generating exam questions with AI…</span>
                 </div>
 
-                <div id="genResult" style="display:none;">
+                <!-- Result -->
+                <div id="genResultWrap" style="display:none;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 style="font-weight:700;color:var(--primary);margin:0;">Generated Exam</h6>
-                        <button onclick="copyResult()" class="btn btn-sm rounded-3"
-                                style="background:rgba(0,203,184,.1);color:var(--secondary);font-size:.75rem;">
-                            <i class="fas fa-copy me-1"></i>Copy
-                        </button>
+                        <h6 style="font-weight:700;color:var(--primary,#2F327D);margin:0;font-size:.88rem;">
+                            <i class="fas fa-clipboard-list me-2" style="color:var(--secondary,#00CBB8);"></i>
+                            Generated Exam
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <button onclick="copyResult()" class="btn btn-sm rounded-3"
+                                    style="background:rgba(0,203,184,.1);color:var(--secondary,#00CBB8);
+                                font-size:.75rem;font-family:Poppins,sans-serif;">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                            <button onclick="clearResult()" class="btn btn-sm rounded-3"
+                                    style="background:rgba(225,52,104,.08);color:#E13468;
+                                font-size:.75rem;font-family:Poppins,sans-serif;">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </button>
+                        </div>
                     </div>
                     <div class="gen-result" id="genResultText"></div>
+                </div>
+
+                <!-- Error state -->
+                <div id="genError" style="display:none;background:rgba(225,52,104,.08);
+                border-left:4px solid #E13468;border-radius:10px;
+                padding:.9rem 1.1rem;margin-bottom:1rem;
+                font-size:.85rem;color:#E13468;font-weight:600;"></div>
+
+                <!-- Empty state -->
+                <div id="genEmpty" style="text-align:center;padding:3rem 1rem;color:#9ca3af;">
+                    <i class="fas fa-wand-magic-sparkles d-block mb-2" style="font-size:2.5rem;opacity:.2;"></i>
+                    <p style="font-size:.85rem;margin:0;">
+                        Upload a file and configure the exam settings,<br>then click Generate.
+                    </p>
                 </div>
             </div>
         </div>
@@ -132,58 +400,296 @@
 
 @section Scripts {
     <script>
-        function instrUpload(input) {
-            if (!input.files.length) return;
-            var fd   = new FormData();
-            var stat = document.getElementById('instrUploadStatus');
-            fd.append('file', input.files[0]);
-            stat.innerHTML = '<span style="color:#F48C06;">⏳ Processing…</span>';
-            fetch('/Instructor/Ai/Upload', { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(d => {
-                if (d.error) { stat.innerHTML = '<span style="color:#E13468;">❌ ' + d.error + '</span>'; return; }
-                stat.innerHTML = '<span style="color:#16a34a;">✅ Ready!</span>';
-                var sel = document.getElementById('genFileSelect');
-                var opt = document.createElement('option');
-                opt.value = d.fileId; opt.textContent = d.fileName;
-                sel.appendChild(opt);
-                input.value = '';
-            })
-            .catch(() => { stat.innerHTML = '<span style="color:#E13468;">❌ Failed</span>'; });
+        var selectedFileId   = null;
+        var pendingFiles     = [];
+
+        // Auto-select the first file if files already exist on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            var firstRadio = document.querySelector('input[name="selectedFile"]');
+            if (firstRadio) {
+                firstRadio.checked = true;
+                firstRadio.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // ── Drop zone ─────────────────────────────────────────────────────────────
+        var dz = document.getElementById('dropZone');
+        dz.addEventListener('dragover',  function(e){ e.preventDefault(); dz.classList.add('drag-over'); });
+        dz.addEventListener('dragleave', function()  { dz.classList.remove('drag-over'); });
+        dz.addEventListener('drop', function(e) {
+            e.preventDefault(); dz.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(fileList) {
+            if (!fileList || !fileList.length) return;
+            pendingFiles = Array.from(fileList);
+            renderQueue();
+            document.getElementById('uploadBtn').style.display = 'block';
         }
 
-        function generateExam() {
-            var fileId = document.getElementById('genFileSelect').value;
-            if (!fileId) { alert('Please select a file first.'); return; }
+        function renderQueue() {
+            var q = document.getElementById('uploadQueue');
+            q.innerHTML = pendingFiles.map(function(f, i) {
+                var icon = f.name.match(/\.pdf$/i)  ? 'fa-file-pdf'  :
+                           f.name.match(/\.docx?$/i)? 'fa-file-word' : 'fa-file-image';
+                var col  = f.name.match(/\.pdf$/i)  ? '#E13468' :
+                           f.name.match(/\.docx?$/i)? '#29B9E7'  : '#F48C06';
+                var kb   = Math.round(f.size / 1024);
+                return '<div class="file-queue-item" id="qi_' + i + '">' +
+                       '<div class="file-type-icon" style="background:' + col + '18;color:' + col + ';"><i class="fas ' + icon + '"></i></div>' +
+                       '<div style="flex:1;min-width:0;">' +
+                       '<div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(f.name) + '</div>' +
+                       '<div style="font-size:.68rem;color:#9ca3af;">' + kb + ' KB</div>' +
+                       '<div class="file-progress-bar"><div class="file-progress-fill" id="fp_' + i + '" style="width:0%"></div></div>' +
+                       '<span class="file-status upload" id="fs_' + i + '">Ready to upload</span>' +
+                       '</div>' +
+                       '<button type="button" onclick="removeFromQueue(' + i + ')" class="btn-close" style="font-size:.6rem;flex-shrink:0;"></button>' +
+                       '</div>';
+            }).join('');
+        }
+
+        function removeFromQueue(i) {
+            pendingFiles.splice(i, 1);
+            if (!pendingFiles.length) document.getElementById('uploadBtn').style.display = 'none';
+            renderQueue();
+        }
+
+        // ── Upload all pending files ───────────────────────────────────────────────
+        // FIX: use a single FormData with all files — server accepts List<IFormFile> files
+        async function startUpload() {
+            if (!pendingFiles.length) return;
+
+            var btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="gen-spinner"></span> Uploading…';
+
+            // Upload each file individually so we can show per-file progress
+            for (var i = 0; i < pendingFiles.length; i++) {
+                await uploadSingle(pendingFiles[i], i);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload All Files';
+
+            // Clear queue and refresh file list
+            pendingFiles = [];
+            document.getElementById('uploadQueue').innerHTML = '';
+            document.getElementById('uploadBtn').style.display = 'none';
+            await loadFiles();
+        }
+
+        function uploadSingle(file, idx) {
+            return new Promise(function(resolve) {
+                var fd     = new FormData();
+                var bar    = document.getElementById('fp_' + idx);
+                var status = document.getElementById('fs_' + idx);
+
+                fd.append('files', file);
+
+                status.textContent = 'Uploading...';
+                status.className   = 'file-status upload';
+                bar.style.width    = '5%';
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/Instructor/Ai/Upload');
+                // NO antiforgery header needed: [IgnoreAntiforgeryToken] is on the action
+
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        var pct = Math.round(e.loaded / e.total * 85);
+                        bar.style.width    = pct + '%';
+                        status.textContent = 'Uploading ' + pct + '%';
+                    }
+                };
+
+                xhr.onload = function() {
+                    bar.style.width = '100%';
+                    if (xhr.status === 200) {
+                        try {
+                            var d = JSON.parse(xhr.responseText);
+                            var r = (d.results && d.results[0]) ? d.results[0] : d;
+                            if (r.fileId || r.ok === true) {
+                                status.textContent = 'Done!';
+                                status.className   = 'file-status ok';
+                            } else {
+                                status.textContent = 'Error: ' + (r.message || r.error || 'Failed');
+                                status.className   = 'file-status err';
+                                bar.style.background = '#E13468';
+                            }
+                        } catch(e) {
+                            status.textContent = 'Parse error';
+                            status.className   = 'file-status err';
+                        }
+                    } else {
+                        status.textContent = 'HTTP ' + xhr.status + ' error';
+                        status.className   = 'file-status err';
+                        bar.style.background = '#E13468';
+                        console.error('Upload response:', xhr.responseText);
+                    }
+                    resolve();
+                };
+
+                xhr.onerror = function() {
+                    status.textContent   = 'Network error';
+                    status.className     = 'file-status err';
+                    bar.style.background = '#E13468';
+                    resolve();
+                };
+
+                xhr.send(fd);
+            });
+        }
+
+        // ── Load stored files ─────────────────────────────────────────────────────
+        async function loadFiles() {
+            try {
+                var resp  = await fetch('/Instructor/Ai/Files');
+                var files = await resp.json();
+                renderStoredFiles(files);
+                document.getElementById('fileCountBadge').textContent = files.length;
+                // Auto-select first file so Generate is immediately usable
+                if (files && files.length && !selectedFileId) {
+                    selectFile(files[0].id, files[0].originalName);
+                }
+            } catch(e) { console.error('loadFiles error:', e); }
+        }
+
+        function renderStoredFiles(files) {
+            var el = document.getElementById('storedFiles');
+            if (!files || !files.length) {
+                el.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:.8rem;padding:1.5rem 0;">' +
+                               '<i class="fas fa-folder-open d-block mb-2" style="font-size:1.5rem;opacity:.3;"></i>' +
+                               'No files uploaded yet.</div>';
+                return;
+            }
+            el.innerHTML = files.map(function(f) {
+                var kb = Math.round(f.fileSizeBytes / 1024);
+                return '<label class="stored-file" id="sf_' + f.id + '">' +
+                       '<input type="radio" name="selectedFile" value="' + f.id +
+                       '" onchange="selectFile(\'' + f.id + '\', \'' + esc(f.originalName) + '\')" />' +
+                       '<div style="width:32px;height:32px;border-radius:8px;background:rgba(91,114,238,.1);' +
+                       'display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                       '<i class="fas fa-file-alt" style="color:var(--accent-purple,#5B72EE);font-size:.82rem;"></i></div>' +
+                       '<div style="flex:1;min-width:0;">' +
+                       '<div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(f.originalName) + '</div>' +
+                       '<div style="font-size:.68rem;color:#9ca3af;">' + kb + ' KB · ' + f.chunkCount + ' chunks</div>' +
+                       '</div>' +
+                       '<button type="button" class="btn-close" style="font-size:.6rem;" onclick="deleteFile(\'' + f.id + '\', event)"></button>' +
+                       '</label>';
+            }).join('');
+        }
+
+        // ── Select / deselect file ────────────────────────────────────────────────
+        function selectFile(id, name) {
+            selectedFileId = id;
+            document.querySelectorAll('.stored-file').forEach(function(el) { el.classList.remove('selected'); });
+            var el = document.getElementById('sf_' + id);
+            if (el) el.classList.add('selected');
+            document.getElementById('selectedFileLabel').textContent = name;
+            document.getElementById('selectedFileName').textContent  = name;
+            document.getElementById('selectedFileBanner').style.display = 'flex';
+            document.getElementById('genBtn').disabled = false;
+            document.getElementById('genEmpty').style.display = 'none';
+        }
+
+        // ── Delete file ────────────────────────────────────────────────────────────
+        async function deleteFile(id, e) {
+            e.preventDefault(); e.stopPropagation();
+            if (!confirm('Delete this file?')) return;
+            await fetch('/Instructor/Ai/DeleteFile', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ fileId: id })
+            });
+            if (selectedFileId === id) {
+                selectedFileId = null;
+                document.getElementById('genBtn').disabled = true;
+                document.getElementById('selectedFileBanner').style.display = 'none';
+                document.getElementById('selectedFileLabel').textContent = 'Select a file from the left panel';
+            }
+            await loadFiles();
+        }
+
+        // ── Generate exam ─────────────────────────────────────────────────────────
+        async function generateExam() {
+            if (!selectedFileId) {
+                showGenError('Please select a file from the left panel first.');
+                return;
+            }
+
             var mcq = parseInt(document.getElementById('mcqCount').value) || 5;
             var tf  = parseInt(document.getElementById('tfCount').value)  || 3;
+            var btn = document.getElementById('genBtn');
 
-            document.getElementById('genBtn').disabled     = true;
-            document.getElementById('genSpinner').style.display = 'block';
-            document.getElementById('genResult').style.display  = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="gen-spinner d-inline-block me-2"></span>Generating...';
+            document.getElementById('genSpinner').style.display    = 'block';
+            document.getElementById('genResultWrap').style.display = 'none';
+            document.getElementById('genEmpty').style.display      = 'none';
+            document.getElementById('genError').style.display      = 'none';
 
-            fetch('/Instructor/Ai/Generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileId: fileId, mcqCount: mcq, tfCount: tf })
-            })
-            .then(r => r.json())
-            .then(d => {
+            try {
+                var resp = await fetch('/Instructor/Ai/Generate', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ fileId: selectedFileId, mcqCount: mcq, tfCount: tf })
+                });
+
+                var text = await resp.text(); // read as text first
+                var d;
+                try { d = JSON.parse(text); } catch(e) {
+                    showGenError('Server returned invalid response. Check the application logs.');
+                    return;
+                }
+
+                if (!resp.ok) {
+                    showGenError(d.error || 'Server error ' + resp.status);
+                    return;
+                }
+
+                if (d.error) {
+                    showGenError(d.error);
+                    return;
+                }
+
+                document.getElementById('genResultText').textContent   = d.result || 'No content generated.';
+                document.getElementById('genResultWrap').style.display = 'block';
+
+            } catch(e) {
+                showGenError('Network error: ' + e.message);
+            } finally {
                 document.getElementById('genSpinner').style.display = 'none';
-                document.getElementById('genBtn').disabled = false;
-                document.getElementById('genResultText').textContent = d.result || 'No result.';
-                document.getElementById('genResult').style.display = 'block';
-            })
-            .catch(() => {
-                document.getElementById('genSpinner').style.display = 'none';
-                document.getElementById('genBtn').disabled = false;
-                alert('Generation failed. Check your API key configuration.');
-            });
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic me-2"></i>Generate Exam';
+            }
+        }
+
+        function showGenError(msg) {
+            var el = document.getElementById('genError');
+            el.textContent = '⚠ ' + msg;
+            el.style.display = 'block';
+            document.getElementById('genSpinner').style.display = 'none';
+            document.getElementById('genBtn').disabled = false;
+            document.getElementById('genBtn').innerHTML = '<i class="fas fa-magic me-2"></i>Generate Exam';
         }
 
         function copyResult() {
             var text = document.getElementById('genResultText').textContent;
-            navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+            navigator.clipboard.writeText(text)
+                .then(function() { alert('Copied to clipboard!'); });
+        }
+
+        function clearResult() {
+            document.getElementById('genResultWrap').style.display = 'none';
+            document.getElementById('genEmpty').style.display      = 'block';
+        }
+
+        function esc(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
     </script>
+
+    @* Antiforgery token for XHR requests *@
+    @Html.AntiForgeryToken()
 }

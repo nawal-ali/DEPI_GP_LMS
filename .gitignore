@@ -1,34 +1,56 @@
-# Visual Studio files
+# ── Visual Studio ─────────────────────────────────────────────────────────
 .vs/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
+*.rsuser
 
-# Build folders
-bin/
-obj/
+# ── Build output ───────────────────────────────────────────────────────────
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+[Bb]in/
+[Oo]bj/
 out/
+bld/
+publish/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
 
-# NuGet
+# ── NuGet ──────────────────────────────────────────────────────────────────
 *.nupkg
-packages/
 *.snupkg
+packages/
+!**/[Pp]ackages/build/
 
-# Logs
+# ── SECRET FILES — never commit these ─────────────────────────────────────
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Production.json
+
+# ── User Secrets (ASP.NET Core) ────────────────────────────────────────────
+# These live in %APPDATA%\Microsoft\UserSecrets\ — never in the repo
+**/secrets.json
+
+# ── Uploaded files (student/AI uploads) ───────────────────────────────────
+**/wwwroot/Uploads/
+
+# ── Logs ───────────────────────────────────────────────────────────────────
 *.log
+logs/
 
-# Rider / JetBrains
-.idea/
-*.sln.iml
-
-# OS files
+# ── OS ─────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Publish output
-publish/
+# ── JetBrains / Rider ──────────────────────────────────────────────────────
+.idea/
+*.sln.iml
 
-# EF Core
+# ── EF Core migrations snapshots ───────────────────────────────────────────
 Migrations/*Designer.cs
 Migrations/*.Snapshot.cs

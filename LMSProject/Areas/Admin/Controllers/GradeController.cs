@@ -24,7 +24,7 @@ namespace LMSProject.Areas.Admin.Controllers
         public async Task<IActionResult> Index()
         {
             ViewData["Title"] = "Grades";
-            var grades = await _unitOfWork.Grades.FindAllAsync(g => g.CurrentState == 1);
+            var grades = await _unitOfWork.Grades.FindAllAsync(g => g.CurrentState == 1, new[] { "Stage" });
             return View("~/Areas/Admin/Views/Grade/Index.cshtml", grades);
         }
 

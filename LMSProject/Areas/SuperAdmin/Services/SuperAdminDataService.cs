@@ -198,6 +198,7 @@ namespace LMSProject.Areas.SuperAdmin.Services
             var allVMs = all.Select(s => new StudentItemVM
             {
                 Id = s.Id.ToString(),
+                StudentId = s.Id,
                 Name = s.FullName,
                 Email = s.User?.Email ?? "",
                 Phone = s.User?.PhoneNumber ?? "",
@@ -241,6 +242,7 @@ namespace LMSProject.Areas.SuperAdmin.Services
             return new StudentItemVM
             {
                 Id = s.Id.ToString(),
+                StudentId = s.Id,
                 Name = s.FullName,
                 Email = s.User?.Email ?? "",
                 Phone = s.User?.PhoneNumber ?? "",
@@ -275,6 +277,7 @@ namespace LMSProject.Areas.SuperAdmin.Services
             var all = instructors.Select(i => new TeacherItemVM
             {
                 Id = i.Id.ToString(),
+                InstructorDbId = i.Id,
                 Name = i.FullName,
                 Email = i.User?.Email ?? "",
                 Phone = i.User?.PhoneNumber ?? "",
@@ -321,6 +324,7 @@ namespace LMSProject.Areas.SuperAdmin.Services
             return new TeacherItemVM
             {
                 Id = i.Id.ToString(),
+                InstructorDbId = i.Id,
                 Name = i.FullName,
                 Email = i.User?.Email ?? "",
                 Phone = i.User?.PhoneNumber ?? "",
@@ -348,6 +352,7 @@ namespace LMSProject.Areas.SuperAdmin.Services
             var allVMs = all.Select(p => new ParentItemVM
             {
                 Id = p.Id.ToString(),
+                ParentDbId = p.Id,
                 Name = p.FullName,
                 Email = p.Email ?? "",
                 Phone = p.PhoneNumber ?? "",
