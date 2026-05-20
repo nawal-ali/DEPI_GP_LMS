@@ -15,7 +15,7 @@ A full-featured Learning Management System built with **ASP.NET Core MVC (.NET 1
 - [Configuration](#-configuration)
 - [Database Setup](#-database-setup)
 - [n8n Automation](#-n8n-automation)
-- [Screenshots](#-screenshots)
+
 
 ---
 
