@@ -105,8 +105,27 @@ namespace LMSProject.Areas.Instructor.Controllers
                 return StatusCode(500, new { error = $"Generation failed: {ex.Message}" });
             }
         }
-    }
 
+
+        // ── Serve file bytes so the browser can POST them to n8n ─────────────
+        [HttpGet]
+        public async Task<IActionResult> GetFileBytes(string fileId)
+        {
+            var docService = HttpContext.RequestServices
+                .GetRequiredService<DocumentProcessingService>();
+
+            var file = await docService.GetFileRecordAsync(fileId, CurrentUserId);
+            if (file == null) return NotFound(new { error = "File not found." });
+
+            var fullPath = Path.Combine(_env.WebRootPath, file.StoredPath);
+            if (!System.IO.File.Exists(fullPath))
+                return NotFound(new { error = "File missing from disk." });
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+            var mime = file.MimeType ?? "application/octet-stream";
+            return File(bytes, mime, file.OriginalName);
+
+        }
     public record GenerateRequest(string FileId, int McqCount = 5, int TfCount = 3);
     public record DeleteFileRequest(string FileId);
-}
+}}

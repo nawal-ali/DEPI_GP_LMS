@@ -181,6 +181,12 @@ namespace LMSProject.AI.Services
             await _mongo.Files.DeleteOneAsync(f => f.Id == fileId);
         }
 
+        // ── Get single file record ────────────────────────────────────────
+        public async Task<UploadedFile?> GetFileRecordAsync(string fileId, string userId)
+            => await _mongo.Files
+                .Find(f => f.Id == fileId && f.StudentUserId == userId)
+                .FirstOrDefaultAsync();
+
         // ── Get student files list ─────────────────────────────────────────
         public async Task<List<UploadedFile>> GetStudentFilesAsync(string studentUserId)
             => await _mongo.Files

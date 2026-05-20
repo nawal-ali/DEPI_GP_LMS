@@ -68,10 +68,29 @@ namespace LMSProject.Controllers
                     form.Add(fc);
                 }
 
-                var resp = await client.PostAsync(url, form);
-                var raw = await resp.Content.ReadAsStringAsync();
+                Console.WriteLine($"[AI Proxy] Calling n8n URL: {url}");
 
-                // Extract text from n8n response (handles both array and object)
+                var resp = await client.PostAsync(url, form);
+                var raw = await resp.Content.ReadAsStringAsync() ?? "";
+
+                Console.WriteLine($"[AI Proxy] n8n Status: {(int)resp.StatusCode} {resp.StatusCode}");
+                Console.WriteLine($"[AI Proxy] n8n Body (first 300): {raw[..Math.Min(300, raw.Length)]}");
+
+                // n8n returned HTML error page → test webhook not active or wrong URL
+                if (raw.TrimStart().StartsWith("<"))
+                    return StatusCode(502,
+                        $"n8n error: workflow not Published or wrong URL. HTTP {(int)resp.StatusCode}. Open n8n, click Publish, use production webhook URL.");
+
+                if (!resp.IsSuccessStatusCode)
+                    return StatusCode((int)resp.StatusCode,
+                        string.IsNullOrWhiteSpace(raw)
+                            ? $"n8n returned empty body with status {(int)resp.StatusCode}. Is the workflow Published?"
+                            : raw);
+
+                if (string.IsNullOrWhiteSpace(raw))
+                    return StatusCode(502,
+                        "n8n returned an empty response. Check the 'Respond to Webhook' node in your workflow.");
+
                 var text = ExtractText(raw);
                 return Content(text, "text/plain; charset=utf-8");
             }
