@@ -48,20 +48,32 @@ namespace LMSProject.Controllers
                     count = annCount
                 });
 
-            // ── Ticket replies (all roles) ─────────────────────────────────
-            var ticketCount = await _db.Tickets
-                .CountAsync(t => t.SenderUserId == user.Id
-                              && t.Status == "In Progress"
-                              && t.CurrentState == 1);
-            if (ticketCount > 0)
+            // ── Ticket replies — tickets the user owns that have staff replies ─
+            var ticketsWithReplies = await _db.Tickets
+                .Where(t => t.SenderUserId == user.Id && t.CurrentState == 1)
+                .Select(t => new { t.Id, t.Status })
+                .ToListAsync();
+
+            var myTicketIds2 = ticketsWithReplies.Select(t => t.Id).ToList();
+
+            // Count tickets where a reply exists from someone other than the ticket owner
+            var repliedTickets = await _db.TicketReplies
+                .Where(r => myTicketIds2.Contains(r.TicketId)
+                          && r.SenderUserId != user.Id
+                          && r.CurrentState == 1)
+                .Select(r => r.TicketId)
+                .Distinct()
+                .CountAsync();
+
+            if (repliedTickets > 0)
                 items.Add(new
                 {
-                    icon = "fa-headset",
+                    icon = "fa-reply",
                     color = "#5B72EE",
                     bg = "rgba(91,114,238,.1)",
-                    text = $"{ticketCount} ticket{(ticketCount > 1 ? "s" : "")} have replies",
+                    text = $"{repliedTickets} ticket{(repliedTickets > 1 ? "s have" : " has")} new repl{(repliedTickets > 1 ? "ies" : "y")}",
                     link = GetTicketLink(role),
-                    count = ticketCount
+                    count = repliedTickets
                 });
 
             // ── Role-specific ──────────────────────────────────────────────

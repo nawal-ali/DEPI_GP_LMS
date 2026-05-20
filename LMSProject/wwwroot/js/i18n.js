@@ -81,6 +81,7 @@ var TRANSLATIONS = {
 
     // ABOUT
     "Empowering Education Through Technology": "تمكين التعليم من خلال التكنولوجيا",
+    "TOTC is a next-generation Learning Management System built to bring students, instructors, and parents together in one seamless platform.":"TOTC هو نظام إدارة التعلم من الجيل التالي، مصمم لجمع الطلاب والمعلمين وأولياء الأمور معًا في منصة واحدة سلسة.",
     "About TOTC": "عن TOTC", "Our Mission": "مهمتنا", "Our Vision": "رؤيتنا",
     "Our Goals": "أهدافنا", "Our Foundation": "أساسنا",
     "Mission, Vision & Goals": "المهمة والرؤية والأهداف",
@@ -129,6 +130,86 @@ var TRANSLATIONS = {
     // GENERAL
     "Search": "بحث", "Filter": "تصفية", "Clear": "مسح", "Save": "حفظ",
     "Cancel": "إلغاء", "Delete": "حذف", "Edit": "تعديل", "Active": "نشط", "Inactive": "غير نشط",
+
+    // HOME EXTRA
+    "Studying": "التعلم",
+    "Online is now much easier": "عبر الإنترنت أصبح أسهل بكثير",
+
+    // TESTIMONIAL
+    "Testimonial": "آراء المستخدمين",
+    "Thank you so much for your help. It's exactly what I've been looking for. You won't regret it. It really saves me time and effort. TOTC is exactly what our business has been lacking.":
+        "شكرًا جزيلًا لمساعدتكم. هذا بالضبط ما كنت أبحث عنه. لن تندم على استخدامه، فقد وفر عليّ الكثير من الوقت والجهد.",
+    "12 reviews at Yelp": "12 تقييم على Yelp",
+
+    // NEWS
+    "NEWS": "أخبار",
+    "PRESS RELEASE": "بيان صحفي",
+
+    "Class adds $30 million to its balance sheet for a Zoom-friendly edtech solution":
+        "أضافت Class مبلغ 30 مليون دولار لدعم حلول التعليم المتوافقة مع Zoom",
+
+    "Class, launched less than a year ago by Blackboard co-founder Michael Chasen, integrates exclusively...":
+        "تم إطلاق Class منذ أقل من عام بواسطة المؤسس المشارك لـ Blackboard...",
+
+    "Class Technologies Inc. Closes $30 Million Series A Financing to Meet High Demand":
+        "شركة Class Technologies تغلق جولة تمويل بقيمة 30 مليون دولار",
+
+    "Class Technologies Inc., the company that created Class,...":
+        "شركة Class Technologies، الشركة المطورة لمنصة Class...",
+
+    "Zoom's earliest investors are betting millions on a better Zoom for schools":
+        "أول مستثمري Zoom يراهنون بالملايين على نسخة تعليمية أفضل",
+
+    "Zoom was never created to be a consumer product. Nonetheless, the...":
+        "لم يتم إنشاء Zoom كمنتج استهلاكي في الأصل، ومع ذلك...",
+
+    "Former Blackboard CEO Raises $16M to Bring LMS Features to Zoom Classrooms":
+        "الرئيس التنفيذي السابق لـ Blackboard يجمع 16 مليون دولار لدعم التعليم عبر Zoom",
+
+    "This year, investors have reaped big financial returns from betting on Zoom...":
+        "حقق المستثمرون هذا العام أرباحًا كبيرة من الاستثمار في Zoom...",
+
+    // FAQ QUESTIONS
+    "What is TOTC and who is it for?":
+        "ما هي منصة TOTC ولمن تم تصميمها؟",
+
+    "TOTC (The Online Teaching Community) is a comprehensive learning management system designed for students, instructors, parents, and administrators. Whether you're a student looking to track your progress, a parent wanting to monitor your child's academic journey, or an instructor managing courses — TOTC has you covered.":
+        "TOTC هي منصة تعليمية متكاملة مصممة للطلاب والمعلمين وأولياء الأمور والإداريين.",
+
+    "How do I enroll in a course?":
+        "كيف يمكنني التسجيل في دورة؟",
+
+    "Course enrollment is managed by your school administrator. Once enrolled, you will automatically see the course appear in your student dashboard. Contact your admin or institution if you believe you should be enrolled in a course.":
+        "يتم التسجيل في الدورات من خلال إدارة المؤسسة التعليمية. بعد التسجيل ستظهر الدورة تلقائياً في لوحة التحكم الخاصة بك.",
+
+    "Can parents monitor their children's progress?":
+        "هل يمكن لأولياء الأمور متابعة تقدم أبنائهم؟",
+
+    "Yes! TOTC offers a dedicated Parent Portal where parents can view their children's enrolled courses, exam scores, assignment submissions, upcoming deadlines, and even download a weekly academic progress report in PDF format.":
+        "نعم، توفر TOTC بوابة خاصة لأولياء الأمور لمتابعة أداء أبنائهم الدراسي.",
+
+    "What types of exams does TOTC support?":
+        "ما أنواع الاختبارات التي تدعمها TOTC؟",
+
+    "TOTC supports multiple-choice question (MCQ) exams with a built-in question bank. Exams are timed, auto-scored, and display results immediately. Questions and answer choices are randomized for each student to maintain integrity.":
+        "تدعم TOTC اختبارات الاختيار من متعدد مع تصحيح تلقائي وعرض فوري للنتائج.",
+
+    "How are assignments submitted?":
+        "كيف يتم تسليم الواجبات؟",
+
+    "Students can submit assignments as text answers, file uploads (PDF, Word, images), or both — depending on how the instructor configured the assignment. Submissions are tracked, and late submissions are flagged automatically.":
+        "يمكن للطلاب تسليم الواجبات كنصوص أو ملفات أو الاثنين معًا حسب إعدادات المدرس.",
+
+    "Is TOTC accessible on mobile devices?":
+        "هل تعمل TOTC على الهواتف المحمولة؟",
+
+    "Absolutely. TOTC is fully responsive and works seamlessly on smartphones, tablets, and desktops. All dashboards adapt to your screen size for the best experience on any device.":
+        "بالتأكيد، تعمل TOTC بسلاسة على الهواتف والأجهزة اللوحية وأجهزة الكمبيوتر.",
+
+    // EXTRA BUTTONS
+    "See more features": "عرض المزيد من الميزات",
+    "Explore more tools": "استكشف المزيد من الأدوات",
+    "Gloria Rose": "جلوريا روز"
 };
 
 // ═══════════════════════════ CORE ENGINE ══════════════════════════════
@@ -165,9 +246,17 @@ function applyLang() {
         var key = el.dataset.i18n;
         if (isAr) {
             if (!el.dataset.orig) el.dataset.orig = el.textContent;
-            if (TRANSLATIONS[key]) el.textContent = TRANSLATIONS[key];
+            // if (TRANSLATIONS[key]) el.textContent = TRANSLATIONS[key];
+            if (TRANSLATIONS[key]) {
+                if (!el.dataset.origHtml)
+                    el.dataset.origHtml = el.innerHTML;
+
+                el.innerHTML = TRANSLATIONS[key];
+            }
         } else {
-            if (el.dataset.orig) el.textContent = el.dataset.orig;
+            // if (el.dataset.orig) el.textContent = el.dataset.orig;
+            if (el.dataset.origHtml)
+                el.innerHTML = el.dataset.origHtml;
         }
     });
 

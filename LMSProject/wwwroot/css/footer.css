@@ -1,4 +1,9 @@
-﻿.footer-section {
+﻿html, body {
+    margin: 0;
+    padding: 0;
+}
+
+.footer-section {
     background-color: var(--dark);
 }
 

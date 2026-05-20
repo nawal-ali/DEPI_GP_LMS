@@ -43,10 +43,6 @@
                             </select>
                             <span asp-validation-for="GradeId" class="text-danger small"></span>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Price</label>
-                            <input asp-for="Price" type="number" class="sa-form-control" placeholder="0.00" min="0" step="0.01" />
-                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Subject <span class="text-danger">*</span></label>
                             <select id="subjectSelect" class="sa-form-control" onchange="loadSubSubjects(this.value)">

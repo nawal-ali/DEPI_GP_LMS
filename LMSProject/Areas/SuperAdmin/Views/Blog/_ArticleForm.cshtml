@@ -1,0 +1,55 @@
+﻿@model MLSCore.Models.TbArticle
+<div class="row g-3">
+    <div class="col-12">
+        <label class="form-label" style="font-weight:600;font-size:.82rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;">
+            Title <span class="text-danger">*</span>
+        </label>
+        <input asp-for="Title" class="sa-form-control" placeholder="Article title…" required />
+        <span asp-validation-for="Title" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label" style="font-weight:600;font-size:.82rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;">
+            Short Excerpt <span style="color:#9ca3af;font-weight:400;">(shown in cards — optional, auto-generated if empty)</span>
+        </label>
+        <textarea asp-for="Excerpt" class="sa-form-control" rows="2"
+                  placeholder="A short summary shown on the blog listing…"></textarea>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label" style="font-weight:600;font-size:.82rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;">
+            Full Content <span class="text-danger">*</span>
+        </label>
+        <textarea asp-for="Content" class="sa-form-control" rows="12"
+                  placeholder="Write the full article content here…" required></textarea>
+        <span asp-validation-for="Content" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label" style="font-weight:600;font-size:.82rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;">
+            Cover Image <span style="color:#9ca3af;font-weight:400;">(optional — JPG, PNG, WebP)</span>
+        </label>
+        <input type="file" name="CoverFile" class="sa-form-control" accept="image/*"
+               style="padding:.5rem;" id="coverFileInput" onchange="previewCover(this)" />
+        <div id="coverPreviewWrap" style="display:none;margin-top:.75rem;">
+            <img id="coverPreview" src="#" alt="Preview"
+                 style="height:140px;border-radius:12px;object-fit:cover;border:2px solid rgba(0,203,184,.3);" />
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewCover(input) {
+            var wrap = document.getElementById('coverPreviewWrap');
+            var img  = document.getElementById('coverPreview');
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) { img.src = e.target.result; wrap.style.display = 'block'; };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                wrap.style.display = 'none';
+            }
+        }
+    </script>
+}

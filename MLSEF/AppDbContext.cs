@@ -76,6 +76,7 @@ namespace MLSEF
         public DbSet<TbSubContent> SubContents { get; set; }
         public DbSet<TbSubject> Subjects { get; set; }
         public DbSet<TbSubSubject> SubSubjects { get; set; }
+        public DbSet<TbArticle> Articles { get; set; }
         public DbSet<TbTask> Tasks { get; set; }
         public DbSet<TbTaskAnswers> TaskAnswers { get; set; }
         public DbSet<TbTerm> Terms { get; set; }

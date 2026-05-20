@@ -1,0 +1,318 @@
+﻿@model List<MLSCore.Models.TbArticle>
+@{
+    ViewData["Title"] = "Blog Management";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+
+    string Grad(int id) => (id % 5) switch
+    {
+        0 => "linear-gradient(135deg,#2F327D,#5B72EE)",
+        1 => "linear-gradient(135deg,#00CBB8,#29B9E7)",
+        2 => "linear-gradient(135deg,#E13468,#F48C06)",
+        3 => "linear-gradient(135deg,#5B72EE,#29B9E7)",
+        _ => "linear-gradient(135deg,#F48C06,#FDCB6E)"
+    };
+    string Ico(int id) => (id % 4) switch
+    {
+        0 => "fa-newspaper",
+        1 => "fa-pen-nib",
+        2 => "fa-book-open",
+        _ => "fa-rss"
+    };
+}
+
+<style>
+    .blog-mgmt-card {
+        background: white;
+        border-radius: 18px;
+        border: 1px solid rgba(47,50,125,.07);
+        box-shadow: 0 3px 16px rgba(47,50,125,.07);
+        overflow: hidden;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        transition: box-shadow .25s, transform .2s;
+        margin-bottom: 1rem;
+    }
+
+        .blog-mgmt-card:hover {
+            box-shadow: 0 8px 32px rgba(47,50,125,.13);
+            transform: translateY(-2px);
+        }
+
+    .blog-cover-box {
+        width: 130px;
+        flex-shrink: 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .blog-cover-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    .blog-cover-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: rgba(255,255,255,.8);
+    }
+
+    .blog-card-body {
+        flex: 1;
+        padding: 1.1rem 1.3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+    }
+
+    .blog-card-title {
+        font-weight: 700;
+        font-size: .95rem;
+        color: var(--primary);
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: .35rem;
+    }
+
+    .blog-card-meta {
+        font-size: .73rem;
+        color: #9ca3af;
+        margin-bottom: .55rem;
+    }
+
+    .blog-card-excerpt {
+        font-size: .8rem;
+        color: #6b7280;
+        line-height: 1.65;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .blog-actions {
+        padding: .85rem 1.1rem;
+        border-left: 1px solid rgba(0,0,0,.05);
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 110px;
+    }
+
+    .blog-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        border-radius: 10px;
+        padding: .4rem .75rem;
+        font-size: .76rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        font-family: Poppins, sans-serif;
+        transition: all .2s;
+    }
+
+    .blog-btn-view {
+        background: rgba(41,185,231,.1);
+        color: #29B9E7;
+    }
+
+    .blog-btn-edit {
+        background: rgba(91,114,238,.1);
+        color: #5B72EE;
+    }
+
+    .blog-btn-del {
+        background: rgba(225,52,104,.1);
+        color: #E13468;
+    }
+
+    .blog-btn-view:hover {
+        background: #29B9E7;
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .blog-btn-edit:hover {
+        background: #5B72EE;
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .blog-btn-del:hover {
+        background: #E13468;
+        color: white;
+        transform: scale(1.05);
+    }
+</style>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success rounded-3 anim" style="font-size:.85rem;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger rounded-3 anim" style="font-size:.85rem;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+    </div>
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 anim flex-wrap gap-3">
+    <div>
+        <h5 style="font-weight:800;color:var(--primary);margin:0;">
+            <i class="fas fa-newspaper me-2" style="color:var(--secondary);"></i>Blog Articles
+        </h5>
+        <small class="text-muted">@Model.Count article(s) published</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <form method="get" class="d-flex gap-2">
+            <input name="q" value="@ViewBag.Q" class="sa-form-control"
+                   placeholder="Search articles…" style="width:220px;" />
+            <button type="submit" class="btn btn-primary rounded-3 px-3"
+                    style="font-family:Poppins,sans-serif;font-size:.82rem;">
+                <i class="fas fa-search"></i>
+            </button>
+        </form>
+        @if (!Model.Any() && string.IsNullOrEmpty(ViewBag.Q as string))
+        {
+            <form asp-action="Seed" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn rounded-3 px-3"
+                        style="background:rgba(0,203,184,.1);color:var(--secondary);font-family:Poppins,sans-serif;font-size:.82rem;">
+                    <i class="fas fa-seedling me-1"></i>Seed 3 articles
+                </button>
+            </form>
+        }
+        <a asp-action="Create" class="btn btn-primary rounded-3 px-4"
+           style="font-family:Poppins,sans-serif;font-size:.85rem;">
+            <i class="fas fa-plus me-2"></i>New Article
+        </a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="sa-card anim" style="text-align:center;padding:4rem 2rem;">
+        <i class="fas fa-newspaper d-block mb-3" style="font-size:3rem;opacity:.12;color:var(--primary);"></i>
+        <h6 style="color:#9ca3af;">No articles yet</h6>
+        <p style="color:#9ca3af;font-size:.85rem;">Click "New Article" to publish your first one.</p>
+    </div>
+}
+else
+{
+    <div class="anim">
+        @foreach (var a in Model)
+        {
+            <div class="blog-mgmt-card">
+                <!-- Cover -->
+                <div class="blog-cover-box">
+                    @if (!string.IsNullOrEmpty(a.CoverImage))
+                    {
+                        <img src="/@a.CoverImage" alt="Cover" />
+                    }
+                    else
+                    {
+                        <div class="blog-cover-placeholder" style="background:@Grad(a.Id);">
+                            <i class="fas @Ico(a.Id)"></i>
+                        </div>
+                    }
+                </div>
+
+                <!-- Info -->
+                <div class="blog-card-body">
+                    <div class="blog-card-title" title="@a.Title">@a.Title</div>
+                    <div class="blog-card-meta">
+                        <i class="fas fa-calendar me-1"></i>@a.CreatedAt.ToString("MMM dd, yyyy")
+                        @if (a.UpdatedAt.HasValue)
+                        {
+                            <span class="ms-2">
+                                <i class="fas fa-edit me-1"></i>Updated @a.UpdatedAt.Value.ToString("MMM dd")
+                            </span>
+                        }
+                    </div>
+                    <div class="blog-card-excerpt">
+                        @(a.Excerpt ?? (a.Content.Length > 160 ? a.Content[..160] + "…" : a.Content))
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="blog-actions">
+                    <a href="@Url.Action("Article", "Home", new { area = "", id = a.Id })"
+                       target="_blank" class="blog-btn blog-btn-view">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@a.Id" class="blog-btn blog-btn-edit">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="blog-btn blog-btn-del"
+                            data-bs-toggle="modal" data-bs-target="#delArticleModal"
+                            onclick="setDel(@a.Id,'@Html.Raw(a.Title.Replace("'", "\\'"))')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Delete Modal -->
+<div class="modal fade" id="delArticleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#E13468,#f48c06);padding:1.1rem 1.4rem;
+                display:flex;align-items:center;gap:.75rem;">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.2);
+                    display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-trash" style="color:white;font-size:.85rem;"></i>
+                </div>
+                <h6 style="color:white;font-weight:700;margin:0;">Delete Article</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.4rem;">
+                <p style="font-size:.87rem;color:#374151;margin-bottom:.4rem;">Delete this article?</p>
+                <p id="delTitle" style="font-weight:700;color:var(--primary);font-size:.88rem;margin-bottom:1rem;"></p>
+                <p style="font-size:.78rem;color:#9ca3af;margin-bottom:1.3rem;">This cannot be undone.</p>
+                <form id="delForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn rounded-3 flex-grow-1" data-bs-dismiss="modal"
+                                style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn rounded-3 flex-grow-1"
+                                style="background:linear-gradient(135deg,#E13468,#f48c06);color:white;
+                            font-family:Poppins,sans-serif;font-weight:700;">
+                            <i class="fas fa-trash me-2"></i>Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setDel(id, title) {
+            document.getElementById('delTitle').textContent = title;
+            document.getElementById('delForm').action = '/SuperAdmin/Blog/Delete/' + id;
+        }
+    </script>
+}

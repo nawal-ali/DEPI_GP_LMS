@@ -1,0 +1,222 @@
+﻿@model MLSCore.Models.TbArticle
+@{
+    ViewData["Title"] = "New Article";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+}
+
+<style>
+    .art-field-label {
+        font-size: .72rem;
+        font-weight: 700;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .4rem;
+        display: block;
+    }
+
+    .art-input {
+        width: 100%;
+        border: 1.5px solid rgba(47,50,125,.12);
+        border-radius: 11px;
+        padding: .65rem .95rem;
+        font-size: .875rem;
+        font-family: Poppins,sans-serif;
+        color: #374151;
+        outline: none;
+        background: #fafbff;
+        transition: border-color .15s,box-shadow .15s;
+    }
+
+        .art-input:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(0,203,184,.1);
+            background: white;
+        }
+
+    .art-textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .art-section {
+        background: #f8f9ff;
+        border-radius: 14px;
+        padding: 1.2rem 1.3rem;
+        margin-bottom: 1rem;
+    }
+
+    .art-section-title {
+        font-size: .78rem;
+        font-weight: 800;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+    }
+
+    .cover-drop-zone {
+        border: 2px dashed rgba(47,50,125,.18);
+        border-radius: 14px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        background: white;
+        transition: all .2s;
+    }
+
+        .cover-drop-zone:hover, .cover-drop-zone.dragover {
+            border-color: var(--secondary);
+            background: rgba(0,203,184,.04);
+        }
+
+    .char-counter {
+        font-size: .7rem;
+        color: #9ca3af;
+        text-align: right;
+        margin-top: .3rem;
+    }
+</style>
+
+<div class="d-flex align-items-center gap-3 mb-4 anim">
+    <a asp-action="Index"
+       style="width:38px;height:38px;border-radius:11px;background:rgba(47,50,125,.07);
+        display:flex;align-items:center;justify-content:center;color:var(--primary);text-decoration:none;">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <div>
+        <h5 style="font-weight:800;color:var(--primary);margin:0;">New Article</h5>
+        <small style="color:#9ca3af;">Publish to the Blog section</small>
+    </div>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-4 anim">
+
+        <!-- LEFT -->
+        <div class="col-lg-8">
+            <div class="art-section">
+                <div class="art-section-title"><i class="fas fa-heading" style="color:var(--secondary);"></i>Article Title</div>
+                <label class="art-field-label">Title <span class="text-danger">*</span></label>
+                <input asp-for="Title" class="art-input" placeholder="Enter a compelling article title…"
+                       required oninput="document.getElementById('tc').textContent=this.value.length" />
+                <div class="char-counter"><span id="tc">0</span> / 200</div>
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="art-section">
+                <div class="art-section-title">
+                    <i class="fas fa-align-left" style="color:var(--purple);"></i>Short Excerpt
+                    <span style="background:rgba(0,203,184,.1);color:var(--secondary);border-radius:20px;padding:2px 8px;font-size:.65rem;font-weight:700;">Optional</span>
+                </div>
+                <label class="art-field-label">Shown in article cards — auto-generated if empty</label>
+                <textarea asp-for="Excerpt" class="art-input art-textarea" rows="3"
+                          placeholder="Write a short 1–2 sentence summary…"
+                          oninput="document.getElementById('ec').textContent=this.value.length"></textarea>
+                <div class="char-counter"><span id="ec">0</span> / 400</div>
+            </div>
+
+            <div class="art-section">
+                <div class="art-section-title">
+                    <i class="fas fa-file-alt" style="color:var(--accent-blue);"></i>Full Content <span class="text-danger">*</span>
+                </div>
+                <label class="art-field-label">Complete article text — blank lines create paragraphs</label>
+                <textarea asp-for="Content" class="art-input art-textarea" rows="15"
+                          placeholder="Write your full article here…"
+                          required oninput="document.getElementById('cc').textContent=this.value.length"></textarea>
+                <div class="char-counter"><span id="cc">0</span> characters</div>
+                <span asp-validation-for="Content" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col-lg-4">
+            <div class="art-section" style="position:sticky;top:1rem;">
+                <div class="art-section-title"><i class="fas fa-image" style="color:var(--accent-pink);"></i>Cover Image</div>
+                <label class="art-field-label">Upload a cover image</label>
+
+                <div class="cover-drop-zone" id="dz" onclick="document.getElementById('cfi').click()">
+                    <div id="dzDefault">
+                        <i class="fas fa-cloud-upload-alt d-block mb-2" style="font-size:2.5rem;color:rgba(47,50,125,.18);"></i>
+                        <div style="font-size:.85rem;font-weight:700;color:#374151;">Click or drag &amp; drop</div>
+                        <div style="font-size:.75rem;color:#9ca3af;margin-top:.3rem;">JPG, PNG, WebP · max 5MB</div>
+                        <div style="font-size:.72rem;color:#9ca3af;margin-top:.2rem;">Leave empty for auto-generated placeholder</div>
+                    </div>
+                    <input type="file" name="CoverFile" id="cfi" accept="image/*"
+                           style="display:none;" onchange="prevCover(this)" />
+                </div>
+
+                <div id="prevWrap" style="display:none;margin-top:.75rem;position:relative;">
+                    <img id="prevImg" src="#" alt="Preview"
+                         style="width:100%;height:180px;object-fit:cover;border-radius:12px;border:2px solid rgba(0,203,184,.35);" />
+                    <button type="button" onclick="clearPrev()"
+                            style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;border-radius:50%;
+                        background:rgba(225,52,104,.85);color:white;border:none;cursor:pointer;font-size:.7rem;
+                        display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <p style="text-align:center;font-size:.72rem;color:var(--secondary);font-weight:700;margin:.4rem 0 0;">
+                        <i class="fas fa-check-circle me-1"></i>Image ready
+                    </p>
+                </div>
+
+                <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:.6rem;">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3"
+                            style="font-family:Poppins,sans-serif;font-size:.88rem;padding:.7rem;">
+                        <i class="fas fa-paper-plane me-2"></i>Publish Article
+                    </button>
+                    <a asp-action="Index" class="btn w-100 rounded-3 text-center"
+                       style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;padding:.65rem;">
+                        Cancel
+                    </a>
+                </div>
+
+                <div style="margin-top:1.1rem;background:white;border-radius:11px;border:1px solid rgba(0,0,0,.06);padding:.9rem 1rem;">
+                    <div style="font-size:.68rem;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">Tips</div>
+                    <div style="font-size:.75rem;color:#6b7280;line-height:1.8;">
+                        <i class="fas fa-check-circle me-1" style="color:var(--secondary);"></i>Use a clear, descriptive title<br />
+                        <i class="fas fa-check-circle me-1" style="color:var(--secondary);"></i>Keep excerpt under 150 chars<br />
+                        <i class="fas fa-check-circle me-1" style="color:var(--secondary);"></i>Blank lines create paragraphs<br />
+                        <i class="fas fa-check-circle me-1" style="color:var(--secondary);"></i>16:9 images look best
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function prevCover(input) {
+            if (input.files && input.files[0]) {
+                var r = new FileReader();
+                r.onload = function(e) {
+                    document.getElementById('prevImg').src = e.target.result;
+                    document.getElementById('prevWrap').style.display = 'block';
+                    document.getElementById('dzDefault').style.opacity = '.3';
+                };
+                r.readAsDataURL(input.files[0]);
+            }
+        }
+        function clearPrev() {
+            document.getElementById('cfi').value = '';
+            document.getElementById('prevWrap').style.display = 'none';
+            document.getElementById('dzDefault').style.opacity = '1';
+        }
+        var dz = document.getElementById('dz');
+        dz.addEventListener('dragover',  function(e){ e.preventDefault(); dz.classList.add('dragover'); });
+        dz.addEventListener('dragleave', function()  { dz.classList.remove('dragover'); });
+        dz.addEventListener('drop', function(e){
+            e.preventDefault(); dz.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) {
+                document.getElementById('cfi').files = e.dataTransfer.files;
+                prevCover(document.getElementById('cfi'));
+            }
+        });
+    </script>
+}

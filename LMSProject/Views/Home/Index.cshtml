@@ -508,93 +508,96 @@
     <div class="container">
         <!-- Section Header -->
         <div class="text-center mb-5 reveal-up">
-            <h2 class="fw-bold text-navy">Lastest News and Resources</h2>
-            <p class="text-muted">See the developments that have occurred to TOTC in the world</p>
+            <h2 class="fw-bold text-navy" data-i18n="Lastest News and Resources">Lastest News and Resources</h2>
+            <p class="text-muted" data-i18n="See the developments that have occurred to TOTC in the world">See the developments that have occurred to TOTC in the world</p>
         </div>
 
-        <div class="row g-5">
-            <!-- Left Main Feature -->
-            <div class="col-lg-6 reveal-left">
-                <div class="news-card-lg">
-                    <img src="~/Images/images/news1.png" class="img-fluid rounded-4 mb-4" alt="Main News">
-                    <span class="badge rounded-pill bg-teal mb-3">NEWS</span>
-                    <h3 class="fw-bold text-navy mb-3">
-                        Class adds $30 million to its balance sheet for a
-                        Zoom-friendly
-                        edtech solution
-                    </h3>
-                    <p class="text-muted mb-4 small">
-                        Class, launched less than a year ago by Blackboard co-founder
-                        Michael Chasen, integrates exclusively...
-                    </p>
-                    <a href="#" class="text-muted text-decoration-underline small fw-bold">Read more</a>
+        @{
+            var articles = ViewBag.LatestArticles as List<MLSCore.Models.TbArticle> ?? new List<MLSCore.Models.TbArticle>();
+            string[] gradients = {
+                "linear-gradient(135deg,#2F327D,#5B72EE)",
+                "linear-gradient(135deg,#00CBB8,#29B9E7)",
+                "linear-gradient(135deg,#E13468,#F48C06)",
+                "linear-gradient(135deg,#5B72EE,#E13468)"
+            };
+            string[] icons = { "fa-newspaper", "fa-pen-nib", "fa-book-open", "fa-rss" };
+        }
+
+        @if (articles.Any())
+        {
+            <div class="row g-5">
+                <!-- Left Main Feature — first article -->
+                @{
+                    var main = articles[0];
+                }
+                <div class="col-lg-6 reveal-left">
+                    <a asp-controller="Home" asp-action="Article" asp-route-id="@main.Id" class="text-decoration-none">
+                        <div class="news-card-lg">
+                            @if (!string.IsNullOrEmpty(main.CoverImage))
+                            {
+                                <img src="~/@main.CoverImage" class="img-fluid rounded-4 mb-4" alt="@main.Title">
+                            }
+                            else
+                            {
+                                <div class="rounded-4 mb-4 d-flex align-items-center justify-content-center"
+                                     style="height:220px;background:@gradients[main.Id % 4];">
+                                    <i class="fas @icons[main.Id % 4]" style="font-size:3rem;color:rgba(255,255,255,.7);"></i>
+                                </div>
+                            }
+                            <span class="badge rounded-pill bg-teal mb-3" data-i18n="NEWS">NEWS</span>
+                            <h3 class="fw-bold text-navy mb-3">@main.Title</h3>
+                            <p class="text-muted mb-4 small">@main.Excerpt</p>
+                            <span class="text-muted text-decoration-underline small fw-bold" data-i18n="Read more">Read more</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Right Side List — remaining articles -->
+                <div class="col-lg-6 reveal-right">
+                    <div class="d-flex flex-column gap-4">
+                        @foreach (var a in articles.Skip(1))
+                        {
+                            <a asp-controller="Home" asp-action="Article" asp-route-id="@a.Id" class="text-decoration-none">
+                                <div class="row align-items-center g-3">
+                                    <div class="col-4 position-relative">
+                                        @if (!string.IsNullOrEmpty(a.CoverImage))
+                                        {
+                                            <img src="~/@a.CoverImage" class="img-fluid rounded-3" alt="@a.Title">
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-3 d-flex align-items-center justify-content-center"
+                                                 style="height:90px;background:@gradients[a.Id % 4];">
+                                                <i class="fas @icons[a.Id % 4]" style="font-size:1.5rem;color:rgba(255,255,255,.8);"></i>
+                                            </div>
+                                        }
+                                        <span class="badge rounded-pill bg-teal badge-overlap">NEWS</span>
+                                    </div>
+                                    <div class="col-8">
+                                        <h6 class="fw-bold text-navy mb-2 news-title-sm">@a.Title</h6>
+                                        <p class="text-muted small mb-0 line-clamp-2">@a.Excerpt</p>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
                 </div>
             </div>
 
-            <!-- Right Side List -->
-            <div class="col-lg-6 reveal-right">
-                <div class="d-flex flex-column gap-4">
-
-                    <!-- Small News Item 1 -->
-                    <div class="row align-items-center g-3">
-                        <div class="col-4 position-relative">
-                            <img src="~/Images/images/news2.png" class="img-fluid rounded-3" alt="News thumb">
-                            <span class="badge rounded-pill bg-teal badge-overlap">PRESS RELEASE</span>
-                        </div>
-                        <div class="col-8">
-                            <h6 class="fw-bold text-navy mb-2 news-title-sm">
-                                Class Technologies Inc. Closes $30
-                                Million
-                                Series A Financing to Meet High Demand
-                            </h6>
-                            <p class="text-muted small mb-0 line-clamp-2">
-                                Class Technologies Inc., the company that
-                                created Class,...
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Small News Item 2 -->
-                    <div class="row align-items-center g-3">
-                        <div class="col-4 position-relative">
-                            <img src="~/Images/images/news3.png" class="img-fluid rounded-3" alt="News thumb">
-                            <span class="badge rounded-pill bg-teal badge-overlap">NEWS</span>
-                        </div>
-                        <div class="col-8">
-                            <h6 class="fw-bold text-navy mb-2 news-title-sm">
-                                Zoom's earliest investors are betting
-                                millions on a better Zoom for schools
-                            </h6>
-                            <p class="text-muted small mb-0 line-clamp-2">
-                                Zoom was never created to be a consumer
-                                product. Nonetheless, the...
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Small News Item 3 -->
-                    <div class="row align-items-center g-3">
-                        <div class="col-4 position-relative">
-                            <img src="~/Images/images/news4.png" class="img-fluid rounded-3" alt="News thumb">
-                            <span class="badge rounded-pill bg-teal badge-overlap">NEWS</span>
-                        </div>
-                        <div class="col-8">
-                            <h6 class="fw-bold text-navy mb-2 news-title-sm">
-                                Former Blackboard CEO Raises $16M to
-                                Bring
-                                LMS Features to Zoom Classrooms
-                            </h6>
-                            <p class="text-muted small mb-0 line-clamp-2">
-                                This year, investors have reaped big
-                                financial
-                                returns from betting on Zoom...
-                            </p>
-                        </div>
-                    </div>
-
-                </div>
+            <div class="text-center mt-4">
+                <a asp-controller="Home" asp-action="Blog"
+                   class="btn btn-outline-secondary rounded-pill px-4 py-2" style="font-size:.85rem;">
+                    View all articles <i class="fas fa-arrow-right ms-2"></i>
+                </a>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-newspaper d-block mb-2" style="font-size:2.5rem;opacity:.15;"></i>
+                <p>No articles published yet.</p>
+            </div>
+        }
     </div>
 </section>
 

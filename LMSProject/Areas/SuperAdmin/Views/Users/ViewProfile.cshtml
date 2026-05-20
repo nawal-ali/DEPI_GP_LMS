@@ -10,7 +10,8 @@
                 <div class="sa-profile-avatar-wrap">
                     @if (!string.IsNullOrEmpty(Model.ImageUrl))
                     {
-                        <img src="@Model.ImageUrl" class="sa-profile-avatar" alt="@Model.Name" />
+                        <img src="@(Model.ImageUrl != null && Model.ImageUrl.StartsWith("http") ? Model.ImageUrl : "~/Uploads/" + Model.ImageUrl)"
+                             class="sa-profile-avatar" alt="@Model.Name" />
                     }
                     else
                     {
@@ -64,7 +65,7 @@
         <!-- Back button -->
         <div class="mt-3">
             <a href="javascript:history.back()" class="d-flex align-items-center gap-2 text-decoration-none"
-                   style="color:var(--primary);font-size:0.85rem;font-weight:600;">
+               style="color:var(--primary);font-size:0.85rem;font-weight:600;">
                 <i class="fas fa-arrow-left" style="color:var(--secondary);"></i> Back to @Model.Role List
             </a>
         </div>
