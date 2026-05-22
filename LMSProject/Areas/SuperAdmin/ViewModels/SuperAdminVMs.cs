@@ -60,8 +60,8 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
 
     public class StudentItemVM
     {
-        public string Id { get; set; } = "";        // UserId (string)
-        public int StudentId { get; set; }        // TbStudent.Id (int) for edit
+        public string Id { get; set; } = "";
+        public int StudentId { get; set; }
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
@@ -93,8 +93,8 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
 
     public class TeacherItemVM
     {
-        public string Id { get; set; } = "";         // UserId
-        public int InstructorDbId { get; set; }   // TbInstructor.Id for edit
+        public string Id { get; set; } = "";
+        public int InstructorDbId { get; set; }
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
@@ -125,8 +125,8 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
 
     public class ParentItemVM
     {
-        public string Id { get; set; } = "";        // UserId
-        public int ParentDbId { get; set; }      // TbParent.Id for edit/link
+        public string Id { get; set; } = "";
+        public int ParentDbId { get; set; }
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
@@ -170,9 +170,9 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
     public class EditSAAnnouncementVM
     {
         public int Id { get; set; }
-        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.MaxLength(200)]
+        [Required, MaxLength(200)]
         public string Title { get; set; } = "";
-        [System.ComponentModel.DataAnnotations.Required]
+        [Required]
         public string Content { get; set; } = "";
         public string? Description { get; set; }
         public string TargetAudience { get; set; } = "All";
@@ -351,14 +351,59 @@ namespace LMSProject.Areas.SuperAdmin.ViewModels
         public int ResolvedTickets { get; set; }
         public int TotalAnnouncements { get; set; }
         public double SystemUptime { get; set; } = 99.9;
-
-        // Chart data (JSON-serializable)
         public int[] MonthlyRegistrations { get; set; } = new int[12];
         public int[] MonthlyTickets { get; set; } = new int[12];
         public int[] CourseEnrollments { get; set; } = new int[12];
-
-        // Breakdown
         public List<(string Label, int Value, string Color)> UserBreakdown { get; set; } = new();
         public List<(string Label, int Value)> TopCourses { get; set; } = new();
+    }
+
+    // ── Course (SA-owned VMs — uses same SelectDropList as Admin controllers) ──
+    public class SACreateCourseVM
+    {
+        [Required, MaxLength(100)]
+        public string Name { get; set; } = "";
+        public int TermId { get; set; }
+        public int GradeId { get; set; }
+        public int SubSubjId { get; set; }
+        public int InstructorId { get; set; }
+        public bool IsLive { get; set; } = false;
+        public MLSCore.Models.CourseStatus Status { get; set; } = MLSCore.Models.CourseStatus.OnLine;
+        public IFormFile? Image { get; set; }
+
+        // Dropdown data
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> Stages { get; set; } = new();
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> Terms { get; set; } = new();
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> Grades { get; set; } = new();
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> Subjects { get; set; } = new();
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> SubSubjects { get; set; } = new();
+        public List<LMSProject.Areas.Admin.Helpers.SelectDropList> Instructors { get; set; } = new();
+    }
+
+    public class SAEditCourseVM : SACreateCourseVM
+    {
+        public int Id { get; set; }
+        public string ImageName { get; set; } = "";
+        public int SubjId { get; set; }
+        public int StageId { get; set; }  // NEW: Track selected stage for re-renders
+    }
+
+    public class SACoursListVM
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string InstructorName { get; set; } = "";
+        public int InstructorId { get; set; }
+        public string Grade { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Term { get; set; } = "";
+        public string? ImageName { get; set; }
+        public MLSCore.Models.CourseStatus Status { get; set; }
+        public int StudentCount { get; set; }
+        public int MaterialCount { get; set; }
+        public int ExamCount { get; set; }
+        public int AssignmentCount { get; set; }
+        public int CurrentState { get; set; }
+        public bool IsLive { get; set; }
     }
 }

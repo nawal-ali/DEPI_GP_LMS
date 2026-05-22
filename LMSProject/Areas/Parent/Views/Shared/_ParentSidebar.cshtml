@@ -52,3 +52,10 @@
    class="pa-nav-item" style="color:var(--accent-pink);">
     <i class="fas fa-sign-out-alt" style="color:var(--accent-pink);"></i><span>Sign Out</span>
 </a>
+
+<p class="pa-group-label mt-3">Schedule</p>
+<a asp-area="Parent" asp-controller="Schedules" asp-action="Index"
+   class="pa-nav-item @(Is("Schedules") ? "active" : "")">
+    <i class="fas fa-calendar-week"></i>
+    <span>Schedule</span>
+</a>

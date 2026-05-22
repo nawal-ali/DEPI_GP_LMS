@@ -1,66 +1,73 @@
-﻿<form method="get" asp-action="Index" class="mb-3 anim">
+﻿@model List<LMSProject.Areas.SuperAdmin.ViewModels.SACoursListVM>
+@{
+    ViewData["Title"] = "Course Management";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-3 anim flex-wrap gap-2">
+    <div>
+        <h5 style="font-weight:800;color:var(--primary);margin:0;">
+            <i class="fas fa-book-open me-2" style="color:var(--secondary);"></i>Course Management
+        </h5>
+        <small class="text-muted">@ViewBag.TotalCourses course(s) total</small>
+    </div>
+    <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Create"
+       class="btn btn-primary rounded-3 px-4" style="font-family:Poppins,sans-serif;">
+        <i class="fas fa-plus me-2"></i>Create Course
+    </a>
+</div>
+
+<!-- Filters -->
+<form method="get" asp-action="Index" class="mb-3 anim">
     <div class="d-flex gap-2 flex-wrap">
-        <div style="position:relative;flex:1;min-width:180px;">
+        <div style="position:relative;flex:1;min-width:200px;">
             <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:.82rem;"></i>
             <input name="search" class="sa-form-control" style="padding-left:2.2rem;" placeholder="Search courses…" value="@ViewBag.Search" />
         </div>
         <select name="grade" class="sa-form-control" style="width:auto;" onchange="this.form.submit()">
             <option value="">All Grades</option>
-            @foreach (var g in (ViewBag.Grades as IEnumerable<dynamic> ?? new List<dynamic>()))
-            {
-                <option value="@g.Name" selected="@(ViewBag.Grade == g.Name ? "selected" : null)">@g.Name</option>
-            }
-        </select>
-        <button type="submit" class="btn btn-primary rounded-3 px-4" style="font-family:Poppins,sans-serif;">Filter</button>
-    </div>
-</form>
-@model List<LMSProject.Areas.Admin.ViewModels.CourseListVM>
-@{
-    ViewData["Title"] = "Course Management";
-}
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 style="font-weight:700;color:var(--primary);margin:0;">
-        <i class="fas fa-book-open me-2" style="color:var(--secondary);"></i>Courses
-        <span class="sa-badge sa-badge-info ms-2">@ViewBag.TotalCourses</span>
-    </h5>
-    <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Create"
-       class="btn btn-primary btn-sm rounded-3 px-3">
-        <i class="fas fa-plus me-1"></i> Create Course
-    </a>
-</div>
-
-<form method="get" asp-action="Index">
-    <div class="sa-filters">
-        <div class="search-wrap">
-            <i class="fas fa-search"></i>
-            <input name="search" class="form-control" placeholder="Search courses…" value="@ViewBag.Search" />
-        </div>
-        <select name="grade" class="form-select" style="width:auto;" onchange="this.form.submit()">
-            <option value="">All Grades</option>
-            @foreach (var g in (List<string>)ViewBag.Grades)
+            @foreach (var g in (ViewBag.Grades as List<string> ?? new()))
             {
                 <option value="@g" selected="@(ViewBag.Grade == g ? "selected" : null)">@g</option>
             }
         </select>
-        <select name="status" class="form-select" style="width:auto;" onchange="this.form.submit()">
+        <select name="status" class="sa-form-control" style="width:auto;" onchange="this.form.submit()">
             <option value="">All Statuses</option>
             <option value="active" selected="@(ViewBag.Status == "active" ? "selected" : null)">Active</option>
             <option value="inactive" selected="@(ViewBag.Status == "inactive" ? "selected" : null)">Inactive</option>
         </select>
-        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3"><i class="fas fa-filter me-1"></i>Filter</button>
-        <a asp-action="Index" class="btn-secondary-sa btn btn-sm"><i class="fas fa-times me-1"></i>Clear</a>
+        <button type="submit" class="btn btn-primary rounded-3 px-3" style="font-family:Poppins,sans-serif;">
+            <i class="fas fa-filter me-1"></i>Filter
+        </button>
+        <a asp-action="Index" class="btn rounded-3 px-3" style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+            <i class="fas fa-times me-1"></i>Clear
+        </a>
     </div>
 </form>
 
-<div class="sa-card">
+<!-- Table -->
+<div class="sa-card anim">
     <div class="table-responsive">
         <table class="sa-table">
-            <thead><tr><th>Course</th><th>Instructor</th><th>Grade / Subject</th><th>Students</th><th>Materials</th><th>Exams</th><th>Assignments</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Instructor</th>
+                    <th>Grade / Subject</th>
+                    <th>Term</th>
+                    <th>Students</th>
+                    <th>Exams</th>
+                    <th>Assignments</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var c in Model)
                 {
                     <tr>
+                        <!-- Course name + image -->
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 @if (!string.IsNullOrEmpty(c.ImageName))
@@ -70,23 +77,23 @@
                                 else
                                 {
 
-                                    <div style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,var(--accent-purple),var(--secondary));display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-book-open" style="color:rgba(255,255,255,0.6);font-size:0.9rem;"></i></div>
+                                    <div style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,var(--accent-purple),var(--secondary));display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-book-open" style="color:rgba(255,255,255,.6);font-size:.9rem;"></i></div>
                                 }
                                 <div>
-                                    <div style="font-weight:600;font-size:0.875rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@c.Name</div>
-                                    <small style="color:#9ca3af;font-size:0.72rem;">@c.Term &nbsp;|&nbsp; @c.Price.ToString("C0")</small>
+                                    <div style="font-weight:600;font-size:.875rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@c.Name</div>
+                                    <small style="color:#9ca3af;font-size:.72rem;">ID: @c.Id</small>
                                 </div>
                             </div>
                         </td>
-                        <td style="font-size:0.83rem;font-weight:500;">@c.InstructorName</td>
+                        <td style="font-size:.83rem;font-weight:500;">@c.InstructorName</td>
                         <td>
-                            <div style="font-size:0.82rem;">@c.Grade</div>
-                            <small style="color:#9ca3af;font-size:0.73rem;">@c.Subject</small>
+                            <div style="font-size:.82rem;">@c.Grade</div>
+                            <small style="color:#9ca3af;font-size:.73rem;">@c.Subject</small>
                         </td>
+                        <td style="font-size:.82rem;">@c.Term</td>
                         <td><span class="sa-badge sa-badge-info">@c.StudentCount</span></td>
-                        <td><span class="sa-badge sa-badge-purple">@c.MaterialCount</span></td>
-                        <td><span class="sa-badge" style="background:rgba(41,185,231,0.12);color:var(--accent-blue);">@c.ExamCount</span></td>
-                        <td><span class="sa-badge" style="background:rgba(244,140,6,0.12);color:var(--orange);">@c.AssignmentCount</span></td>
+                        <td><span class="sa-badge" style="background:rgba(41,185,231,.12);color:var(--accent-blue);">@c.ExamCount</span></td>
+                        <td><span class="sa-badge" style="background:rgba(244,140,6,.12);color:#f48c06;">@c.AssignmentCount</span></td>
                         <td>
                             @if (c.CurrentState == 1)
                             {
@@ -102,17 +109,21 @@
                             <div class="d-flex gap-1 flex-wrap">
                                 <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id"
                                    class="sa-btn-icon sa-btn-edit" title="Edit"><i class="fas fa-edit"></i></a>
-                                <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="AssignInstructor" asp-route-courseId="@c.Id"
-                                   class="sa-btn-icon sa-btn-view" title="Assign Instructor" style="background:rgba(244,140,6,.12);color:var(--orange);"><i class="fas fa-user-tie"></i></a>
                                 <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Enroll" asp-route-courseId="@c.Id"
                                    class="sa-btn-icon sa-btn-add" title="Enroll Students"><i class="fas fa-user-plus"></i></a>
-                                <a asp-area="SuperAdmin" asp-controller="Monitor" asp-action="Materials" asp-route-courseId="@c.Id"
-                                   class="sa-btn-icon sa-btn-view" title="Materials"><i class="fas fa-folder"></i></a>
-                                <form asp-area="SuperAdmin" asp-controller="Courses" asp-action="Delete" method="post" style="display:inline;"
-                                      onsubmit="return confirm('Deactivate course @c.Name?')">
+                                <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="AssignInstructor" asp-route-courseId="@c.Id"
+                                   class="sa-btn-icon sa-btn-view" title="Assign Instructor"><i class="fas fa-chalkboard-teacher"></i></a>
+                                <a asp-area="SuperAdmin" asp-controller="Schedules" asp-action="Manage" asp-route-courseId="@c.Id"
+                                   class="sa-btn-icon" style="background:rgba(0,203,184,.1);color:var(--secondary);" title="Manage Sessions">
+                                    <i class="fas fa-calendar-week"></i>
+                                </a>
+                                <form asp-area="SuperAdmin" asp-controller="Courses" asp-action="Delete" method="post" style="display:inline;" id="delC_@c.Id">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@c.Id" />
-                                    <button type="submit" class="sa-btn-icon sa-btn-delete" title="Deactivate"><i class="fas fa-ban"></i></button>
+                                    <button type="button" class="sa-btn-icon sa-btn-delete" title="Deactivate"
+                                            onclick="triggerDelete(this)">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
                                 </form>
                             </div>
                         </td>
@@ -120,19 +131,68 @@
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="9" class="text-center py-5 text-muted"><i class="fas fa-book fa-2x d-block mb-2 opacity-25"></i>No courses found.</td></tr>
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fas fa-book fa-2x d-block mb-2 opacity-25"></i>No courses found.
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>
     </div>
 </div>
 
+<!-- Pagination -->
 @if ((int)ViewBag.TotalPages > 1)
 {
-    <div class="sa-pagination">
+    <div class="sa-pagination anim">
         @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
         {
-            <a asp-action="Index" asp-route-page="@p" class="sa-page-btn @(p == (int)ViewBag.Page ? "active" : "")">@p</a>
+            <a asp-action="Index" asp-route-page="@p"
+               class="sa-page-btn @(p == (int)ViewBag.Page ? "active" : "")">@p</a>
         }
     </div>
+}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="delModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#E13468,#f48c06);padding:1.1rem 1.4rem;display:flex;align-items:center;gap:.75rem;">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-ban" style="color:white;font-size:.85rem;"></i>
+                </div>
+                <h6 style="color:white;font-weight:700;margin:0;">Deactivate Course</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.4rem;">
+                <p style="font-size:.87rem;color:#374151;">Deactivate this course?</p>
+                <p id="delCourseName" style="font-weight:700;color:var(--primary);font-size:.88rem;margin-bottom:1rem;"></p>
+                <p style="font-size:.78rem;color:#9ca3af;margin-bottom:1.3rem;">Students will lose access. You can reactivate later.</p>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn rounded-3 flex-grow-1" data-bs-dismiss="modal"
+                            style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                        Cancel
+                    </button>
+                    <button type="button" id="delConfirmBtn" class="btn rounded-3 flex-grow-1"
+                            style="background:linear-gradient(135deg,#E13468,#f48c06);color:white;font-family:Poppins,sans-serif;font-weight:700;">
+                        <i class="fas fa-ban me-2"></i>Deactivate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function triggerDelete(btn) {
+            var form = btn.closest('form');
+            var row  = btn.closest('tr');
+            var name = row?.querySelector('[style*="font-weight:600"]')?.textContent?.trim() || 'this course';
+            document.getElementById('delCourseName').textContent = name;
+            document.getElementById('delConfirmBtn').onclick = function(){ form.submit(); };
+            new bootstrap.Modal(document.getElementById('delModal')).show();
+        }
+    </script>
 }

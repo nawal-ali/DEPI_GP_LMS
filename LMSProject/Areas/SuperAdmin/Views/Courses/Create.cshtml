@@ -1,96 +1,151 @@
-﻿@model LMSProject.Areas.Admin.ViewModels.CreateCourseVM
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.SACreateCourseVM
 @using MLSCore.Models
 @{
     ViewData["Title"] = "Create Course";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+
+    var gradesByStage = ViewBag.GradesByStage as Dictionary<string, List<object>>
+                        ?? new Dictionary<string, List<object>>();
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <div class="sa-card">
-            <div class="sa-modal-header" style="border-radius:16px 16px 0 0;">
-                <h5 class="mb-0" style="color:white;"><i class="fas fa-plus-circle me-2"></i>Create New Course</h5>
+<div class="row justify-content-center anim">
+    <div class="col-lg-10">
+        <div class="sa-card" style="overflow:hidden;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,var(--primary),#5B72EE);padding:1.3rem 1.5rem;display:flex;align-items:center;gap:.85rem;">
+                <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-plus-circle" style="color:white;font-size:1rem;"></i>
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;font-size:1.1rem;">Create New Course</h5>
+                    <small style="color:rgba(255,255,255,.75);font-size:.8rem;">Fill in all required fields</small>
+                </div>
+                <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index"
+                   style="margin-left:auto;color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem;">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
             </div>
+
+            <!-- Form -->
             <div class="sa-card-body">
                 <form asp-area="SuperAdmin" asp-controller="Courses" asp-action="Create"
                       method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
-                    <div class="row g-3">
+                    <input type="hidden" asp-for="IsLive" id="isLiveHidden" />
+
+                    <!-- Row 1: Name + Status -->
+                    <div class="row g-3 mb-3">
                         <div class="col-md-8">
-                            <label class="form-label">Course Name <span class="text-danger">*</span></label>
-                            <input asp-for="Name" class="sa-form-control" placeholder="e.g. Advanced Mathematics Grade 10" />
+                            <label class="sa-label">Course Name <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="sa-form-control"
+                                   placeholder="e.g. Advanced Mathematics Grade 10" />
                             <span asp-validation-for="Name" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Status</label>
-                            <select asp-for="Status" class="sa-form-control">
-                                <option value="@CourseStatus.OnLine">Online (Live)</option>
-                                <option value="@CourseStatus.Recorded">Recorded</option>
+                            <label class="sa-label">Status</label>
+                            <select asp-for="Status" class="sa-form-control" id="statusSelect"
+                                    onchange="syncIsLive(this.value)">
+                                <option value="0">Online (Live)</option>
+                                <option value="1">Recorded</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Row 2: Stage + Term -->
+                    <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="form-label">Term <span class="text-danger">*</span></label>
-                            <select asp-for="TermId" asp-items="@(new SelectList(Model.Terms, "Id", "Name"))"
-                                    class="sa-form-control">
-                                <option value="">— Select Term —</option>
+                            <label class="sa-label">Stage <span class="text-danger">*</span></label>
+                            <select id="stageSelect" class="sa-form-control" onchange="loadGradesByStage(this.value)" required>
+                                <option value="" disabled selected hidden>— Select Stage —</option>
+                                @foreach (var stage in Model.Stages ?? new())
+                                {
+                                    <option value="@stage.Id">@stage.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="sa-label">Term <span class="text-danger">*</span></label>
+                            <select asp-for="TermId" class="sa-form-control" required>
+                                <option value="" disabled selected hidden>— Select Term —</option>
+                                @foreach (var t in Model.Terms ?? new())
+                                {
+                                    <option value="@t.Id">@t.Name</option>
+                                }
                             </select>
                             <span asp-validation-for="TermId" class="text-danger small"></span>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Grade <span class="text-danger">*</span></label>
-                            <select asp-for="GradeId" asp-items="@(new SelectList(Model.Grades, "Id", "Name"))"
-                                    class="sa-form-control">
-                                <option value="">— Select Grade —</option>
+                    </div>
+
+                    <!-- Row 3: Grade + Instructor -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="sa-label">Grade <span class="text-danger">*</span></label>
+                            <select asp-for="GradeId" id="gradeSelect" class="sa-form-control" required>
+                                <option value="" disabled selected hidden>— Select Grade —</option>
                             </select>
                             <span asp-validation-for="GradeId" class="text-danger small"></span>
                         </div>
-
                         <div class="col-md-6">
-                            <label class="form-label">Subject <span class="text-danger">*</span></label>
-                            <select id="subjectSelect" class="sa-form-control" onchange="loadSubSubjects(this.value)">
-                                <option value="">— Select Subject —</option>
-                                @foreach (var s in Model.Subjects)
+                            <label class="sa-label">Instructor <span class="text-danger">*</span></label>
+                            <select asp-for="InstructorId" class="sa-form-control" required>
+                                <option value="" disabled selected hidden>— Select Instructor —</option>
+                                @foreach (var i in Model.Instructors ?? new())
+                                {
+                                    <option value="@i.Id">@i.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="InstructorId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Subject + Sub-Subject -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="sa-label">Subject <span class="text-danger">*</span></label>
+                            <select id="subjectSelect" class="sa-form-control" onchange="loadSubSubjects(this.value)" required>
+                                <option value="" disabled selected hidden>— Select Subject —</option>
+                                @foreach (var s in Model.Subjects ?? new())
                                 {
                                     <option value="@s.Id">@s.Name</option>
                                 }
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Sub-Subject <span class="text-danger">*</span></label>
-                            <select asp-for="SubSubjId" id="subsubjectSelect" class="sa-form-control">
-                                <option value="">— Select Sub-Subject —</option>
-                                @foreach (var ss in Model.SubSubjects)
-                                {
-                                    <option value="@ss.Id">@ss.Name</option>
-                                }
+                            <label class="sa-label">Sub-Subject <span class="text-danger">*</span></label>
+                            <select asp-for="SubSubjId" id="subsubjectSelect" class="sa-form-control" required>
+                                <option value="" disabled selected hidden>— Select Sub-Subject —</option>
                             </select>
                             <span asp-validation-for="SubSubjId" class="text-danger small"></span>
                         </div>
+                    </div>
+
+                    <!-- Row 5: Image -->
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label">Assign Instructor <span class="text-danger">*</span></label>
-                            <select asp-for="InstructorId" asp-items="@(new SelectList(Model.Instructors, "Id", "Name"))"
-                                    class="sa-form-control">
-                                <option value="">— Select Instructor —</option>
-                            </select>
-                            <span asp-validation-for="InstructorId" class="text-danger small"></span>
+                            <label class="sa-label">Course Image</label>
+                            <input asp-for="Image" type="file" class="sa-form-control" accept="image/*"
+                                   onchange="previewImg(this)" />
+                            <small class="text-muted d-block mt-1">JPG, PNG or GIF (max 2MB)</small>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Course Image</label>
-                            <input asp-for="Image" type="file" class="sa-form-control" accept="image/*" />
-                        </div>
-                        <div class="col-12">
-                            <div class="p-3 rounded-3" style="background:rgba(0,203,184,0.06);border-left:3px solid var(--secondary);">
-                                <div class="form-check">
-                                    <input asp-for="ShowInHomePage" class="form-check-input" type="checkbox" />
-                                    <label class="form-check-label" asp-for="ShowInHomePage" style="font-weight:600;font-size:0.87rem;">
-                                        Show this course on the Home Page
-                                    </label>
-                                </div>
+                            <div id="imgPreview" style="display:none;">
+                                <label class="sa-label">Preview</label>
+                                <img id="imgPreviewEl" style="height:90px;border-radius:10px;object-fit:cover;border:2px solid rgba(0,203,184,.2);" />
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary rounded-3 px-4"><i class="fas fa-save me-2"></i>Create Course</button>
-                        <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index" class="btn-secondary-sa">Cancel</a>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 pt-3" style="border-top:1px solid rgba(47,50,125,.1);">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4"
+                                style="font-family:Poppins,sans-serif;font-weight:700;">
+                            <i class="fas fa-save me-2"></i>Create Course
+                        </button>
+                        <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index"
+                           class="btn rounded-3 px-4"
+                           style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;font-weight:600;">
+                            Cancel
+                        </a>
                     </div>
                 </form>
             </div>
@@ -100,14 +155,52 @@
 
 @section Scripts {
     <script>
-        async function loadSubSubjects(subjectId) {
-            const sel = document.getElementById('subsubjectSelect');
-            sel.innerHTML = '<option value="">Loading…</option>';
-            if (!subjectId) { sel.innerHTML = '<option value="">— Select Sub-Subject —</option>'; return; }
-            const res  = await fetch(`/SuperAdmin/Courses/GetSubSubjects?subjectId=${subjectId}`);
-            const data = await res.json();
-            sel.innerHTML = '<option value="">— Select Sub-Subject —</option>' +
-                data.map(ss => `<option value="${ss.id}">${ss.name}</option>`).join('');
+        var gradesByStage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(gradesByStage));
+
+        function syncIsLive(statusVal) {
+            document.getElementById('isLiveHidden').value =
+                (parseInt(statusVal) === 0) ? 'true' : 'false';
         }
+
+        function loadGradesByStage(stageId) {
+            var sel = document.getElementById('gradeSelect');
+            var grades = gradesByStage[stageId] || [];
+
+            if (!stageId || grades.length === 0) {
+                sel.innerHTML = '<option value="" disabled selected hidden>— Select Grade —</option>';
+                return;
+            }
+
+            sel.innerHTML = '<option value="" disabled selected hidden>— Select Grade —</option>' +
+                grades.map(function(g){ return '<option value="' + g.id + '">' + g.name + '</option>'; }).join('');
+        }
+
+        async function loadSubSubjects(subjectId) {
+            var sel = document.getElementById('subsubjectSelect');
+            sel.innerHTML = '<option value="" disabled selected hidden>Loading…</option>';
+            if (!subjectId) {
+                sel.innerHTML = '<option value="" disabled selected hidden>— Select Sub-Subject —</option>';
+                return;
+            }
+            var res = await fetch('/SuperAdmin/Courses/GetSubSubjects?subjectId=' + subjectId);
+            var data = await res.json();
+            sel.innerHTML = '<option value="" disabled selected hidden>— Select Sub-Subject —</option>' +
+                data.map(function(ss){ return '<option value="' + ss.id + '">' + ss.name + '</option>'; }).join('');
+        }
+
+        function previewImg(input) {
+            if (input.files && input.files[0]) {
+                var r = new FileReader();
+                r.onload = function(e){
+                    document.getElementById('imgPreviewEl').src = e.target.result;
+                    document.getElementById('imgPreview').style.display = 'block';
+                };
+                r.readAsDataURL(input.files[0]);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            syncIsLive(document.getElementById('statusSelect').value);
+        });
     </script>
 }

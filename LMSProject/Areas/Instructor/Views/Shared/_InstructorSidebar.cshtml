@@ -53,6 +53,12 @@
 
 <div class="sa-group-label mt-3">Communication</div>
 
+<a asp-area="Instructor" asp-controller="Schedules" asp-action="Index"
+   class="sa-nav-item @(Is("Schedules") ? "active" : "")">
+    <i class="fas fa-calendar-week"></i>
+    <span>Schedule</span>
+</a>
+
 <a asp-area="Instructor"
    asp-controller="Tickets"
    asp-action="Index"

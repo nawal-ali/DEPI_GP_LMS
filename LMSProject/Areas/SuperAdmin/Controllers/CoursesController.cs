@@ -1,5 +1,5 @@
 ﻿using LMSProject.Areas.Admin.Helpers;
-using LMSProject.Areas.Admin.ViewModels;
+using LMSProject.Areas.SuperAdmin.ViewModels;
 using LMSProject.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -50,7 +50,7 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
                 .Select(g => new { g.Key, Count = g.Count() })
                 .ToDictionaryAsync(g => g.Key, g => g.Count);
 
-            var vmList = all.Select(c => new CourseListVM
+            var vmList = all.Select(c => new SACoursListVM
             {
                 Id = c.Id,
                 Name = c.Name,
@@ -60,7 +60,6 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
                 Grade = c.Grade?.Name ?? "",
                 Subject = c.SubSubject?.Subject?.Name ?? "",
                 Term = c.Term?.Name ?? "",
-                Price = c.Price,
                 Status = c.status,
                 StudentCount = c.StudentCourses?.Count ?? 0,
                 MaterialCount = 0,
@@ -74,7 +73,7 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
             ViewBag.Status = status;
             ViewBag.Page = page;
             ViewBag.TotalPages = (int)Math.Ceiling((double)vmList.Count / ps);
-            ViewBag.TotalCount = vmList.Count;
+            ViewBag.TotalCourses = vmList.Count;
             ViewBag.Grades = await _db.Grades.Where(g => g.CurrentState == 1).Select(g => g.Name).ToListAsync();
 
             return View(vmList.Skip((page - 1) * ps).Take(ps).ToList());
@@ -85,13 +84,18 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
         public async Task<IActionResult> Create()
         {
             ViewData["Title"] = "Create Course";
-            return View(await BuildCreateVM(new CreateCourseVM()));
+            await LoadGradesByStageToViewBag();
+            return View(await BuildCreateVM(new SACreateCourseVM()));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateCourseVM vm)
+        public async Task<IActionResult> Create(SACreateCourseVM vm)
         {
-            if (!ModelState.IsValid) return View(await BuildCreateVM(vm));
+            if (!ModelState.IsValid)
+            {
+                await LoadGradesByStageToViewBag();
+                return View(await BuildCreateVM(vm));
+            }
 
             string? img = null;
             if (vm.Image != null) img = Upload.UploadImage("Images/images/", vm.Image);
@@ -100,8 +104,7 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
             {
                 Name = vm.Name,
                 status = vm.Status,
-                Price = vm.Price,
-                ShowInHomePage = vm.ShowInHomePage,
+                IsLive = vm.IsLive,
                 TermId = vm.TermId,
                 GradeId = vm.GradeId,
                 SubSubjId = vm.SubSubjId,
@@ -121,30 +124,40 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             ViewData["Title"] = "Edit Course";
-            var c = await _db.Courses.Include(x => x.SubSubject).FirstOrDefaultAsync(x => x.Id == id);
+            var c = await _db.Courses
+                .Include(x => x.SubSubject)
+                .Include(x => x.Grade)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (c == null) return NotFound();
 
-            var vm = new EditCourseVM
+            var vm = new SAEditCourseVM
             {
                 Id = c.Id,
                 Name = c.Name,
                 Status = c.status,
-                Price = c.Price,
-                ShowInHomePage = c.ShowInHomePage,
+                IsLive = c.IsLive,
                 TermId = c.TermId,
                 GradeId = c.GradeId,
+                StageId = c.Grade?.StageId ?? 0,
                 SubjId = c.SubSubject?.SubjectId ?? 0,
                 SubSubjId = c.SubSubjId,
                 InstructorId = c.InstructorId,
                 ImageName = c.ImageName
             };
+
+            await LoadGradesByStageToViewBag();
             return View(await BuildEditVM(vm));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(EditCourseVM vm)
+        public async Task<IActionResult> Edit(SAEditCourseVM vm)
         {
-            if (!ModelState.IsValid) return View(await BuildEditVM(vm));
+            if (!ModelState.IsValid)
+            {
+                await LoadGradesByStageToViewBag();
+                return View(await BuildEditVM(vm));
+            }
 
             var c = await _db.Courses.FindAsync(vm.Id);
             if (c == null) return NotFound();
@@ -155,11 +168,15 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
                 c.ImageName = Upload.UploadImage("Images/images/", vm.Image);
             }
 
-            c.Name = vm.Name; c.status = vm.Status; c.Price = vm.Price;
-            c.ShowInHomePage = vm.ShowInHomePage; c.TermId = vm.TermId;
-            c.GradeId = vm.GradeId; c.SubSubjId = vm.SubSubjId;
+            c.Name = vm.Name;
+            c.status = vm.Status;
+            c.IsLive = vm.IsLive;
+            c.TermId = vm.TermId;
+            c.GradeId = vm.GradeId;
+            c.SubSubjId = vm.SubSubjId;
             c.InstructorId = vm.InstructorId;
-            c.UpdatedBy = CurrentUserId; c.UpdatedDate = DateTime.Now;
+            c.UpdatedBy = CurrentUserId;
+            c.UpdatedDate = DateTime.Now;
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "Course updated.";
@@ -184,7 +201,6 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
                 .Select(ss => new { id = ss.Id, name = ss.Name }).ToListAsync();
             return Json(list);
         }
-
 
         // ── Assign Instructor ──────────────────────────────────────────────
         [HttpGet]
@@ -228,7 +244,7 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
 
             var studentsQ = _db.Students
                 .Include(s => s.Grade)
-                .Include(s => s.User)   // Email lives on ApplicationUser
+                .Include(s => s.User)
                 .Where(s => s.CurrentState == 1);
 
             if (!string.IsNullOrEmpty(search))
@@ -267,28 +283,70 @@ namespace LMSProject.Areas.SuperAdmin.Controllers
         }
 
         // ── Helpers ────────────────────────────────────────────────────────
-        private async Task<CreateCourseVM> BuildCreateVM(CreateCourseVM vm)
+        private async Task<SACreateCourseVM> BuildCreateVM(SACreateCourseVM? vm = null)
         {
-            vm.Terms = await _db.Terms.Where(t => t.CurrentState == 1)
-                .Select(t => new SelectDropList { Id = t.Id, Name = t.Name }).ToListAsync();
-            vm.Grades = await _db.Grades.Where(g => g.CurrentState == 1)
-                .Select(g => new SelectDropList { Id = g.Id, Name = g.Name }).ToListAsync();
-            vm.Subjects = await _db.Subjects.Where(s => s.CurrentState == 1)
-                .Select(s => new SelectDropList { Id = s.Id, Name = s.Name }).ToListAsync();
-            vm.SubSubjects = await _db.SubSubjects.Where(ss => ss.CurrentState == 1)
-                .Select(ss => new SelectDropList { Id = ss.Id, Name = ss.Name }).ToListAsync();
-            vm.Instructors = await _db.Instructors.Where(i => i.CurrentState == 1)
-                .Select(i => new SelectDropList { Id = i.Id, Name = i.FullName }).ToListAsync();
+            var result = vm ?? new SACreateCourseVM();
+
+            result.Stages = await _db.Stages
+                .Where(s => s.CurrentState == 1)
+                .OrderBy(s => s.Name)
+                .Select(s => new SelectDropList { Id = s.Id, Name = s.Name })
+                .ToListAsync();
+
+            result.Terms = await _db.Terms
+                .Where(t => t.CurrentState == 1)
+                .OrderBy(t => t.Name)
+                .Select(t => new SelectDropList { Id = t.Id, Name = t.Name })
+                .ToListAsync();
+
+            result.Grades = await _db.Grades
+                .Where(g => g.CurrentState == 1)
+                .Include(g => g.Stage)
+                .OrderBy(g => g.Stage.Name).ThenBy(g => g.Name)
+                .Select(g => new SelectDropList { Id = g.Id, Name = g.Name })
+                .ToListAsync();
+
+            result.Subjects = await _db.Subjects
+                .Where(s => s.CurrentState == 1)
+                .OrderBy(s => s.Name)
+                .Select(s => new SelectDropList { Id = s.Id, Name = s.Name })
+                .ToListAsync();
+
+            result.Instructors = await _db.Instructors
+                .Where(i => i.CurrentState == 1)
+                .OrderBy(i => i.FullName)
+                .Select(i => new SelectDropList { Id = i.Id, Name = i.FullName })
+                .ToListAsync();
+
+            return result;
+        }
+
+        private async Task<SAEditCourseVM> BuildEditVM(SAEditCourseVM vm)
+        {
+            await BuildCreateVM(vm);
+            vm.SubSubjects = await _db.SubSubjects
+                .Where(ss => ss.SubjectId == vm.SubjId && ss.CurrentState == 1)
+                .Select(ss => new SelectDropList { Id = ss.Id, Name = ss.Name })
+                .ToListAsync();
             return vm;
         }
 
-        private async Task<EditCourseVM> BuildEditVM(EditCourseVM vm)
+        private async Task LoadGradesByStageToViewBag()
         {
-            var base_ = await BuildCreateVM(vm);
-            base_.SubSubjects = await _db.SubSubjects
-                .Where(ss => ss.SubjectId == vm.SubjId && ss.CurrentState == 1)
-                .Select(ss => new SelectDropList { Id = ss.Id, Name = ss.Name }).ToListAsync();
-            return (EditCourseVM)base_;
+            var grades = await _db.Grades
+                .Where(g => g.CurrentState == 1)
+                .OrderBy(g => g.Name)
+                .Select(g => new { g.Id, g.Name, g.StageId })
+                .ToListAsync();
+
+            var dict = grades
+                .GroupBy(g => g.StageId)
+                .ToDictionary(
+                    g => g.Key.ToString(),
+                    g => g.Select(x => new { id = x.Id, name = x.Name }).ToList<object>()
+                );
+
+            ViewBag.GradesByStage = dict;
         }
     }
 }

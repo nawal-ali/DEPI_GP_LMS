@@ -1,16 +1,159 @@
-﻿@* Matches Angular admin-dashboard sidebar structure exactly *@
-
+﻿@inject MLSEF.AppDbContext Db
+@using Microsoft.EntityFrameworkCore
 @{
     var current = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var routeGradeId = ViewContext.RouteData.Values["gradeId"]?.ToString();
 
-    string Active(string ctrl, string? act = null)
-    {
-        if (act != null)
-            return (current == ctrl && action == act) ? "active" : "";
-        return current == ctrl ? "active" : "";
-    }
+    string Active(string ctrl, string? act = null) =>
+        (current == ctrl && (act == null || action == act)) ? "active" : "";
+
+    // ── Load Stage → Grade tree (no filtered include — compatible with all EF versions) ──
+    var stages = await Db.Stages
+        .Where(s => s.CurrentState == 1)
+        .Include(s => s.Grades)
+        .OrderBy(s => s.Name)
+        .ToListAsync();
+
+    bool isSchedules = current == "Schedules";
 }
+
+<style>
+    .sch-stage-wrap {
+        border-radius: 10px;
+        margin-bottom: .3rem;
+    }
+
+    .sch-stage-btn {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        width: 100%;
+        padding: .45rem .85rem;
+        border: none;
+        background: transparent;
+        color: #374151;
+        font-family: Poppins,sans-serif;
+        font-size: .82rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 10px;
+        text-align: left;
+        transition: background .15s,color .15s;
+    }
+
+        .sch-stage-btn:hover {
+            background: rgba(91,114,238,.08);
+            color: var(--primary);
+        }
+
+        .sch-stage-btn[aria-expanded="true"] {
+            background: rgba(91,114,238,.08);
+            color: var(--primary);
+        }
+
+            .sch-stage-btn[aria-expanded="true"] .sch-chevron {
+                transform: rotate(90deg);
+                color: var(--primary);
+            }
+
+    .sch-chevron {
+        margin-left: auto;
+        font-size: .6rem;
+        color: #9ca3af;
+        transition: transform .25s;
+    }
+
+    .sch-grades {
+        display: none;
+        padding-left: .5rem;
+    }
+
+        .sch-grades.open {
+            display: block;
+        }
+
+    .sch-grade-lnk {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .33rem .75rem .33rem 1.1rem;
+        border-radius: 8px;
+        font-size: .79rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background .15s,color .15s;
+        position: relative;
+    }
+
+        .sch-grade-lnk::before {
+            content: '';
+            position: absolute;
+            left: .35rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #d1d5db;
+            transition: background .15s;
+        }
+
+        .sch-grade-lnk:hover {
+            background: rgba(0,203,184,.1);
+            color: var(--secondary);
+        }
+
+            .sch-grade-lnk:hover::before {
+                background: var(--secondary);
+            }
+
+        .sch-grade-lnk.active {
+            background: rgba(0,203,184,.12);
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+            .sch-grade-lnk.active::before {
+                background: var(--secondary);
+            }
+
+    .sch-all-lnk {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .45rem .85rem;
+        border-radius: 10px;
+        font-size: .82rem;
+        color: #374151;
+        font-weight: 600;
+        text-decoration: none;
+        margin-bottom: .25rem;
+        transition: background .15s,color .15s;
+    }
+
+        .sch-all-lnk:hover, .sch-all-lnk.active {
+            background: rgba(91,114,238,.08);
+            color: var(--primary);
+        }
+</style>
+
+@* ── Script defined BEFORE buttons use it ──────────────────────── *@
+<script>
+    (function () {
+        // Use relative DOM traversal — no IDs — so double-render is safe
+        function toggleStage(btn) {
+            var panel = btn.nextElementSibling;
+            if (!panel || !panel.classList.contains('sch-grades')) return;
+            var isOpen = panel.classList.contains('open');
+            panel.classList.toggle('open', !isOpen);
+            btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        }
+        // Expose globally
+        window.toggleStage = toggleStage;
+    })();
+</script>
 
 <!-- Profile -->
 <p class="sa-group-label mt-3">Profile</p>
@@ -46,7 +189,76 @@
     </a>
 </div>
 
-<!-- Blog -->
+<!-- Courses -->
+<p class="sa-group-label mt-3">Courses</p>
+<div>
+    <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index"
+       class="sa-nav-item @Active("Courses")">
+        <i class="fas fa-book-open"></i><span>Course Management</span>
+    </a>
+</div>
+
+<!-- ── Schedules — dynamic Stage → Grade tree ───────────────────── -->
+<p class="sa-group-label mt-3">Schedules</p>
+<div>
+    <a asp-area="SuperAdmin" asp-controller="Schedules" asp-action="Index"
+       class="sch-all-lnk @(isSchedules && action == "Index" ? "active" : "")">
+        <i class="fas fa-calendar-week" style="width:16px;text-align:center;color:var(--secondary);"></i>
+        <span>All Schedules</span>
+    </a>
+
+    @if (!stages.Any())
+    {
+        <div style="padding:.4rem .85rem;font-size:.75rem;color:#9ca3af;">
+            <i class="fas fa-info-circle me-1"></i>No stages configured
+        </div>
+    }
+    else
+    {
+        @foreach (var stage in stages)
+        {
+            var grades = stage.Grades?.Where(g => g.CurrentState == 1).OrderBy(g => g.Name).ToList()
+                            ?? new List<MLSCore.Models.TbGrade>();
+            var hasActive = grades.Any(g => g.Id.ToString() == routeGradeId);
+
+            <div class="sch-stage-wrap">
+                @* button triggers toggleStage(this) — no IDs needed *@
+                <button type="button"
+                        class="sch-stage-btn"
+                        aria-expanded="@(hasActive ? "true" : "false")"
+                        onclick="toggleStage(this)">
+                    <i class="fas fa-layer-group"
+                       style="width:16px;text-align:center;color:var(--accent-purple);font-size:.78rem;"></i>
+                    <span>@stage.Name</span>
+                    <i class="fas fa-chevron-right sch-chevron"></i>
+                </button>
+
+                <div class="sch-grades @(hasActive ? "open" : "")">
+                    @if (!grades.Any())
+                    {
+                        <span class="sch-grade-lnk" style="cursor:default;opacity:.45;">No grades</span>
+                    }
+                    else
+                    {
+                        @foreach (var grade in grades)
+                        {
+                            var active = grade.Id.ToString() == routeGradeId && isSchedules;
+                            <a asp-area="SuperAdmin"
+                               asp-controller="Schedules"
+                               asp-action="GradeSchedule"
+                               asp-route-gradeId="@grade.Id"
+                               class="sch-grade-lnk @(active ? "active" : "")">
+                                @grade.Name
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Content -->
 <p class="sa-group-label mt-3">Content</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Blog" asp-action="Index"
@@ -68,7 +280,7 @@
     </a>
 </div>
 
-<!-- Statistics -->
+<!-- Analytics -->
 <p class="sa-group-label mt-3">Analytics</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Statistics" asp-action="Index"
@@ -85,29 +297,25 @@
     </a>
 </div>
 
-<!-- System -->
+<!-- Configuration -->
 <p class="sa-group-label mt-3">Configuration</p>
-<a asp-area="Admin" asp-controller="Stage" asp-action="Index"
-   class="sa-nav-item @Active("Stage")">
+<a asp-area="Admin" asp-controller="Stage" asp-action="Index" class="sa-nav-item @Active("Stage")">
     <i class="fas fa-layer-group"></i><span>Stages</span>
 </a>
-<a asp-area="Admin" asp-controller="Grade" asp-action="Index"
-   class="sa-nav-item @Active("Grade")">
+<a asp-area="Admin" asp-controller="Grade" asp-action="Index" class="sa-nav-item @Active("Grade")">
     <i class="fas fa-graduation-cap"></i><span>Grades</span>
 </a>
-<a asp-area="Admin" asp-controller="Subject" asp-action="Index"
-   class="sa-nav-item @Active("Subject")">
+<a asp-area="Admin" asp-controller="Subject" asp-action="Index" class="sa-nav-item @Active("Subject")">
     <i class="fas fa-book"></i><span>Subjects</span>
 </a>
-<a asp-area="Admin" asp-controller="SubSubject" asp-action="Index"
-   class="sa-nav-item @Active("SubSubject")">
+<a asp-area="Admin" asp-controller="SubSubject" asp-action="Index" class="sa-nav-item @Active("SubSubject")">
     <i class="fas fa-bookmark"></i><span>Sub-Subjects</span>
 </a>
-<a asp-area="Admin" asp-controller="Term" asp-action="Index"
-   class="sa-nav-item @Active("Term")">
+<a asp-area="Admin" asp-controller="Term" asp-action="Index" class="sa-nav-item @Active("Term")">
     <i class="fas fa-calendar-alt"></i><span>Terms</span>
 </a>
 
+<!-- Inquiries -->
 <p class="sa-group-label mt-3">Inquiries</p>
 <a asp-area="SuperAdmin" asp-controller="ContactForms" asp-action="Index"
    class="sa-nav-item @Active("ContactForms")" style="position:relative;">
@@ -118,6 +326,7 @@
     padding:1px 7px;font-size:.65rem;font-weight:700;margin-left:auto;"></span>
 </a>
 
+<!-- System -->
 <p class="sa-group-label mt-3">System</p>
 <div>
     <a asp-area="SuperAdmin" asp-controller="Home" asp-action="Index"

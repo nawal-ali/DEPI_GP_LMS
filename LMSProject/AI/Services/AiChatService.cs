@@ -2,6 +2,10 @@
 using MongoDB.Driver;
 using MLSEF;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace LMSProject.AI.Services
 {
@@ -11,54 +15,103 @@ namespace LMSProject.AI.Services
         private readonly GithubAiService _ai;
         private readonly DocumentProcessingService _docs;
         private readonly AppDbContext _db;
+        private readonly IHttpClientFactory _http;
+        private readonly string _chatbotWebhook;
 
         public AiChatService(MongoDbService mongo, GithubAiService ai,
-            DocumentProcessingService docs, AppDbContext db)
-        { _mongo = mongo; _ai = ai; _docs = docs; _db = db; }
+            DocumentProcessingService docs, AppDbContext db,
+            IHttpClientFactory http, IConfiguration cfg)
+        {
+            _mongo = mongo;
+            _ai = ai;
+            _docs = docs;
+            _db = db;
+            _http = http;
+            _chatbotWebhook = cfg["N8N:ChatbotWebhook"] ?? "";
+        }
 
-        // ── RAG Chat ───────────────────────────────────────────────────────
+        // ── RAG Chat — sends to n8n (same pattern as InstructorAiService) ──
         public async Task<string> ChatAsync(string question, string sessionId,
             string studentUserId, string? fileId = null)
         {
+            // 1. Get relevant document chunks from MongoDB
             var chunks = await _docs.RetrieveAsync(question, studentUserId, fileId, topK: 5);
             var context = chunks.Any()
                 ? string.Join("\n\n---\n\n", chunks.Select(c => c.Content))
                 : "";
 
-            var system = chunks.Any()
-                ? "You are a helpful AI study assistant. Answer based on the document context provided. " +
-                  "If the answer is not in the context, say so. Be concise and educational."
-                : "You are a helpful AI study assistant. " +
-                  "The student has not uploaded any documents yet, or no relevant content was found. " +
-                  "Answer general study questions from your knowledge. " +
-                  "Remind them they can upload PDF or DOCX files for document-specific help.";
-
-            // Recent history (last 6 messages)
+            // 2. Get recent chat history (last 6 messages)
             var history = await _mongo.Messages
                 .Find(m => m.SessionId == sessionId)
                 .SortByDescending(m => m.CreatedAt)
                 .Limit(6)
                 .ToListAsync();
-
             history.Reverse();
 
-            var userContent = chunks.Any()
-                ? $"Context from uploaded document:\n{context}\n\nQuestion: {question}"
-                : question;
+            var historyText = history.Any()
+                ? string.Join("\n", history.Select(m => $"{m.Role}: {m.Content}"))
+                : "";
 
-            var messages = history
-                .Select(m => (m.Role, m.Content))
-                .Append(("user", userContent))
-                .ToList();
+            // 3. Build system prompt
+            var systemPrompt = chunks.Any()
+                ? "You are a helpful AI study assistant. Answer questions related to math, science, English or Arabic. " +
+                  "If the answer is not in the context, say so. Be concise and educational."
+                : "You are a helpful AI study assistant. " +
+                  "Answer questions related to math, science, English or Arabic." ;
+            //? "You are a helpful AI study assistant. Answer based on the document context provided. " +
+            //  "If the answer is not in the context, say so. Be concise and educational."
+            //: "You are a helpful AI study assistant. " +
+            //  "No documents uploaded yet. Answer general study questions. " +
+            //  "Remind students they can upload PDF or DOCX files for document-specific help.";
 
-            var answer = await _ai.ChatAsync(messages, system);
 
+            // 4. Send JSON to n8n — same as N8nService.TriggerAsync pattern
+            string answer;
+            if (!string.IsNullOrEmpty(_chatbotWebhook))
+            {
+                var client = _http.CreateClient();
+                client.Timeout = TimeSpan.FromSeconds(120);
+
+                var payload = new
+                {
+                    question = question,
+                    context = context,
+                    history = historyText,
+                    systemPrompt = systemPrompt,
+                    hasContext = chunks.Any()
+                };
+
+                var body = new StringContent(
+                    JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                var resp = await client.PostAsync(_chatbotWebhook, body);
+                var raw = await resp.Content.ReadAsStringAsync() ?? "";
+
+                answer = ExtractAnswer(raw);
+
+                if (string.IsNullOrWhiteSpace(answer))
+                    answer = "⚠️ No response from AI. Make sure the n8n chatbot workflow is Published.";
+            }
+            else
+            {
+                // Fallback to GitHub Models if webhook not configured
+                var userContent = chunks.Any()
+                    ? $"Context from uploaded document:\n{context}\n\nQuestion: {question}"
+                    : question;
+                var messages = history
+                    .Select(m => (m.Role, m.Content))
+                    .Append(("user", userContent))
+                    .ToList();
+                answer = await _ai.ChatAsync(messages, systemPrompt);
+            }
+
+            // 5. Save to MongoDB (same as before)
             await _mongo.Messages.InsertManyAsync(new[]
             {
                 new ChatMessage { SessionId=sessionId, StudentUserId=studentUserId,
-                                  Role="user",      Content=question, SourceFileId=fileId },
+                                  Role="user",      Content=question,  SourceFileId=fileId },
                 new ChatMessage { SessionId=sessionId, StudentUserId=studentUserId,
-                                  Role="assistant", Content=answer,   SourceFileId=fileId }
+                                  Role="assistant", Content=answer,    SourceFileId=fileId }
             });
 
             await _mongo.Sessions.UpdateOneAsync(
@@ -66,6 +119,37 @@ namespace LMSProject.AI.Services
                 Builders<ChatSession>.Update.Set(s => s.UpdatedAt, DateTime.UtcNow));
 
             return answer;
+        }
+
+        // ── Extract answer from n8n JSON response ─────────────────────────
+        private static string ExtractAnswer(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return "";
+            if (raw.TrimStart().StartsWith("<")) return "";  // HTML error page
+
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                var root = doc.RootElement;
+                var fields = new[] { "output", "text", "answer", "result", "message", "content", "response" };
+
+                if (root.ValueKind == JsonValueKind.Array && root.GetArrayLength() > 0)
+                {
+                    var first = root[0];
+                    foreach (var f in fields)
+                        if (first.TryGetProperty(f, out var v) && v.ValueKind == JsonValueKind.String)
+                            return v.GetString()!;
+                }
+                if (root.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var f in fields)
+                        if (root.TryGetProperty(f, out var v) && v.ValueKind == JsonValueKind.String)
+                            return v.GetString()!;
+                }
+            }
+            catch { }
+
+            return raw; // plain text fallback
         }
 
         // ── Session management ─────────────────────────────────────────────
@@ -90,14 +174,13 @@ namespace LMSProject.AI.Services
                 .SortBy(m => m.CreatedAt)
                 .ToListAsync();
 
-        // ── AI Tools ───────────────────────────────────────────────────────
+        // ── AI Tools (still use GitHub Models — not chatbot) ──────────────
         public async Task<string> SummarizeAsync(string fileId, string studentUserId)
         {
             var chunks = await GetChunks(fileId, studentUserId, 10);
             if (!chunks.Any()) return "No content found for this file.";
-            var text = Join(chunks);
             return await _ai.ChatAsync(
-                new List<(string, string)> { ("user", $"Summarize this document:\n{text}") },
+                new List<(string, string)> { ("user", $"Summarize this document:\n{Join(chunks)}") },
                 "You are an expert summarizer. Provide a clear, structured summary.");
         }
 
@@ -105,11 +188,10 @@ namespace LMSProject.AI.Services
         {
             var chunks = await GetChunks(fileId, studentUserId, 8);
             if (!chunks.Any()) return "No content found.";
-            var text = Join(chunks);
             return await _ai.ChatAsync(
                 new List<(string, string)>
                 {
-                    ("user", $"Generate {count} MCQs from this text. Format each:\nQ: ...\nA) ...\nB) ...\nC) ...\nD) ...\nCorrect: ...\n\nText:\n{text}")
+                    ("user", $"Generate {count} MCQs from this text. Format each:\nQ: ...\nA) ...\nB) ...\nC) ...\nD) ...\nCorrect: ...\n\nText:\n{Join(chunks)}")
                 },
                 "You are an expert teacher. Generate clear, educational MCQs.");
         }
@@ -118,16 +200,14 @@ namespace LMSProject.AI.Services
         {
             var chunks = await GetChunks(fileId, studentUserId, 8);
             if (!chunks.Any()) return "No content found.";
-            var text = Join(chunks);
             return await _ai.ChatAsync(
                 new List<(string, string)>
                 {
-                    ("user", $"Extract the 10 most important key points as a numbered list:\n{text}")
+                    ("user", $"Extract the 10 most important key points as a numbered list:\n{Join(chunks)}")
                 },
                 "You are an expert educator. Extract the most important concepts.");
         }
 
-        // ── Study Planner ──────────────────────────────────────────────────
         public async Task<string> GenerateStudyPlanAsync(string studentUserId)
         {
             var student = await _db.Students
@@ -142,36 +222,24 @@ namespace LMSProject.AI.Services
                 .Select(sc => sc.CourseId)
                 .ToListAsync();
 
-            // Use dictionary for course names — avoids .Course navigation issues
             var courseNames = await _db.Courses
                 .Where(c => courseIds.Contains(c.Id))
                 .ToDictionaryAsync(c => c.Id, c => c.Name);
 
-            // Upcoming exams — do NOT Include(t => t.Course), use dictionary
             var exams = await _db.Tests
                 .Where(t => courseIds.Contains(t.CourseId) && t.CurrentState == 1
                          && t.Deadline.HasValue && t.Deadline > now)
-                .OrderBy(t => t.Deadline)
-                .Take(10)
-                .ToListAsync();
+                .OrderBy(t => t.Deadline).Take(10).ToListAsync();
 
-            // Pending assignments — do NOT Include(a => a.Course), use dictionary
             var assignments = await _db.Assignments
                 .Where(a => courseIds.Contains(a.CourseId) && a.CurrentState == 1 && a.Deadline > now)
                 .Include(a => a.Submissions.Where(s => s.StudentId == student.Id))
-                .OrderBy(a => a.Deadline)
-                .Take(10)
-                .ToListAsync();
+                .OrderBy(a => a.Deadline).Take(10).ToListAsync();
 
-            // Build enrolled courses — ALWAYS included so AI doesn't invent subjects
             var enrolledCourseNames = courseNames.Values.ToList();
-
-            var examLines = exams.Select(e =>
-                $"• {e.Title} [{courseNames.GetValueOrDefault(e.CourseId, "?")}] — Due {e.Deadline:MMM dd, yyyy} ({Math.Max(0, (int)(e.Deadline!.Value - DateTime.Now).TotalDays)} days left)");
-
+            var examLines = exams.Select(e => $"• {e.Title} [{courseNames.GetValueOrDefault(e.CourseId, "?")}] — Due {e.Deadline:MMM dd, yyyy} ({Math.Max(0, (int)(e.Deadline!.Value - now).TotalDays)} days left)");
             var pendingAssign = assignments.Where(a => !a.Submissions.Any()).ToList();
-            var assignLines = pendingAssign.Select(a =>
-                $"• {a.Title} [{courseNames.GetValueOrDefault(a.CourseId, "?")}] — Due {a.Deadline:MMM dd, yyyy} ({Math.Max(0, (int)(a.Deadline - DateTime.Now).TotalDays)} days left)");
+            var assignLines = pendingAssign.Select(a => $"• {a.Title} [{courseNames.GetValueOrDefault(a.CourseId, "?")}] — Due {a.Deadline:MMM dd, yyyy} ({Math.Max(0, (int)(a.Deadline - now).TotalDays)} days left)");
 
             var context =
                 $"Student: {student.FullName}\n" +
@@ -184,18 +252,10 @@ namespace LMSProject.AI.Services
             var systemPrompt =
                 "You are a school academic advisor.\n" +
                 "Create a 7-day study plan using ONLY the student's ACTUAL enrolled courses above.\n" +
-                "Rules:\n" +
-                "- NEVER mention subjects not in the Enrolled Courses list.\n" +
+                "Rules:\n- NEVER mention subjects not in the Enrolled Courses list.\n" +
                 "- If no deadlines: focus on reviewing enrolled courses.\n" +
-                "- Name each actual course and task explicitly.\n" +
-                "Format each day as:\n" +
-                "📅 Day N — [Weekday]\n" +
-                "• [Task with course name]\n" +
-                "• [Task]\n\n" +
-                "After Day 7, add:\n" +
-                "💡 Tips\n" +
-                "• [2-3 practical tips]\n" +
-                "Be concise and realistic.";
+                "Format each day as:\n📅 Day N — [Weekday]\n• [Task with course name]\n\n" +
+                "After Day 7, add:\n💡 Tips\n• [2-3 practical tips]\nBe concise and realistic.";
 
             return await _ai.ChatAsync(
                 new List<(string, string)> { ("user", $"Create a study plan for:\n\n{context}") },
@@ -203,13 +263,10 @@ namespace LMSProject.AI.Services
         }
 
         // ── Helpers ────────────────────────────────────────────────────────
-        private async Task<List<DocumentChunk>> GetChunks(
-            string fileId, string studentUserId, int limit)
+        private async Task<List<DocumentChunk>> GetChunks(string fileId, string studentUserId, int limit)
             => await _mongo.Chunks
                 .Find(c => c.FileId == fileId && c.StudentUserId == studentUserId)
-                .SortBy(c => c.ChunkIndex)
-                .Limit(limit)
-                .ToListAsync();
+                .SortBy(c => c.ChunkIndex).Limit(limit).ToListAsync();
 
         private static string Join(List<DocumentChunk> chunks)
             => string.Join("\n", chunks.Select(c => c.Content));

@@ -1,86 +1,238 @@
-﻿@using LMSProject.Areas.Admin.ViewModel
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model LMSProject.Areas.SuperAdmin.ViewModels.SAEditCourseVM
+@using MLSCore.Models
 @{
-    ViewData["Title"] = "Sub-Subject-Edit";
+    ViewData["Title"] = "Edit Course";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+
+    var gradesByStage = ViewBag.GradesByStage as Dictionary<string, List<object>>
+                        ?? new Dictionary<string, List<object>>();
 }
-@section Styles
-{
-    <link rel="stylesheet" href="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.css">
-}
-@model GradeEditVM
-<div class="col-12 grid-margin stretch-card">
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Adding Grade Data</h4>
-            <p class="card-description"> Insert Grade Data </p>
-            <form asp-area="SuperAdmin" class="forms-sample" method="post" enctype="multipart/form-data">
-                <div class="form-group row">
-                    <input asp-for="ImageName" type="hidden" />
-                    <input asp-for="Id" type="hidden" />
-                    <label asp-for="Stages" class="col-sm-3 col-form-label">Select Stage</label>
-                    <div class="col-sm-9">
-                        <select id="StageId" name="StageId" class="form-check form-control">
-                            @foreach (var item in Model.Stages)
+
+<div class="row justify-content-center anim">
+    <div class="col-lg-10">
+        <div class="sa-card" style="overflow:hidden;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,var(--primary),#5B72EE);padding:1.3rem 1.5rem;display:flex;align-items:center;gap:.85rem;">
+                <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-edit" style="color:white;font-size:1rem;"></i>
+                </div>
+                <div>
+                    <h5 style="color:white;font-weight:700;margin:0;font-size:1.1rem;">Edit Course</h5>
+                    <small style="color:rgba(255,255,255,.75);font-size:.8rem;">Update course details</small>
+                </div>
+                <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index"
+                   style="margin-left:auto;color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem;">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+            <!-- Form -->
+            <div class="sa-card-body">
+                <form asp-area="SuperAdmin" asp-controller="Courses" asp-action="Edit"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="IsLive" id="isLiveHidden" />
+                    <input type="hidden" asp-for="SubjId" />
+
+                    <!-- Row 1: Name + Status -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="sa-label">Course Name <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="sa-form-control" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="sa-label">Status</label>
+                            <select asp-for="Status" class="sa-form-control" id="statusSelect"
+                                    onchange="syncIsLive(this.value)">
+                                <option value="0">Online (Live)</option>
+                                <option value="1">Recorded</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Stage + Term -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="sa-label">Stage <span class="text-danger">*</span></label>
+                            <select id="stageSelect" class="sa-form-control" onchange="loadGradesByStage(this.value)" required>
+                                <option value="" disabled hidden>— Select Stage —</option>
+                                @foreach (var stage in Model.Stages ?? new())
+                                {
+                                    <option value="@stage.Id" selected="@(stage.Id == Model.StageId ? "selected" : null)">@stage.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="sa-label">Term <span class="text-danger">*</span></label>
+                            <select asp-for="TermId" class="sa-form-control" required>
+                                <option value="" disabled hidden>— Select Term —</option>
+                                @foreach (var t in Model.Terms ?? new())
+                                {
+                                    <option value="@t.Id">@t.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="TermId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Grade + Instructor -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="sa-label">Grade <span class="text-danger">*</span></label>
+                            <select asp-for="GradeId" id="gradeSelect" class="sa-form-control" required>
+                                <option value="" disabled hidden>— Select Grade —</option>
+                            </select>
+                            <span asp-validation-for="GradeId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="sa-label">Instructor <span class="text-danger">*</span></label>
+                            <select asp-for="InstructorId" class="sa-form-control" required>
+                                <option value="" disabled hidden>— Select Instructor —</option>
+                                @foreach (var i in Model.Instructors ?? new())
+                                {
+                                    <option value="@i.Id">@i.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="InstructorId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Subject + Sub-Subject -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="sa-label">Subject <span class="text-danger">*</span></label>
+                            <select id="subjectSelect" class="sa-form-control" onchange="loadSubSubjects(this.value)" required>
+                                <option value="" disabled hidden>— Select Subject —</option>
+                                @foreach (var s in Model.Subjects ?? new())
+                                {
+                                    <option value="@s.Id" selected="@(s.Id == Model.SubjId ? "selected" : null)">@s.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="sa-label">Sub-Subject <span class="text-danger">*</span></label>
+                            <select asp-for="SubSubjId" id="subsubjectSelect" class="sa-form-control" required>
+                                <option value="" disabled hidden>— Select Sub-Subject —</option>
+                                @foreach (var ss in Model.SubSubjects ?? new())
+                                {
+                                    <option value="@ss.Id" selected="@(ss.Id == Model.SubSubjId ? "selected" : null)">@ss.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="SubSubjId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Image -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="sa-label">Course Image</label>
+                            <input asp-for="Image" type="file" class="sa-form-control" accept="image/*"
+                                   onchange="previewImg(this)" />
+                            <small class="text-muted d-block mt-1">JPG, PNG or GIF (max 2MB)</small>
+                        </div>
+                        <div class="col-md-6">
+                            @if (!string.IsNullOrEmpty(Model.ImageName))
                             {
-                                <option value="@item.Id" selected="@(Model.StageId == item.Id)">@item.Name</option>
+                                <div style="margin-bottom:1rem;">
+                                    <label class="sa-label">Current Image</label>
+                                    <img src="/@Model.ImageName" style="height:90px;border-radius:10px;object-fit:cover;border:2px solid rgba(0,203,184,.2);" />
+                                </div>
                             }
-
-                            }
-                        </select>
-
+                            <div id="imgPreview" style="display:none;">
+                                <label class="sa-label">New Preview</label>
+                                <img id="imgPreviewEl" style="height:90px;border-radius:10px;object-fit:cover;border:2px solid rgba(0,203,184,.2);" />
+                            </div>
+                        </div>
                     </div>
 
-                </div>
-                <div class="form-group row">
-
-                    <label asp-for="Name" class="col-sm-3 col-form-label"></label>
-                    <div class="col-sm-9">
-                        <input type="text" class="form-control" asp-for="Name">
-                        <span asp-validation-for="Name" class="text-danger"></span>
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 pt-3" style="border-top:1px solid rgba(47,50,125,.1);flex-wrap:wrap;">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4"
+                                style="font-family:Poppins,sans-serif;font-weight:700;">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        @if (Model.IsLive)
+                        {
+                            <a asp-area="SuperAdmin" asp-controller="Schedules" asp-action="Manage"
+                               asp-route-courseId="@Model.Id"
+                               class="btn rounded-3 px-4"
+                               style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));color:white;font-family:Poppins,sans-serif;font-weight:700;">
+                                <i class="fas fa-calendar-week me-2"></i>Manage Sessions
+                            </a>
+                        }
+                        <a asp-area="SuperAdmin" asp-controller="Courses" asp-action="Index"
+                           class="btn rounded-3 px-4"
+                           style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;font-weight:600;">
+                            Cancel
+                        </a>
                     </div>
-
-                </div>
-                <div class="form-group row">
-                    <label class=" col-sm-3 col-form-label">
-                        Show In Home Page
-                    </label>
-                    <div class="col-sm-9">
-                        <input type="checkbox" asp-for="ShowInHomePage" class="form-check-input"><i class="input-helper"></i>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label class=" col-sm-3 col-form-label">
-                        Upload Image
-                    </label>
-                    <div class="col-sm-9">
-                        <input asp-for="Image" type="file"
-                               class="form-control" placeholder="Uplad Image"
-                               accept=".jpg, .jpeg, .png, ,.gif">
-
-                    </div>
-                </div> <button type="submit" onclick="" class="btn btn-gradient-primary me-2">Submit</button>
-
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-<!-- Custom js for this page -->
-@section Scripts {
-    @{
-        <script src="~/Admin/assets/vendors/jquery-toast-plugin/jquery.toast.min.js"></script>
-        <script src="~/Admin/assets/js/toastDemo.js"></script>
 
-        await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
-        @if (ViewBag.Messag != null)
-        {
-            <script type="text/javascript">
-                showSuccessToast();
-            </script>
+@section Scripts {
+    <script>
+        var gradesByStage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(gradesByStage));
+        var currentGradeId = @Model.GradeId;
+        var currentSubSubjId = @Model.SubSubjId;
+
+        function syncIsLive(statusVal) {
+            document.getElementById('isLiveHidden').value =
+                (parseInt(statusVal) === 0) ? 'true' : 'false';
         }
 
-            
-    }
-    <!-- End custom js for this page -->
+        function loadGradesByStage(stageId) {
+            var sel = document.getElementById('gradeSelect');
+            var grades = gradesByStage[stageId] || [];
+
+            if (!stageId || grades.length === 0) {
+                sel.innerHTML = '<option value="" disabled hidden>— Select Grade —</option>';
+                return;
+            }
+
+            sel.innerHTML = '<option value="" disabled hidden>— Select Grade —</option>' +
+                grades.map(function(g){
+                    var selected = g.id == currentGradeId ? ' selected' : '';
+                    return '<option value="' + g.id + '"' + selected + '>' + g.name + '</option>';
+                }).join('');
+        }
+
+        async function loadSubSubjects(subjectId) {
+            var sel = document.getElementById('subsubjectSelect');
+            document.querySelector('input[name="SubjId"]').value = subjectId;
+            sel.innerHTML = '<option value="" disabled hidden>Loading…</option>';
+            if (!subjectId) {
+                sel.innerHTML = '<option value="" disabled hidden>— Select Sub-Subject —</option>';
+                return;
+            }
+            var res = await fetch('/SuperAdmin/Courses/GetSubSubjects?subjectId=' + subjectId);
+            var data = await res.json();
+            sel.innerHTML = '<option value="" disabled hidden>— Select Sub-Subject —</option>' +
+                data.map(function(ss){
+                    var selected = ss.id == currentSubSubjId ? ' selected' : '';
+                    return '<option value="' + ss.id + '"' + selected + '>' + ss.name + '</option>';
+                }).join('');
+        }
+
+        function previewImg(input) {
+            if (input.files && input.files[0]) {
+                var r = new FileReader();
+                r.onload = function(e){
+                    document.getElementById('imgPreviewEl').src = e.target.result;
+                    document.getElementById('imgPreview').style.display = 'block';
+                };
+                r.readAsDataURL(input.files[0]);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            syncIsLive(document.getElementById('statusSelect').value);
+            var stageId = document.getElementById('stageSelect').value;
+            if (stageId) loadGradesByStage(stageId);
+        });
+    </script>
 }

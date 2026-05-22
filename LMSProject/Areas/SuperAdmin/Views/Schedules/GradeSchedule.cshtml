@@ -1,0 +1,572 @@
+﻿@model List<MLSCore.Models.TbScheduleSession>
+@using MLSCore.Models
+@{
+    ViewData["Title"] = "Schedule";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+
+    var grade = ViewBag.Grade as TbGrade;
+    var gradeId = (int)ViewBag.GradeId;
+    var liveCourses = ViewBag.LiveCourses as List<TbCourse> ?? new();
+    var terms = ViewBag.Terms as List<TbTerm> ?? new();
+    var selTerm = ViewBag.SelTerm;
+
+    string[] DayNames = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+    string[] DayShort = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    string[] Colors = { "#5B72EE", "#00CBB8", "#E13468", "#F48C06", "#29B9E7", "#9b59b6", "#16a34a", "#2F327D" };
+
+    int StartHour = 7, EndHour = 21;
+    int todayDow = (int)DateTime.Today.DayOfWeek;
+
+    var byDay = Model.GroupBy(s => s.DayOfWeek).ToDictionary(g => g.Key, g => g.ToList());
+
+    string[] Palette = { "#5B72EE", "#00CBB8", "#E13468", "#F48C06", "#29B9E7", "#9b59b6", "#16a34a" };
+    var colorMap = new Dictionary<int, string>();
+    int ci = 0;
+    foreach (var s in Model)
+        if (!colorMap.ContainsKey(s.CourseId))
+            colorMap[s.CourseId] = string.IsNullOrEmpty(s.Color) ? Palette[ci++ % Palette.Length] : s.Color;
+}
+
+<style>
+    .gs-header {
+        background: linear-gradient(135deg,var(--primary),#5B72EE);
+        border-radius: 16px;
+        padding: 1.2rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.2rem;
+    }
+
+    .gs-badge {
+        background: rgba(255,255,255,.15);
+        color: white;
+        border-radius: 20px;
+        padding: 3px 12px;
+        font-size: .72rem;
+    }
+
+    /* Timetable */
+    .gs-wrap {
+        background: white;
+        border-radius: 18px;
+        overflow: auto;
+        box-shadow: 0 4px 20px rgba(47,50,125,.07);
+    }
+
+    .gs-grid {
+        display: grid;
+        grid-template-columns: 56px repeat(7,1fr);
+        min-width: 760px;
+    }
+
+    .gs-day-hd {
+        background: white;
+        padding: .65rem .5rem;
+        text-align: center;
+        font-size: .74rem;
+        font-weight: 700;
+        color: var(--primary);
+        border-bottom: 2px solid rgba(47,50,125,.08);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+        .gs-day-hd.today {
+            background: var(--primary);
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+
+    .gs-time {
+        background: #fafbff;
+        border-right: 1px solid rgba(0,0,0,.04);
+        font-size: .66rem;
+        color: #9ca3af;
+        padding: .25rem .4rem;
+        text-align: right;
+        border-bottom: 1px solid rgba(0,0,0,.03);
+        height: 52px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+    }
+
+    .gs-slot {
+        position: relative;
+        border-right: 1px solid rgba(0,0,0,.04);
+        border-bottom: 1px solid rgba(0,0,0,.03);
+        height: 52px;
+    }
+
+    .gs-card {
+        position: absolute;
+        left: 2px;
+        right: 2px;
+        border-radius: 8px;
+        padding: 3px 6px;
+        font-size: .67rem;
+        font-weight: 600;
+        color: white;
+        overflow: hidden;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        transition: transform .15s,box-shadow .15s;
+        z-index: 5;
+        line-height: 1.3;
+    }
+
+        .gs-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 14px rgba(0,0,0,.22);
+        }
+
+    /* Color swatches */
+    .color-dot {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: border .15s;
+    }
+
+        .color-dot.selected {
+            border-color: #374151;
+        }
+
+    /* Term pill filter */
+    .term-pill {
+        display: inline-block;
+        padding: .3rem .9rem;
+        border-radius: 20px;
+        font-size: .75rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        border: 1.5px solid rgba(47,50,125,.1);
+        color: #6b7280;
+        transition: all .15s;
+    }
+
+        .term-pill:hover, .term-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+    /* Empty state */
+    .gs-empty {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #9ca3af;
+    }
+</style>
+
+<!-- ── Header ──────────────────────────────────────────────────────── -->
+<div class="gs-header anim">
+    <a asp-action="Index" style="color:rgba(255,255,255,.7);font-size:.82rem;text-decoration:none;">
+        <i class="fas fa-arrow-left me-1"></i>All Schedules
+    </a>
+    <div style="width:1px;height:22px;background:rgba(255,255,255,.2);"></div>
+    <div>
+        <div style="color:white;font-weight:800;font-size:1rem;">@grade?.Stage?.Name — @grade?.Name</div>
+        <div style="color:rgba(255,255,255,.65);font-size:.75rem;">Weekly timetable</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <span class="gs-badge"><i class="fas fa-calendar-check me-1"></i>@Model.Count session(s)</span>
+        @if (liveCourses.Any())
+        {
+            <button type="button" class="btn btn-sm rounded-3"
+                    style="background:rgba(255,255,255,.2);color:white;font-family:Poppins,sans-serif;font-weight:700;font-size:.78rem;"
+                    data-bs-toggle="modal" data-bs-target="#addModal">
+                <i class="fas fa-plus me-1"></i>Add Session
+            </button>
+        }
+    </div>
+</div>
+
+<!-- ── Term filter ──────────────────────────────────────────────────── -->
+@if (terms.Any())
+{
+    <div class="mb-3 d-flex gap-2 flex-wrap align-items:center anim">
+        <a href="@Url.Action("GradeSchedule", "Schedules", new { area = "SuperAdmin", gradeId })"
+           class="term-pill @(selTerm == null ? "active" : "")">All Terms</a>
+        @foreach (var t in terms)
+        {
+            <a href="@Url.Action("GradeSchedule", "Schedules", new { area = "SuperAdmin", gradeId, termId = t.Id })"
+               class="term-pill @(selTerm?.ToString() == t.Id.ToString() ? "active" : "")">@t.Name</a>
+        }
+    </div>
+}
+
+<!-- ── Timetable ────────────────────────────────────────────────────── -->
+<div class="gs-wrap anim">
+    @if (!Model.Any())
+    {
+        <div class="gs-empty">
+            <i class="fas fa-calendar-week d-block mb-3" style="font-size:3rem;opacity:.12;"></i>
+            <div style="font-weight:700;color:var(--primary);margin-bottom:.4rem;">No sessions yet</div>
+            <div style="font-size:.84rem;">
+                @if (liveCourses.Any())
+                {
+                    <span>Click <strong>Add Session</strong> above to schedule the first one.</span>
+                }
+                else
+                {
+                    <span>Create a <em>Live Course</em> for <strong>@grade?.Name</strong> first, then add sessions.</span>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="gs-grid">
+            <!-- Header row -->
+            <div class="gs-day-hd" style="background:#f8f9ff;border-bottom:2px solid rgba(47,50,125,.08);"></div>
+            @for (int d = 0; d < 7; d++)
+            {
+                <div class="gs-day-hd @(d == todayDow ? "today" : "")">
+                    <div>@DayShort[d]</div>
+                    <div style="font-size:.63rem;font-weight:400;opacity:.7;">@DayNames[d]</div>
+                </div>
+            }
+
+            <!-- Time rows -->
+            @for (int h = StartHour; h < EndHour; h++)
+            {
+                <div class="gs-time">@($"{h:D2}:00")</div>
+                @for (int d = 0; d < 7; d++)
+                {
+                    var slotSessions = byDay.ContainsKey(d)
+                        ? byDay[d].Where(s => s.StartTime.Hours == h ||
+                            (s.StartTime.Hours < h && s.EndTime.Hours > h)).ToList()
+                        : new();
+                    <div class="gs-slot">
+                        @foreach (var s in slotSessions)
+                        {
+                            if (s.StartTime.Hours == h)
+                            {
+                                double totalMin = (s.EndTime - s.StartTime).TotalMinutes;
+                                double heightPx = totalMin / 60.0 * 52;
+                                double topPx = s.StartTime.Minutes / 60.0 * 52;
+                                var col = colorMap.ContainsKey(s.CourseId) ? colorMap[s.CourseId] : "#5B72EE";
+                                <div class="gs-card"
+                                     style="background:@col;height:@(heightPx.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;top:@(topPx.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;"
+                                     onclick="openDetail(@s.Id)">
+                                    <div style="font-weight:700;font-size:.69rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@s.Course?.Name</div>
+                                    <div style="opacity:.9;font-size:.62rem;">@s.StartTime.ToString(@"hh\:mm") – @s.EndTime.ToString(@"hh\:mm")</div>
+                                    @if (!string.IsNullOrEmpty(s.Course?.Instructor?.FullName))
+                                    {
+                                        <div style="opacity:.8;font-size:.6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                            <i class="fas fa-user me-1"></i>@s.Course.Instructor.FullName
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     ADD SESSION MODAL
+═════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,var(--primary),#5B72EE);padding:1.1rem 1.4rem;display:flex;align-items:center;gap:.75rem;">
+                <h6 style="color:white;font-weight:700;margin:0;"><i class="fas fa-plus me-2"></i>Add Session</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.4rem;">
+                <form asp-area="SuperAdmin" asp-controller="Schedules" asp-action="GradeAddSession" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="gradeId" value="@gradeId" />
+
+                    <div class="mb-3">
+                        <label class="sa-label">Course <span class="text-danger">*</span></label>
+                        <select name="courseId" class="sa-form-control" required>
+                            <option value="">— Select Course —</option>
+                            @foreach (var c in liveCourses)
+                            {
+                                <option value="@c.Id">@c.Name (@c.Term?.Name) — @c.Instructor?.FullName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="sa-label">Day of Week</label>
+                        <select name="dayOfWeek" class="sa-form-control">
+                            @for (int i = 0; i < 7; i++)
+                            {
+                                <option value="@i">@DayNames[i]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="sa-label">Start Time</label>
+                            <input type="time" name="startTime" step="60" required
+                                   style="display:block;width:100%;padding:.45rem .75rem;border:1.5px solid rgba(47,50,125,.15);border-radius:10px;font-family:Poppins,sans-serif;font-size:.87rem;color:#374151;background:#fff;outline:none;" />
+                        </div>
+                        <div class="col-6">
+                            <label class="sa-label">End Time</label>
+                            <input type="time" name="endTime" step="60" required
+                                   style="display:block;width:100%;padding:.45rem .75rem;border:1.5px solid rgba(47,50,125,.15);border-radius:10px;font-family:Poppins,sans-serif;font-size:.87rem;color:#374151;background:#fff;outline:none;" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="sa-label">Zoom Link <span style="color:#9ca3af;">(optional)</span></label>
+                        <input type="url" name="meetingLink" class="sa-form-control" placeholder="https://zoom.us/j/..." />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="sa-label">Session Color</label>
+                        <div class="d-flex gap-2 flex-wrap" id="addColorPicker">
+                            @foreach (var col in Colors)
+                            {
+                                <div class="color-dot @(col == Colors[0] ? "selected" : "")"
+                                     style="background:@col;"
+                                     onclick="pickColor(this,'@col','addColorInput')"></div>
+                            }
+                        </div>
+                        <input type="hidden" name="color" id="addColorInput" value="@Colors[0]" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="sa-label">Notes <span style="color:#9ca3af;">(optional)</span></label>
+                        <textarea name="notes" class="sa-form-control" rows="2" placeholder="e.g. Bring textbook"></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn rounded-3 flex-grow-1" data-bs-dismiss="modal"
+                                style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary rounded-3 flex-grow-1" style="font-family:Poppins,sans-serif;">
+                            <i class="fas fa-plus me-2"></i>Add Session
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SESSION DETAIL MODAL (click on card)
+═════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div id="detailHeader" style="padding:1.2rem 1.5rem;display:flex;align-items:center;gap:.8rem;">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-calendar-alt" style="color:white;"></i>
+                </div>
+                <h6 style="color:white;font-weight:700;margin:0;" id="detailTitle">Session Details</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div id="detailBody" style="padding:1.3rem 1.5rem;"></div>
+            <div id="detailActions" style="padding:0 1.5rem 1.5rem;display:flex;gap:.5rem;flex-wrap:wrap;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     EDIT SESSION MODAL
+═════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));padding:1.1rem 1.4rem;display:flex;align-items:center;gap:.75rem;">
+                <h6 style="color:white;font-weight:700;margin:0;"><i class="fas fa-edit me-2"></i>Edit Session</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.4rem;">
+                <form asp-area="SuperAdmin" asp-controller="Schedules" asp-action="GradeEditSession" method="post" id="editForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="editId" />
+                    <input type="hidden" name="gradeId" value="@gradeId" />
+
+                    <div class="mb-3">
+                        <label class="sa-label">Day</label>
+                        <select name="dayOfWeek" id="editDay" class="sa-form-control">
+                            @for (int i = 0; i < 7; i++)
+                            {
+                                <option value="@i">@DayNames[i]</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="sa-label">Start</label>
+                            <input type="time" name="startTime" id="editStart" step="60"
+                                   style="display:block;width:100%;padding:.45rem .75rem;border:1.5px solid rgba(47,50,125,.15);border-radius:10px;font-family:Poppins,sans-serif;font-size:.87rem;color:#374151;background:#fff;outline:none;" />
+                        </div>
+                        <div class="col-6">
+                            <label class="sa-label">End</label>
+                            <input type="time" name="endTime" id="editEnd" step="60"
+                                   style="display:block;width:100%;padding:.45rem .75rem;border:1.5px solid rgba(47,50,125,.15);border-radius:10px;font-family:Poppins,sans-serif;font-size:.87rem;color:#374151;background:#fff;outline:none;" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="sa-label">Zoom Link</label>
+                        <input type="url" name="meetingLink" id="editLink" class="sa-form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="sa-label">Notes</label>
+                        <textarea name="notes" id="editNotes" class="sa-form-control" rows="2"></textarea>
+                    </div>
+                    <input type="hidden" name="color" id="editColor" />
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn rounded-3 flex-grow-1" data-bs-dismiss="modal"
+                                style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary rounded-3 flex-grow-1" style="font-family:Poppins,sans-serif;">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     DELETE CONFIRM MODAL
+═════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#E13468,#c0392b);padding:1.1rem 1.4rem;display:flex;align-items:center;gap:.75rem;">
+                <h6 style="color:white;font-weight:700;margin:0;"><i class="fas fa-trash me-2"></i>Remove Session</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.4rem;">
+                <p style="font-size:.87rem;color:#374151;margin-bottom:1.2rem;">
+                    Are you sure you want to remove <strong id="deleteSessionName"></strong>? This cannot be undone.
+                </p>
+                <form asp-area="SuperAdmin" asp-controller="Schedules" asp-action="GradeDeleteSession" method="post" id="deleteForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="deleteId" />
+                    <input type="hidden" name="gradeId" value="@gradeId" />
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn rounded-3 flex-grow-1" data-bs-dismiss="modal"
+                                style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn rounded-3 flex-grow-1"
+                                style="background:#E13468;color:white;font-family:Poppins,sans-serif;font-weight:700;">
+                            <i class="fas fa-trash me-2"></i>Remove
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Session data from server ──────────────────────────────────────
+        var sessions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.Select(s => new
+                    {
+                            id = s.Id,
+                            courseId = s.CourseId,
+                            courseName = s.Course?.Name ?? "",
+                            subject = s.Course?.SubSubject?.Subject?.Name ?? "",
+                            subSubject = s.Course?.SubSubject?.Name ?? "",
+                            instructor = s.Course?.Instructor?.FullName ?? "",
+                            term = s.Course?.Term?.Name ?? "",
+                            grade = s.Course?.Grade?.Name ?? "",
+                            day = s.DayOfWeek,
+                            start = s.StartTime.ToString(@"hh\:mm"),
+                            end = s.EndTime.ToString(@"hh\:mm"),
+                            durationMin = (int)(s.EndTime - s.StartTime).TotalMinutes,
+                            meetingLink = s.MeetingLink ?? "",
+                            color = s.Color,
+                            notes = s.Notes ?? ""
+                    })));
+
+        var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+        // ── Color picker ──────────────────────────────────────────────────
+        function pickColor(el, color, inputId) {
+            el.closest('.d-flex').querySelectorAll('.color-dot').forEach(function(d){
+                d.classList.remove('selected');
+            });
+            el.classList.add('selected');
+            document.getElementById(inputId).value = color;
+        }
+
+        // ── Open detail modal ─────────────────────────────────────────────
+        function openDetail(id) {
+            var s = sessions.find(function(x){ return x.id === id; });
+            if (!s) return;
+
+            document.getElementById('detailHeader').style.background =
+                'linear-gradient(135deg,' + s.color + 'cc,' + s.color + ')';
+            document.getElementById('detailTitle').textContent = s.courseName;
+
+            document.getElementById('detailBody').innerHTML =
+                '<div style="font-size:.83rem;line-height:2.2;color:#374151;">' +
+                '<i class="fas fa-book me-2" style="color:var(--secondary);width:18px;"></i>' + (s.subSubject || s.subject || '—') + '<br/>' +
+                '<i class="fas fa-chalkboard-teacher me-2" style="color:var(--accent-purple);width:18px;"></i>' + (s.instructor || '—') + '<br/>' +
+                '<i class="fas fa-calendar me-2" style="color:var(--accent-blue);width:18px;"></i>' + dayNames[s.day] + ' &nbsp; ' + s.start + ' – ' + s.end + '<br/>' +
+                '<i class="fas fa-clock me-2" style="color:#F48C06;width:18px;"></i>' + s.durationMin + ' min<br/>' +
+                '<i class="fas fa-calendar-alt me-2" style="color:var(--primary);width:18px;"></i>' + (s.term || '—') + '<br/>' +
+                (s.notes ? '<i class="fas fa-sticky-note me-2" style="color:#9ca3af;width:18px;"></i>' + s.notes + '<br/>' : '') +
+                '</div>';
+
+            var actions = '';
+            if (s.meetingLink)
+                actions += '<a href="' + s.meetingLink + '" target="_blank" class="btn rounded-3 flex-grow-1" style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));color:white;font-family:Poppins,sans-serif;font-weight:700;font-size:.82rem;"><i class="fas fa-video me-1"></i>Join</a>';
+            actions += '<button type="button" class="btn rounded-3 flex-grow-1" style="background:rgba(91,114,238,.1);color:var(--accent-purple);font-family:Poppins,sans-serif;font-size:.82rem;" onclick="openEdit(' + s.id + ');"><i class="fas fa-edit me-1"></i>Edit</button>';
+            actions += '<button type="button" class="btn rounded-3 flex-grow-1" style="background:rgba(225,52,104,.08);color:#E13468;font-family:Poppins,sans-serif;font-size:.82rem;" onclick="openDelete(' + s.id + ',\'' + s.courseName.replace(/'/g,"\\\'") + '\');"><i class="fas fa-trash me-1"></i>Delete</button>';
+            document.getElementById('detailActions').className = 'px-3 pb-3 d-flex gap-2 flex-wrap';
+            document.getElementById('detailActions').innerHTML = actions;
+
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }
+
+        // ── Open edit modal ───────────────────────────────────────────────
+        function openEdit(id) {
+            var s = sessions.find(function(x){ return x.id === id; });
+            if (!s) return;
+            // Close detail modal if open
+            var dm = bootstrap.Modal.getInstance(document.getElementById('detailModal'));
+            if (dm) dm.hide();
+            document.getElementById('editId').value    = s.id;
+            document.getElementById('editDay').value   = s.day;
+            document.getElementById('editStart').value = s.start;
+            document.getElementById('editEnd').value   = s.end;
+            document.getElementById('editLink').value  = s.meetingLink;
+            document.getElementById('editColor').value = s.color;
+            document.getElementById('editNotes').value = s.notes;
+            setTimeout(function(){
+                new bootstrap.Modal(document.getElementById('editModal')).show();
+            }, 300);
+        }
+
+        // ── Open delete modal ─────────────────────────────────────────────
+        function openDelete(id, name) {
+            var dm = bootstrap.Modal.getInstance(document.getElementById('detailModal'));
+            if (dm) dm.hide();
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteSessionName').textContent = name;
+            setTimeout(function(){
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            }, 300);
+        }
+    </script>
+}

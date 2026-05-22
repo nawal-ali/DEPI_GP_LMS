@@ -1,0 +1,145 @@
+﻿@{
+    ViewData["AreaName"] = "Parent";
+}
+@{
+    string areaName  = (string)(ViewData["AreaName"] ?? "Student");
+    string pageTitle = "My Schedule";
+    Layout = "~/Areas/" + areaName + "/Views/Shared/_" + areaName + "Layout.cshtml";
+}
+@model List<MLSCore.Models.TbScheduleSession>
+@{
+    string[] Short = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+    string[] Full  = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
+    int StartHour = 7, EndHour = 21, todayDow = (int)DateTime.Today.DayOfWeek;
+    var byDay = Model.GroupBy(s=>s.DayOfWeek).ToDictionary(g=>g.Key,g=>g.ToList());
+    string[] Pal = {"#5B72EE","#00CBB8","#E13468","#F48C06","#29B9E7","#9b59b6","#16a34a"};
+    var cm = new Dictionary<int,string>(); int ci=0;
+    foreach(var s in Model) if(!cm.ContainsKey(s.CourseId)) cm[s.CourseId]=string.IsNullOrEmpty(s.Color)?Pal[ci++%Pal.Length]:s.Color;
+}
+
+<style>
+.sch-wrap{overflow-x:auto;}
+.sch-tbl{display:grid;grid-template-columns:52px repeat(7,1fr);min-width:700px;}
+.sch-dh{background:white;padding:.65rem .5rem;text-align:center;font-size:.75rem;font-weight:700;color:var(--primary);border-bottom:2px solid rgba(47,50,125,.08);position:sticky;top:0;z-index:10;}
+.sch-dh.today{background:var(--primary);color:white;border-radius:8px 8px 0 0;}
+.sch-tc{background:#fafbff;border-right:1px solid rgba(0,0,0,.04);font-size:.67rem;color:#9ca3af;padding:.3rem .4rem;text-align:right;border-bottom:1px solid rgba(0,0,0,.03);height:48px;display:flex;align-items:flex-start;justify-content:flex-end;}
+.sch-sl{position:relative;border-right:1px solid rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.03);height:48px;}
+.sch-cd{position:absolute;left:2px;right:2px;border-radius:8px;padding:3px 6px;font-size:.68rem;font-weight:600;color:white;overflow:hidden;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .15s;z-index:5;line-height:1.3;}
+.sch-cd:hover{transform:scale(1.02);}
+</style>
+
+<div class="anim">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="font-weight:800;color:var(--primary);margin:0;">
+            <i class="fas fa-calendar-week me-2" style="color:var(--secondary);"></i>My Schedule
+        </h5>
+        <span style="background:rgba(0,203,184,.1);color:var(--secondary);border-radius:20px;padding:3px 14px;font-size:.78rem;font-weight:700;">
+            Week of @DateTime.Today.ToString("MMM dd, yyyy")
+        </span>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;padding:5rem 2rem;background:white;border-radius:18px;box-shadow:0 4px 20px rgba(47,50,125,.07);">
+            <i class="fas fa-calendar-week d-block mb-3" style="font-size:3.5rem;color:rgba(47,50,125,.12);"></i>
+            <h6 style="color:var(--primary);font-weight:700;">No sessions scheduled</h6>
+            <p style="color:#9ca3af;font-size:.85rem;">Your schedule will appear here once sessions are added.</p>
+        </div>
+    }
+    else
+    {
+         var todaySess = Model.Where(s=>s.DayOfWeek==todayDow).OrderBy(s=>s.StartTime).ToList(); 
+        @if(todaySess.Any()){
+            <div style="background:linear-gradient(135deg,var(--primary),#5B72EE);border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:1.2rem;color:white;">
+                <div style="font-size:.72rem;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem;">
+                    <i class="fas fa-star me-1"></i>Today — @Full[todayDow]
+                </div>
+                <div class="d-flex gap-3 flex-wrap">
+                    @foreach(var ts in todaySess){
+                        <div style="background:rgba(255,255,255,.15);border-radius:11px;padding:.55rem .9rem;">
+                            <div style="font-weight:700;font-size:.82rem;">@ts.Course?.Name</div>
+                            <div style="font-size:.72rem;opacity:.8;">@ts.StartTime.ToString(@"hh\:mm")–@ts.EndTime.ToString(@"hh\:mm")</div>
+                            @if(!string.IsNullOrEmpty(ts.MeetingLink)){
+                                <a href="@ts.MeetingLink" target="_blank" style="color:rgba(255,255,255,.9);font-size:.7rem;font-weight:700;text-decoration:none;"><i class="fas fa-video me-1"></i>Join</a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        <div style="background:white;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(47,50,125,.07);" class="sch-wrap">
+            <div class="sch-tbl">
+                <div class="sch-dh" style="background:#f8f9ff;"></div>
+                @for(int d=0;d<7;d++){
+                    <div class="sch-dh @(d==todayDow?"today":"")">
+                        <div>@Short[d]</div>
+                        <div style="font-size:.65rem;font-weight:400;opacity:.7;">@Full[d]</div>
+                    </div>
+                }
+                @for(int h=StartHour;h<EndHour;h++){
+                    <div class="sch-tc">@($"{h:D2}:00")</div>
+                    @for(int d=0;d<7;d++){
+                        var slotList = byDay.ContainsKey(d)
+                            ? byDay[d].Where(s=>s.StartTime.Hours==h||(s.StartTime.Hours<h&&s.EndTime.Hours>h)).ToList()
+                            : new List<MLSCore.Models.TbScheduleSession>();
+                        <div class="sch-sl">
+                            @foreach(var s in slotList){
+                                if(s.StartTime.Hours==h){
+                                    double ht=(s.EndTime-s.StartTime).TotalMinutes/60.0*48;
+                                    double tp=s.StartTime.Minutes/60.0*48;
+                                    var col=cm.ContainsKey(s.CourseId)?cm[s.CourseId]:"#5B72EE";
+                                    <div class="sch-cd" style="background:@col;height:@(ht)px;top:@(tp)px;" onclick="showSess(@s.Id)">
+                                        <div>@s.Course?.Name</div>
+                                        <div style="opacity:.85;font-size:.62rem;">@s.StartTime.ToString(@"hh\:mm")–@s.EndTime.ToString(@"hh\:mm")</div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="sessModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div id="sessHead" style="padding:1.1rem 1.4rem;display:flex;align-items:center;gap:.75rem;">
+                <h6 style="color:white;font-weight:700;margin:0;" id="sessTitle">Session</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.3rem;" id="sessBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+var sd=@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(s=>new{
+    id=s.Id,cn=s.Course!=null?s.Course.Name:"",
+    gr=s.Course!=null&&s.Course.Grade!=null?s.Course.Grade.Name:"",
+    ins=s.Course!=null&&s.Course.Instructor!=null?s.Course.Instructor.FullName:"",
+    sub=s.Course!=null&&s.Course.SubSubject!=null&&s.Course.SubSubject.Subject!=null?s.Course.SubSubject.Subject.Name:"",
+    d=s.DayOfWeek,
+    st=s.StartTime.ToString(@"hh\:mm"),en=s.EndTime.ToString(@"hh\:mm"),
+    ml=s.MeetingLink??"",col=s.Color,nt=s.Notes??""
+})));
+var DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function showSess(id){
+    var s=sd.find(function(x){return x.id===id;});if(!s)return;
+    document.getElementById("sessHead").style.background="linear-gradient(135deg,"+s.col+"cc,"+s.col+")";
+    document.getElementById("sessTitle").textContent=s.cn;
+    var b="<div style='font-size:.83rem;line-height:2.2;color:#374151;'>" +
+        "<i class='fas fa-calendar me-2' style='color:var(--secondary);'></i>"+DN[s.d]+" "+s.st+"–"+s.en+"<br/>" +
+        "<i class='fas fa-chalkboard-teacher me-2' style='color:var(--accent-purple);'></i>"+(s.ins||"—")+"<br/>" +
+        "<i class='fas fa-layer-group me-2' style='color:var(--accent-blue);'></i>"+(s.gr||"—")+"<br/>" +
+        "<i class='fas fa-book me-2' style='color:var(--accent-pink);'></i>"+(s.sub||"—")+"<br/>" +
+        (s.nt?"<i class='fas fa-sticky-note me-2' style='color:#9ca3af;'></i>"+s.nt+"<br/>":"") +
+        "</div>" +
+        (s.ml?"<a href='"+s.ml+"' target='_blank' class='btn w-100 rounded-3 mt-2' style='background:linear-gradient(135deg,var(--secondary),var(--accent-blue));color:white;font-family:Poppins,sans-serif;font-weight:700;'><i class='fas fa-video me-2'></i>Join Session</a>":"");
+    document.getElementById("sessBody").innerHTML=b;
+    new bootstrap.Modal(document.getElementById("sessModal")).show();
+}
+</script>
+}
