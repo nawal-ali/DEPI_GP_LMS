@@ -43,8 +43,8 @@
     .sch-table { display:grid; grid-template-columns:52px repeat(7,1fr); min-width:700px; }
     .sch-day-head { background:white; padding:.65rem .5rem; text-align:center; font-size:.75rem; font-weight:700; color:var(--primary); border-bottom:2px solid rgba(47,50,125,.08); position:sticky;top:0;z-index:10; }
     .sch-day-head.today { background:var(--primary); color:white; border-radius:8px 8px 0 0; }
-    .sch-time-cell { background:#fafbff;border-right:1px solid rgba(0,0,0,.04);font-size:.67rem;color:#9ca3af;padding:.3rem .4rem;text-align:right;border-bottom:1px solid rgba(0,0,0,.03);height:48px;display:flex;align-items:flex-start;justify-content:flex-end; }
-    .sch-slot { position:relative; border-right:1px solid rgba(0,0,0,.04); border-bottom:1px solid rgba(0,0,0,.03); height:48px; }
+    .sch-time-cell { background:white;border-right:1px solid rgba(0,0,0,.04);font-size:.67rem;color:#9ca3af;padding:.3rem .4rem;text-align:right;border-bottom:1px solid rgba(0,0,0,.03);height:48px;display:flex;align-items:flex-start;justify-content:flex-end; }
+    .sch-slot { position:relative; background:white; border-right:1px solid rgba(0,0,0,.04); border-bottom:1px solid rgba(0,0,0,.03); height:48px; }
     .sch-session-card {
         position:absolute; left:2px; right:2px;
         border-radius:8px; padding:3px 6px;
@@ -59,6 +59,21 @@
     /* Add course btn */
     .sch-add-btn { background:linear-gradient(135deg,var(--primary),#5B72EE);color:white;border:none;border-radius:12px;padding:.65rem 1rem;font-size:.82rem;font-weight:700;cursor:pointer;width:100%;font-family:Poppins,sans-serif;transition:opacity .2s; }
     .sch-add-btn:hover { opacity:.9; }
+
+    /* Scroll wrapper for timetable */
+    .sch-tbl-scroll { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:18px; }
+    .sch-tbl-scroll::-webkit-scrollbar { height:5px; }
+    .sch-tbl-scroll::-webkit-scrollbar-track { background:#f1f1f1; border-radius:10px; }
+    .sch-tbl-scroll::-webkit-scrollbar-thumb { background:rgba(47,50,125,.2); border-radius:10px; }
+    .sch-tbl-hint { display:none; align-items:center; gap:.4rem; font-size:.73rem; color:#9ca3af; margin-bottom:.5rem; }
+
+    /* Mobile layout */
+    @@media (max-width: 768px) {
+        .sch-page { flex-direction:column; height:auto; min-height:0; }
+        .sch-sidebar { width:100%; }
+        .sch-main { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .sch-tbl-hint { display:flex; }
+    }
 </style>
 
 <div class="sch-page anim">
@@ -139,6 +154,11 @@
         else
         {
             <!-- Timetable header + body -->
+            <div class="sch-tbl-hint">
+                <i class="fas fa-arrows-left-right"></i>
+                <span>Scroll sideways to see all days</span>
+            </div>
+            <div class="sch-tbl-scroll">
             <div style="background:white;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(47,50,125,.07);min-width:700px;">
                 <div class="sch-table">
 
@@ -200,6 +220,7 @@
                         }
                     }
                 </div>
+            </div>
             </div>
         }
     </div>

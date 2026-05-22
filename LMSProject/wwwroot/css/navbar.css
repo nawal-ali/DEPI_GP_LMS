@@ -47,3 +47,18 @@
 .navbar-solid .navbar-toggler-icon {
     filter: invert(0);
 }
+
+/* ── Mobile offcanvas: always dark text ────────────────────────────── */
+@media (max-width: 767.98px) {
+    /* nav links */
+    #offcanvasNavbar .nav-text {
+        color: #2d2d2d !important;
+    }
+
+    /* language toggle button */
+    #langBtn {
+        background: rgba(47,50,125,.08) !important;
+        border-color: rgba(47,50,125,.2) !important;
+        color: #2d2d2d !important;
+    }
+}

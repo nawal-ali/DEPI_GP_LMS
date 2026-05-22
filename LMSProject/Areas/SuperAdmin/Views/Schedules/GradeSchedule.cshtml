@@ -52,14 +52,21 @@
         background: white;
         border-radius: 18px;
         overflow: auto;
+        -webkit-overflow-scrolling: touch;
         box-shadow: 0 4px 20px rgba(47,50,125,.07);
     }
+    .gs-wrap::-webkit-scrollbar { height: 5px; }
+    .gs-wrap::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .gs-wrap::-webkit-scrollbar-thumb { background: rgba(47,50,125,.2); border-radius: 10px; }
 
     .gs-grid {
         display: grid;
         grid-template-columns: 56px repeat(7,1fr);
         min-width: 760px;
     }
+
+    .gs-hint { display:none; align-items:center; gap:.4rem; font-size:.73rem; color:#9ca3af; margin-bottom:.5rem; }
+    @@media (max-width: 768px) { .gs-hint { display:flex; } }
 
     .gs-day-hd {
         background: white;
@@ -81,7 +88,7 @@
         }
 
     .gs-time {
-        background: #fafbff;
+        background: white;
         border-right: 1px solid rgba(0,0,0,.04);
         font-size: .66rem;
         color: #9ca3af;
@@ -96,6 +103,7 @@
 
     .gs-slot {
         position: relative;
+        background: white;
         border-right: 1px solid rgba(0,0,0,.04);
         border-bottom: 1px solid rgba(0,0,0,.03);
         height: 52px;
@@ -203,6 +211,10 @@
 }
 
 <!-- ── Timetable ────────────────────────────────────────────────────── -->
+<div class="gs-hint anim">
+    <i class="fas fa-arrows-left-right"></i>
+    <span>Scroll sideways to see all days</span>
+</div>
 <div class="gs-wrap anim">
     @if (!Model.Any())
     {
