@@ -51,8 +51,24 @@
 
                     <div class="mb-3">
                         <label class="form-label">Points <span class="text-danger">*</span></label>
-                        <input asp-for="Points" type="number" min="1" max="1000" class="sa-form-control" style="max-width:150px;" />
+                        <input asp-for="Points" type="number" min="1" max="@ViewBag.RemainingPoints" class="sa-form-control" style="max-width:150px;" />
                         <span asp-validation-for="Points" class="text-danger small"></span>
+                        <div class="mt-1" style="font-size:.78rem;">
+                            <span style="color:#9ca3af;">Marks used: </span>
+                            <strong style="color:var(--primary);">@ViewBag.UsedPoints / @ViewBag.TotalMarks</strong>
+                            @if ((int)ViewBag.RemainingPoints > 0)
+                            {
+                                <span style="color:#16a34a;margin-left:.5rem;">
+                                    <i class="fas fa-check-circle me-1"></i>@ViewBag.RemainingPoints mark@((int)ViewBag.RemainingPoints != 1 ? "s" : "") remaining
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="color:#E13468;margin-left:.5rem;">
+                                    <i class="fas fa-exclamation-circle me-1"></i>No marks remaining
+                                </span>
+                            }
+                        </div>
                     </div>
 
                     <!-- MCQ Section -->

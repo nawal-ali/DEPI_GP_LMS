@@ -1,4 +1,4 @@
-@model List<MLSCore.Models.TbStudentTest>
+@model List<LMSProject.Areas.Instructor.ViewModel.ExamResultRowVM>
 @{
     var exam = ViewBag.Exam as MLSCore.Models.TbTest;
     ViewData["Title"] = $"Results: {exam?.Title}";
@@ -16,9 +16,11 @@
 
 @if (Model.Any())
 {
-    var avg = Model.Average(r => r.Score);
-    var highest = Model.Max(r => r.Score);
-    var passing = Model.Count(r => exam != null && r.Score >= exam.TotalMarks * 0.5);
+    var graded = Model.Where(r => !r.IsPending).ToList();
+    var avg    = graded.Any() ? graded.Average(r => r.Score) : 0;
+    var highest = graded.Any() ? graded.Max(r => r.Score) : 0;
+    var passing = graded.Count(r => exam != null && r.Score >= exam.TotalMarks * 0.5);
+    var pending = Model.Count(r => r.IsPending);
 
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
@@ -41,8 +43,8 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="sa-card p-3 text-center">
-                <div style="font-size:1.6rem;font-weight:800;color:var(--accent-blue);">@passing</div>
-                <small class="text-muted">Passed (≥50%)</small>
+                <div style="font-size:1.6rem;font-weight:800;color:#F48C06;">@pending</div>
+                <small class="text-muted">Pending Review</small>
             </div>
         </div>
     </div>
@@ -68,30 +70,63 @@
                         <th>Percentage</th>
                         <th>Duration</th>
                         <th>Date</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (int i = 0; i < Model.Count; i++)
                     {
                         var r = Model[i];
-                        var pct = exam?.TotalMarks > 0 ? r.Score / exam.TotalMarks * 100 : 0;
+                        var pct  = exam?.TotalMarks > 0 ? r.Score / exam.TotalMarks * 100 : 0;
                         var passed = pct >= 50;
                         <tr>
                             <td style="font-weight:700;color:var(--primary);">@(i + 1)</td>
                             <td>
-                                <div style="font-weight:600;font-size:0.85rem;">@r.Student?.FullName</div>
+                                <div style="font-weight:600;font-size:0.85rem;">@r.StudentName</div>
                             </td>
-                            <td style="font-weight:700;">@r.Score / @exam?.TotalMarks</td>
+                            <td style="font-weight:700;">
+                                @if (r.IsPending)
+                                {
+                                    <span style="color:#F48C06;">@r.Score <small style="font-size:.7rem;font-weight:400;">partial</small></span>
+                                }
+                                else
+                                {
+                                    @r.Score
+                                }
+                                <span style="color:#9ca3af;font-weight:400;"> / @exam?.TotalMarks</span>
+                            </td>
                             <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div style="height:6px;width:80px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
-                                        <div style="height:100%;width:@(Math.Min(pct,100))%;background:@(passed?"#33EFA0":"#E13468");border-radius:10px;"></div>
+                                @if (r.IsPending)
+                                {
+                                    <span style="background:rgba(244,140,6,.12);color:#F48C06;border-radius:8px;padding:2px 10px;font-size:.75rem;font-weight:700;">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="height:6px;width:80px;background:rgba(0,0,0,0.06);border-radius:10px;overflow:hidden;">
+                                            <div style="height:100%;width:@(Math.Min(pct,100))%;background:@(passed?"#33EFA0":"#E13468");border-radius:10px;"></div>
+                                        </div>
+                                        <span style="font-size:0.78rem;font-weight:600;color:@(passed?"#16a34a":"var(--accent-pink)");">@pct.ToString("0")\%</span>
                                     </div>
-                                    <span style="font-size:0.78rem;font-weight:600;color:@(passed?"#16a34a":"var(--accent-pink)");">@pct.ToString("0")\%</span>
-                                </div>
+                                }
                             </td>
                             <td style="font-size:0.8rem;">@r.TimeInMinutes min</td>
                             <td style="font-size:0.78rem;color:#9ca3af;">@r.JoinDate.ToString("MMM d, yyyy")</td>
+                            <td>
+                                @if (r.IsPending)
+                                {
+                                    <a asp-action="GradeTextAnswers" asp-route-studentTestId="@r.StudentTestId"
+                                       class="btn btn-sm px-3" style="border-radius:8px;background:rgba(244,140,6,.15);color:#F48C06;font-size:.78rem;font-weight:600;">
+                                        <i class="fas fa-pen me-1"></i>Grade
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span style="color:#aaa;font-size:.8rem;">—</span>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>

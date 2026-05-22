@@ -106,6 +106,7 @@ namespace LMSProject.Areas.Student.ViewModels
         public int QuestionCount { get; set; }
 
         public bool IsSubmitted { get; set; }
+        public bool IsPending { get; set; }
         public double? Score { get; set; }
         public DateTime? TakenAt { get; set; }
 

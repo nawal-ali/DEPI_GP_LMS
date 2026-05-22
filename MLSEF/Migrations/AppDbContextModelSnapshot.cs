@@ -106,12 +106,10 @@ namespace MLSEF.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AttachmentUrl")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Category")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -123,12 +121,10 @@ namespace MLSEF.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("CreatedBy")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("CreatedByUserId")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -143,7 +139,6 @@ namespace MLSEF.Migrations
                         .HasDefaultValue(1);
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -159,7 +154,6 @@ namespace MLSEF.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ImageUrl")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -174,7 +168,6 @@ namespace MLSEF.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<string>("Priority")
-                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
@@ -206,7 +199,6 @@ namespace MLSEF.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("UpdatedBy")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -245,6 +237,44 @@ namespace MLSEF.Migrations
                         .HasDatabaseName("IX_Announcement_AudienceActive");
 
                     b.ToTable("Announcements");
+                });
+
+            modelBuilder.Entity("MLSCore.Models.TbArticle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CoverImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentState")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Excerpt")
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Articles");
                 });
 
             modelBuilder.Entity("MLSCore.Models.TbAssignment", b =>
@@ -394,6 +424,44 @@ namespace MLSEF.Migrations
                     b.ToTable("Choices");
                 });
 
+            modelBuilder.Entity("MLSCore.Models.TbContactForm", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ContactForms");
+                });
+
             modelBuilder.Entity("MLSCore.Models.TbCourse", b =>
                 {
                     b.Property<int>("Id")
@@ -428,10 +496,26 @@ namespace MLSEF.Migrations
                     b.Property<int>("InstructorId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsLive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LiveEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LiveStartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MeetingLink")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("NumberOfSessions")
+                        .HasColumnType("int");
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
@@ -440,6 +524,9 @@ namespace MLSEF.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("float")
                         .HasDefaultValue(0.0);
+
+                    b.Property<int?>("SessionDurationMinutes")
+                        .HasColumnType("int");
 
                     b.Property<bool>("ShowInHomePage")
                         .HasColumnType("bit");
@@ -892,22 +979,18 @@ namespace MLSEF.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("AlternativePhoneNumber")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("City")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CreatedBy")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -922,7 +1005,6 @@ namespace MLSEF.Migrations
                         .HasDefaultValue(1);
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -932,7 +1014,6 @@ namespace MLSEF.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ImageName")
-                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
@@ -944,32 +1025,26 @@ namespace MLSEF.Migrations
                         .HasDefaultValue(true);
 
                     b.Property<string>("NationalId")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Occupation")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("PostalCode")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Relationship")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("UpdatedBy")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -993,6 +1068,52 @@ namespace MLSEF.Migrations
                         .IsUnique();
 
                     b.ToTable("Parents");
+                });
+
+            modelBuilder.Entity("MLSCore.Models.TbScheduleSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentState")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("MeetingLink")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.ToTable("ScheduleSessions");
                 });
 
             modelBuilder.Entity("MLSCore.Models.TbSelectedChoice", b =>
@@ -1127,7 +1248,6 @@ namespace MLSEF.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ImageName")
-                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
@@ -1137,11 +1257,9 @@ namespace MLSEF.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ParentMobile")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ParentNationalId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")
@@ -1241,6 +1359,9 @@ namespace MLSEF.Migrations
 
                     b.Property<double>("Score")
                         .HasColumnType("float");
+
+                    b.Property<bool>("IsPending")
+                        .HasColumnType("bit");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
@@ -1665,6 +1786,153 @@ namespace MLSEF.Migrations
                     b.ToTable("TestsQuestion");
                 });
 
+            modelBuilder.Entity("MLSCore.Models.TbTicket", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AssignedToUserId")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("AssignedToUserId");
+
+                    b.Property<string>("AttachmentName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AttachmentPath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentState")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CustomType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ForwardNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ForwardedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ForwardedByUserId")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("ForwardedByUserId");
+
+                    b.Property<bool>("IsForwarded")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SenderUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("SenderUserId");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("ForwardedByUserId");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.ToTable("Tickets");
+                });
+
+            modelBuilder.Entity("MLSCore.Models.TbTicketReply", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttachmentName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AttachmentPath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentState")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SenderUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("SenderUserId");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("int")
+                        .HasColumnName("TicketId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("TicketReplies");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityPasskeyData", b =>
                 {
                     b.Property<byte[]>("AttestationObject")
@@ -1846,8 +2114,7 @@ namespace MLSEF.Migrations
                     b.HasOne("MLSCore.IdentityModel.ApplicationUser", "Creator")
                         .WithMany("CreatedAnnouncements")
                         .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("MLSCore.Models.TbGrade", "Grade")
                         .WithMany()
@@ -2043,6 +2310,17 @@ namespace MLSEF.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MLSCore.Models.TbScheduleSession", b =>
+                {
+                    b.HasOne("MLSCore.Models.TbCourse", "Course")
+                        .WithMany("ScheduleSessions")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+                });
+
             modelBuilder.Entity("MLSCore.Models.TbSelectedChoice", b =>
                 {
                     b.HasOne("MLSCore.Models.TbChoice", "Choice")
@@ -2227,6 +2505,50 @@ namespace MLSEF.Migrations
                     b.Navigation("Test");
                 });
 
+            modelBuilder.Entity("MLSCore.Models.TbTicket", b =>
+                {
+                    b.HasOne("MLSCore.IdentityModel.ApplicationUser", "AssignedTo")
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MLSCore.IdentityModel.ApplicationUser", "ForwardedBy")
+                        .WithMany()
+                        .HasForeignKey("ForwardedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MLSCore.IdentityModel.ApplicationUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedTo");
+
+                    b.Navigation("ForwardedBy");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("MLSCore.Models.TbTicketReply", b =>
+                {
+                    b.HasOne("MLSCore.IdentityModel.ApplicationUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MLSCore.Models.TbTicket", "Ticket")
+                        .WithMany("Replies")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Sender");
+
+                    b.Navigation("Ticket");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -2313,6 +2635,8 @@ namespace MLSEF.Migrations
 
                     b.Navigation("Discounts");
 
+                    b.Navigation("ScheduleSessions");
+
                     b.Navigation("StudentCourses");
                 });
 
@@ -2394,6 +2718,11 @@ namespace MLSEF.Migrations
             modelBuilder.Entity("MLSCore.Models.TbTestQuestion", b =>
                 {
                     b.Navigation("Choices");
+                });
+
+            modelBuilder.Entity("MLSCore.Models.TbTicket", b =>
+                {
+                    b.Navigation("Replies");
                 });
 #pragma warning restore 612, 618
         }

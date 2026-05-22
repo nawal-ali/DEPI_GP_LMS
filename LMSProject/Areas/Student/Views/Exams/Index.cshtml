@@ -15,7 +15,8 @@
     @{
         var all = Model.Count;
         var available = Model.Count(e => e.CanTake);
-        var submitted = Model.Count(e => e.IsSubmitted);
+        var submitted = Model.Count(e => e.IsSubmitted && !e.IsPending);
+        var pending = Model.Count(e => e.IsPending);
         var expired = Model.Count(e => e.IsExpired);
     }
     <button class="btn btn-primary btn-sm rounded-3" onclick="filterExams('all')" id="tab-all">All (@all)</button>
@@ -27,6 +28,13 @@
             style="background:rgba(22,163,74,.1);color:#16a34a;">
         Submitted (@submitted)
     </button>
+    @if (pending > 0)
+    {
+        <button class="btn btn-sm rounded-3" onclick="filterExams('pending')" id="tab-pending"
+                style="background:rgba(244,140,6,.1);color:#F48C06;">
+            Pending Review (@pending)
+        </button>
+    }
     <button class="btn btn-sm rounded-3" onclick="filterExams('expired')" id="tab-expired"
             style="background:rgba(225,52,104,.1);color:var(--accent-pink);">
         Expired (@expired)
@@ -60,7 +68,7 @@ else
                 <tbody>
                     @foreach (var e in Model)
                     {
-                        string tag = e.IsSubmitted ? "submitted" : e.IsExpired ? "expired" : "available";
+                        string tag = e.IsSubmitted ? (e.IsPending ? "pending" : "submitted") : e.IsExpired ? "expired" : "available";
                         <tr data-tag="@tag">
                             <td style="font-weight:600;font-size:.87rem;">@e.Title</td>
                             <td><span class="pb pb-purple">@e.CourseName</span></td>
@@ -75,30 +83,35 @@ else
                                 }
                             </td>
                             <td>
-                                @if (e.IsSubmitted)
+                                @if (e.IsSubmitted && e.IsPending)
+                                {
+                                    <span class="pb" style="background:rgba(244,140,6,.12);color:#F48C06;">Pending</span>
+                                }
+                                else if (e.IsSubmitted)
                                 {
                                     <span class="pb pb-green">Submitted</span>
                                 }
                                 else if (e.IsExpired)
                                 {
-
                                     <span class="pb pb-red">Expired</span>
                                 }
                                 else
                                 {
-
                                     <span class="pb pb-orange">Available</span>
                                 }
                             </td>
                             <td>
-                                @if (e.IsSubmitted && e.Score.HasValue)
+                                @if (e.IsSubmitted && e.IsPending)
+                                {
+                                    <span style="color:#F48C06;font-weight:700;font-size:.82rem;"><i class="fas fa-clock me-1"></i>Awaiting review</span>
+                                }
+                                else if (e.IsSubmitted && e.Score.HasValue)
                                 {
                                     <span style="font-weight:800;color:@e.ScoreColor;">@e.Score / @e.TotalMarks</span>
                                     <span class="pb ms-1" style="background:@(e.ScoreColor)15;color:@e.ScoreColor;font-size:.68rem;">@e.GradeLabel</span>
                                 }
                                 else
                                 {
-
                                     <span style="color:#9ca3af;">—</span>
                                 }
                             </td>

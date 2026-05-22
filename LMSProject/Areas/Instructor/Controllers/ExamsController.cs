@@ -273,8 +273,15 @@ namespace LMSProject.Areas.Instructor.Controllers
 
             if (exam == null) return NotFound();
 
+            var usedPoints = await _context.TestsQuestion
+                .Where(q => q.TestId == examId && q.CurrentState == 1)
+                .SumAsync(q => q.Pints);
+
             var vm = new CreateQuestionVM { TestId = examId, Points = 1 };
             ViewBag.ExamTitle = exam.Title;
+            ViewBag.TotalMarks = (int)exam.TotalMarks;
+            ViewBag.UsedPoints = usedPoints;
+            ViewBag.RemainingPoints = (int)exam.TotalMarks - usedPoints;
             ViewData["Title"] = "Add Question";
             return View(vm);
         }
@@ -292,6 +299,14 @@ namespace LMSProject.Areas.Instructor.Controllers
 
             if (exam == null) return NotFound();
 
+            var usedPoints = await _context.TestsQuestion
+                .Where(q => q.TestId == vm.TestId && q.CurrentState == 1)
+                .SumAsync(q => q.Pints);
+            var remaining = (int)exam.TotalMarks - usedPoints;
+
+            if (vm.Points > remaining)
+                ModelState.AddModelError("Points", $"Only {remaining} mark(s) remaining out of {exam.TotalMarks} total. Reduce question points.");
+
             if (vm.QuestionType == QuestionType.Choice || vm.QuestionType == QuestionType.MultiChoice)
             {
                 if (string.IsNullOrWhiteSpace(vm.ChoiceA) || string.IsNullOrWhiteSpace(vm.ChoiceB))
@@ -304,6 +319,9 @@ namespace LMSProject.Areas.Instructor.Controllers
             {
                 var examForTitle = await _context.Tests.FindAsync(vm.TestId);
                 ViewBag.ExamTitle = examForTitle?.Title;
+                ViewBag.TotalMarks = (int)(examForTitle?.TotalMarks ?? 0);
+                ViewBag.UsedPoints = usedPoints;
+                ViewBag.RemainingPoints = remaining;
                 ViewData["Title"] = "Add Question";
                 return View(vm);
             }
@@ -409,11 +427,93 @@ namespace LMSProject.Areas.Instructor.Controllers
                 .Where(st => st.TestId == id)
                 .Include(st => st.Student)
                 .OrderByDescending(st => st.Score)
+                .Select(st => new ExamResultRowVM
+                {
+                    StudentTestId = st.Id,
+                    StudentName = st.Student != null ? st.Student.FullName : "",
+                    Score = st.Score,
+                    IsPending = st.IsPending,
+                    JoinDate = st.JoinDate,
+                    TimeInMinutes = st.TimeInMinutes
+                })
                 .ToListAsync();
 
             ViewBag.Exam = exam;
             ViewData["Title"] = $"Results: {exam.Title}";
             return View(results);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GradeTextAnswers(int studentTestId)
+        {
+            var instructorId = await GetInstructorIdAsync();
+            if (instructorId == null) return NotFound();
+
+            var courseIds = await GetMyCourseIdsAsync(instructorId.Value);
+            var studentTest = await _context.StudentTests
+                .Include(st => st.Student)
+                .Include(st => st.Test)
+                .Include(st => st.Answers)
+                    .ThenInclude(a => a.Question)
+                .FirstOrDefaultAsync(st => st.Id == studentTestId && courseIds.Contains(st.Test.CourseId));
+
+            if (studentTest == null) return NotFound();
+
+            var vm = new GradeTextAnswersVM
+            {
+                StudentTestId = studentTestId,
+                StudentName = studentTest.Student?.FullName ?? "",
+                ExamTitle = studentTest.Test?.Title ?? "",
+                ExamId = studentTest.TestId,
+                TotalMarks = studentTest.Test?.TotalMarks ?? 0,
+                AutoScore = studentTest.Answers.Where(a => a.Marked).Sum(a => a.Score),
+                TextAnswers = studentTest.Answers
+                    .Where(a => a.Question?.QuestionType == QuestionType.Text)
+                    .Select(a => new TextAnswerGradeItemVM
+                    {
+                        AnswerId = a.Id,
+                        QuestionTitle = a.Question?.Title ?? "",
+                        QuestionDescription = a.Question?.Description,
+                        MaxPoints = a.Question?.Pints ?? 0,
+                        StudentAnswer = a.TextAnswer,
+                        AwardedPoints = a.Marked ? a.Score : null
+                    }).ToList()
+            };
+
+            ViewData["Title"] = $"Grade: {vm.StudentName}";
+            return View(vm);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> GradeTextAnswers(GradeTextAnswersVM vm)
+        {
+            var instructorId = await GetInstructorIdAsync();
+            if (instructorId == null) return NotFound();
+
+            var courseIds = await GetMyCourseIdsAsync(instructorId.Value);
+            var studentTest = await _context.StudentTests
+                .Include(st => st.Answers)
+                    .ThenInclude(a => a.Question)
+                .Include(st => st.Test)
+                .FirstOrDefaultAsync(st => st.Id == vm.StudentTestId && courseIds.Contains(st.Test.CourseId));
+
+            if (studentTest == null) return NotFound();
+
+            foreach (var item in vm.TextAnswers)
+            {
+                var answer = studentTest.Answers.FirstOrDefault(a => a.Id == item.AnswerId);
+                if (answer == null) continue;
+                var max = answer.Question?.Pints ?? 0;
+                answer.Score = Math.Round(Math.Min(item.AwardedPoints ?? 0, max), 2);
+                answer.Marked = true;
+            }
+
+            studentTest.Score = Math.Round(studentTest.Answers.Sum(a => a.Score), 2);
+            studentTest.IsPending = false;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Graded successfully. Final score: {studentTest.Score} / {studentTest.Test?.TotalMarks}";
+            return RedirectToAction(nameof(Results), new { id = studentTest.TestId });
         }
     }
 }

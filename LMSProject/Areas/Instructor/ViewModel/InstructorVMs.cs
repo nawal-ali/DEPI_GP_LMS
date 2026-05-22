@@ -190,6 +190,38 @@ namespace LMSProject.Areas.Instructor.ViewModel
         public string? CorrectChoice { get; set; }
     }
 
+    public class GradeTextAnswersVM
+    {
+        public int StudentTestId { get; set; }
+        public string StudentName { get; set; } = "";
+        public string ExamTitle { get; set; } = "";
+        public int ExamId { get; set; }
+        public double TotalMarks { get; set; }
+        public double AutoScore { get; set; }
+        public List<TextAnswerGradeItemVM> TextAnswers { get; set; } = new();
+    }
+
+    public class TextAnswerGradeItemVM
+    {
+        public int AnswerId { get; set; }
+        public string QuestionTitle { get; set; } = "";
+        public string? QuestionDescription { get; set; }
+        public int MaxPoints { get; set; }
+        public string? StudentAnswer { get; set; }
+        [Range(0, 10000)]
+        public double? AwardedPoints { get; set; }
+    }
+
+    public class ExamResultRowVM
+    {
+        public int StudentTestId { get; set; }
+        public string StudentName { get; set; } = "";
+        public double Score { get; set; }
+        public bool IsPending { get; set; }
+        public DateTime JoinDate { get; set; }
+        public int TimeInMinutes { get; set; }
+    }
+
     // ─── Assignments ──────────────────────────────────────────────────────────────
 
     public class AssignmentListItemVM

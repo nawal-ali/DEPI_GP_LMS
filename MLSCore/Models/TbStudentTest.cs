@@ -6,6 +6,7 @@
         public TimeOnly JoinTime {  get; set; }
         public int TimeInMinutes {  get; set; }
         public double Score {  get; set; }
+        public bool IsPending { get; set; }
         [ForeignKey("Student")]
         public int StudentId {  get; set; }
         public TbStudent Student { get; set; }

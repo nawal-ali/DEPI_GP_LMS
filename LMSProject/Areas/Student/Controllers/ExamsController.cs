@@ -45,6 +45,7 @@ namespace LMSProject.Areas.Student.Controllers
                 Deadline = t.Deadline,
                 QuestionCount = t.Questions?.Count(q => q.CurrentState == 1) ?? 0,
                 IsSubmitted = results.ContainsKey(t.Id),
+                IsPending = results.TryGetValue(t.Id, out var rp) && rp.IsPending,
                 Score = results.TryGetValue(t.Id, out var r) ? r.Score : null,
                 TakenAt = results.TryGetValue(t.Id, out var r2) ? r2.JoinDate : null
             }).ToList();
@@ -102,34 +103,79 @@ namespace LMSProject.Areas.Student.Controllers
 
             if (exam is null) return NotFound();
 
-            double score = 0;
             var questions = exam.Questions?.Where(q => q.CurrentState == 1).ToList() ?? new();
-            double perQ = exam.TotalMarks / Math.Max(1, questions.Count);
+            bool hasText = questions.Any(q => q.QuestionType == MLSCore.Models.QuestionType.Text);
+            double mcqScore = 0;
 
-            foreach (var ans in vm.Answers)
-            {
-                var q = questions.FirstOrDefault(x => x.Id == ans.QuestionId);
-                if (q == null) continue;
-                if (q.QuestionType == MLSCore.Models.QuestionType.Text)
-                {
-                    // Text answers graded manually by instructor — auto score = 0
-                    continue;
-                }
-                var ch = q?.Choices?.FirstOrDefault(c => c.Id == ans.ChoiceId);
-                if (ch?.Correct == true) score += perQ;
-            }
-
-            _db.StudentTests.Add(new TbStudentTest
+            var studentTest = new TbStudentTest
             {
                 StudentId = sid,
                 TestId = vm.ExamId,
-                Score = Math.Round(score, 2),
+                Score = 0,
+                IsPending = hasText,
                 JoinDate = DateTime.Now,
                 TimeInMinutes = exam.DurationInMinutes
-            });
-
+            };
+            _db.StudentTests.Add(studentTest);
             await _db.SaveChangesAsync();
-            TempData["Success"] = $"Exam submitted! Your score: {Math.Round(score, 1)} / {exam.TotalMarks}";
+
+            var answerRecords = new List<TbStudentAnswer>();
+            var selectedChoices = new List<TbSelectedChoice>();
+
+            foreach (var q in questions)
+            {
+                var ansVM = vm.Answers.FirstOrDefault(a => a.QuestionId == q.Id);
+                double qScore = 0;
+                bool marked = q.QuestionType != MLSCore.Models.QuestionType.Text;
+
+                var answer = new TbStudentAnswer
+                {
+                    StudentTestId = studentTest.Id,
+                    QuestionId = q.Id,
+                    TextAnswer = q.QuestionType == MLSCore.Models.QuestionType.Text ? ansVM?.TextAnswer ?? "" : "",
+                    Score = 0,
+                    Marked = marked
+                };
+
+                if (q.QuestionType != MLSCore.Models.QuestionType.Text && ansVM != null && ansVM.ChoiceId > 0)
+                {
+                    var ch = q.Choices?.FirstOrDefault(c => c.Id == ansVM.ChoiceId);
+                    if (ch?.Correct == true)
+                    {
+                        qScore = q.Pints;
+                        mcqScore += qScore;
+                    }
+                    answer.Score = qScore;
+                    answerRecords.Add(answer);
+                    _db.StudentAnswers.Add(answer);
+                    await _db.SaveChangesAsync();
+                    selectedChoices.Add(new TbSelectedChoice
+                    {
+                        StAnswerId = answer.Id,
+                        ChoiceId = ansVM.ChoiceId,
+                        Score = (int)qScore
+                    });
+                }
+                else
+                {
+                    answerRecords.Add(answer);
+                    _db.StudentAnswers.Add(answer);
+                    await _db.SaveChangesAsync();
+                }
+            }
+
+            if (selectedChoices.Any())
+            {
+                _db.SelectedChoices.AddRange(selectedChoices);
+            }
+
+            studentTest.Score = Math.Round(mcqScore, 2);
+            await _db.SaveChangesAsync();
+
+            var msg = hasText
+                ? $"Exam submitted! MCQ score so far: {Math.Round(mcqScore, 1)} / {exam.TotalMarks}. Text answers are pending instructor review."
+                : $"Exam submitted! Your score: {Math.Round(mcqScore, 1)} / {exam.TotalMarks}";
+            TempData["Success"] = msg;
             return RedirectToAction("Index");
         }
     }
