@@ -16,18 +16,22 @@ namespace LMSProject.AI.Services
         private readonly DocumentProcessingService _docs;
         private readonly AppDbContext _db;
         private readonly IHttpClientFactory _http;
+        private readonly IWebHostEnvironment _env;
         private readonly string _chatbotWebhook;
+        private readonly string _toolsWebhook;
 
         public AiChatService(MongoDbService mongo, GithubAiService ai,
             DocumentProcessingService docs, AppDbContext db,
-            IHttpClientFactory http, IConfiguration cfg)
+            IHttpClientFactory http, IWebHostEnvironment env, IConfiguration cfg)
         {
             _mongo = mongo;
             _ai = ai;
             _docs = docs;
             _db = db;
             _http = http;
+            _env = env;
             _chatbotWebhook = cfg["N8N:ChatbotWebhook"] ?? "";
+            _toolsWebhook   = cfg["N8N:ExamGeneratorWebhook"] ?? "";
         }
 
         // ── RAG Chat — sends to n8n (same pattern as InstructorAiService) ──
@@ -174,38 +178,103 @@ namespace LMSProject.AI.Services
                 .SortBy(m => m.CreatedAt)
                 .ToListAsync();
 
-        // ── AI Tools (still use GitHub Models — not chatbot) ──────────────
-        public async Task<string> SummarizeAsync(string fileId, string studentUserId)
-        {
-            var chunks = await GetChunks(fileId, studentUserId, 10);
-            if (!chunks.Any()) return "No content found for this file.";
-            return await _ai.ChatAsync(
-                new List<(string, string)> { ("user", $"Summarize this document:\n{Join(chunks)}") },
-                "You are an expert summarizer. Provide a clear, structured summary.");
-        }
-
-        public async Task<string> GenerateMcqAsync(string fileId, string studentUserId, int count = 5)
-        {
-            var chunks = await GetChunks(fileId, studentUserId, 8);
-            if (!chunks.Any()) return "No content found.";
-            return await _ai.ChatAsync(
-                new List<(string, string)>
+        // ── AI Tools — send file to n8n (same approach as InstructorAiService) ──
+        public Task<string> SummarizeAsync(string fileId, string studentUserId)
+            => RunToolViaFile(fileId, studentUserId,
+                "Summarize this document clearly and in a structured way with headings and bullet points.",
+                "summarize",
+                async () =>
                 {
-                    ("user", $"Generate {count} MCQs from this text. Format each:\nQ: ...\nA) ...\nB) ...\nC) ...\nD) ...\nCorrect: ...\n\nText:\n{Join(chunks)}")
-                },
-                "You are an expert teacher. Generate clear, educational MCQs.");
-        }
+                    var chunks = await GetChunks(fileId, studentUserId, 10);
+                    if (!chunks.Any()) return "No content found for this file.";
+                    return await _ai.ChatAsync(
+                        new List<(string, string)> { ("user", $"Summarize this document:\n{Join(chunks)}") },
+                        "You are an expert summarizer. Provide a clear, structured summary.");
+                });
 
-        public async Task<string> KeyPointsAsync(string fileId, string studentUserId)
-        {
-            var chunks = await GetChunks(fileId, studentUserId, 8);
-            if (!chunks.Any()) return "No content found.";
-            return await _ai.ChatAsync(
-                new List<(string, string)>
+        public Task<string> GenerateMcqAsync(string fileId, string studentUserId, int count = 5)
+            => RunToolViaFile(fileId, studentUserId,
+                $"Generate {count} Multiple Choice Questions from this document. " +
+                $"Format each question as:\nQ: ...\nA) ...\nB) ...\nC) ...\nD) ...\nCorrect: ...",
+                "mcq",
+                async () =>
                 {
-                    ("user", $"Extract the 10 most important key points as a numbered list:\n{Join(chunks)}")
-                },
-                "You are an expert educator. Extract the most important concepts.");
+                    var chunks = await GetChunks(fileId, studentUserId, 8);
+                    if (!chunks.Any()) return "No content found.";
+                    return await _ai.ChatAsync(
+                        new List<(string, string)>
+                        {
+                            ("user", $"Generate {count} MCQs from this text. Format each:\nQ: ...\nA) ...\nB) ...\nC) ...\nD) ...\nCorrect: ...\n\nText:\n{Join(chunks)}")
+                        },
+                        "You are an expert teacher. Generate clear, educational MCQs.");
+                });
+
+        public Task<string> KeyPointsAsync(string fileId, string studentUserId)
+            => RunToolViaFile(fileId, studentUserId,
+                "Extract the 10 most important key points from this document as a numbered list.",
+                "keypoints",
+                async () =>
+                {
+                    var chunks = await GetChunks(fileId, studentUserId, 8);
+                    if (!chunks.Any()) return "No content found.";
+                    return await _ai.ChatAsync(
+                        new List<(string, string)>
+                        {
+                            ("user", $"Extract the 10 most important key points as a numbered list:\n{Join(chunks)}")
+                        },
+                        "You are an expert educator. Extract the most important concepts.");
+                });
+
+        // ── Core: send file as multipart to n8n (identical to InstructorAiService) ──
+        private async Task<string> RunToolViaFile(
+            string fileId, string studentUserId,
+            string prompt, string action,
+            Func<Task<string>> githubFallback)
+        {
+            if (!string.IsNullOrEmpty(_toolsWebhook))
+            {
+                var fileRecord = await _mongo.Files
+                    .Find(f => f.Id == fileId && f.StudentUserId == studentUserId)
+                    .FirstOrDefaultAsync();
+
+                if (fileRecord != null)
+                {
+                    var fullPath = Path.Combine(_env.WebRootPath, fileRecord.StoredPath);
+                    if (File.Exists(fullPath))
+                    {
+                        var client = _http.CreateClient();
+                        client.Timeout = TimeSpan.FromSeconds(120);
+
+                        using var form = new MultipartFormDataContent();
+                        form.Add(new StringContent(prompt), "question");
+                        form.Add(new StringContent(action), "action");
+
+                        var fileBytes = await File.ReadAllBytesAsync(fullPath);
+                        var fileContent = new ByteArrayContent(fileBytes);
+                        fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+                            string.IsNullOrEmpty(fileRecord.MimeType) ? "application/octet-stream" : fileRecord.MimeType);
+                        fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+                        {
+                            Name = "\"file\"",
+                            FileName = "\"" + fileRecord.OriginalName + "\""
+                        };
+                        form.Add(fileContent);
+
+                        var resp = await client.PostAsync(_toolsWebhook, form);
+                        var raw  = await resp.Content.ReadAsStringAsync() ?? "";
+
+                        if (!string.IsNullOrWhiteSpace(raw) && !raw.TrimStart().StartsWith("<"))
+                        {
+                            var answer = ExtractAnswer(raw);
+                            if (!string.IsNullOrWhiteSpace(answer))
+                                return answer;
+                        }
+                    }
+                }
+            }
+
+            // Fallback to GitHub Models
+            return await githubFallback();
         }
 
         public async Task<string> GenerateStudyPlanAsync(string studentUserId)

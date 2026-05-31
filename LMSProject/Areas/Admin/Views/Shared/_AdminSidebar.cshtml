@@ -31,6 +31,10 @@
    class="sa-nav-item @(Is("AdminCourse") ? "active" : "")">
     <i class="fas fa-book-open"></i><span>Courses</span>
 </a>
+<a asp-area="Admin" asp-controller="Schedules" asp-action="Index"
+   class="sa-nav-item @(Is("Schedules") ? "active" : "")">
+    <i class="fas fa-calendar-week"></i><span>Schedules</span>
+</a>
 
 <p class="sa-group-label mt-3">Content Monitoring</p>
 <a asp-area="Admin" asp-controller="Monitor" asp-action="Materials"

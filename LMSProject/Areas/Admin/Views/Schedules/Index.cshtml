@@ -1,0 +1,270 @@
+@model List<MLSCore.Models.TbScheduleSession>
+@{
+    ViewData["Title"] = "Weekly Schedules";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    string[] Days = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+
+    int StartHour = 7, EndHour = 21;
+
+    var byDay = Model.GroupBy(s => s.DayOfWeek)
+                     .ToDictionary(g => g.Key, g => g.ToList());
+
+    string[] Palette = { "#5B72EE", "#00CBB8", "#E13468", "#F48C06", "#29B9E7", "#9b59b6", "#16a34a" };
+    var colorMap = new Dictionary<int, string>();
+    int ci = 0;
+    foreach (var s in Model)
+    {
+        if (!colorMap.ContainsKey(s.CourseId))
+            colorMap[s.CourseId] = string.IsNullOrEmpty(s.Color) ? Palette[ci++ % Palette.Length] : s.Color;
+    }
+}
+
+<style>
+    .sch-page { display:flex; gap:1.2rem; height:calc(100vh - 110px); min-height:500px; }
+    .sch-sidebar { width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:.75rem; overflow-y:auto; }
+    .sch-main   { flex:1; overflow:auto; }
+
+    .sch-filter { background:white;border-radius:14px;padding:1rem 1.2rem;box-shadow:0 2px 12px rgba(47,50,125,.06); }
+    .sch-filter select { width:100%;border:1.5px solid rgba(47,50,125,.1);border-radius:9px;padding:.4rem .7rem;font-size:.78rem;font-family:Poppins,sans-serif;color:#374151;outline:none;margin-bottom:.5rem;background:#fafbff; }
+    .sch-filter select:focus { border-color:var(--secondary); }
+    .sch-filter label { font-size:.7rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:.25rem; }
+
+    .sch-course-card { background:white;border-radius:12px;padding:.75rem 1rem;box-shadow:0 2px 10px rgba(47,50,125,.06);cursor:pointer;transition:box-shadow .2s; border-left:4px solid #5B72EE; }
+    .sch-course-card:hover { box-shadow:0 4px 18px rgba(47,50,125,.12); }
+    .sch-course-name { font-weight:700;font-size:.82rem;color:var(--primary);margin-bottom:.2rem; }
+    .sch-course-meta { font-size:.7rem;color:#9ca3af; }
+
+    .sch-table { display:grid; grid-template-columns:52px repeat(7,1fr); min-width:700px; }
+    .sch-day-head { background:white; padding:.65rem .5rem; text-align:center; font-size:.75rem; font-weight:700; color:var(--primary); border-bottom:2px solid rgba(47,50,125,.08); position:sticky;top:0;z-index:10; }
+    .sch-day-head.today { background:var(--primary); color:white; border-radius:8px 8px 0 0; }
+    .sch-time-cell { background:white;border-right:1px solid rgba(0,0,0,.04);font-size:.67rem;color:#9ca3af;padding:.3rem .4rem;text-align:right;border-bottom:1px solid rgba(0,0,0,.03);height:48px;display:flex;align-items:flex-start;justify-content:flex-end; }
+    .sch-slot { position:relative; background:white; border-right:1px solid rgba(0,0,0,.04); border-bottom:1px solid rgba(0,0,0,.03); height:48px; }
+    .sch-session-card {
+        position:absolute; left:2px; right:2px;
+        border-radius:8px; padding:3px 6px;
+        font-size:.68rem; font-weight:600; color:white;
+        overflow:hidden; cursor:pointer;
+        box-shadow:0 2px 8px rgba(0,0,0,.15);
+        transition:transform .15s, box-shadow .15s;
+        z-index:5; line-height:1.3;
+    }
+    .sch-session-card:hover { transform:scale(1.02); box-shadow:0 4px 14px rgba(0,0,0,.2); }
+
+    .sch-tbl-scroll { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:18px; }
+    .sch-tbl-scroll::-webkit-scrollbar { height:5px; }
+    .sch-tbl-scroll::-webkit-scrollbar-track { background:#f1f1f1; border-radius:10px; }
+    .sch-tbl-scroll::-webkit-scrollbar-thumb { background:rgba(47,50,125,.2); border-radius:10px; }
+    .sch-tbl-hint { display:none; align-items:center; gap:.4rem; font-size:.73rem; color:#9ca3af; margin-bottom:.5rem; }
+
+    @@media (max-width: 768px) {
+        .sch-page { flex-direction:column; height:auto; min-height:0; }
+        .sch-sidebar { width:100%; }
+        .sch-main { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .sch-tbl-hint { display:flex; }
+    }
+</style>
+
+<div class="sch-page anim">
+
+    <!-- ── LEFT: Sidebar ──────────────────────────────────────── -->
+    <div class="sch-sidebar">
+
+        <!-- Filters -->
+        <div class="sch-filter">
+            <form method="get" id="filterForm">
+                <label>Grade</label>
+                <select name="gradeId" onchange="this.form.submit()">
+                    <option value="">All Grades</option>
+                    @foreach (var g in (ViewBag.Grades as List<MLSCore.Models.TbGrade> ?? new()))
+                    {
+                        <option value="@g.Id" selected="@(ViewBag.SelGrade?.ToString() == g.Id.ToString() ? "selected" : null)">
+                            @g.Stage?.Name — @g.Name
+                        </option>
+                    }
+                </select>
+                <label>Term</label>
+                <select name="termId" onchange="this.form.submit()">
+                    <option value="">All Terms</option>
+                    @foreach (var t in (ViewBag.Terms as List<MLSCore.Models.TbTerm> ?? new()))
+                    {
+                        <option value="@t.Id" selected="@(ViewBag.SelTerm?.ToString() == t.Id.ToString() ? "selected" : null)">@t.Name</option>
+                    }
+                </select>
+                <label>Instructor</label>
+                <select name="instructorId" onchange="this.form.submit()">
+                    <option value="">All Instructors</option>
+                    @foreach (var i in (ViewBag.Instructors as List<MLSCore.Models.TbInstructor> ?? new()))
+                    {
+                        <option value="@i.Id" selected="@(ViewBag.SelInstructor?.ToString() == i.Id.ToString() ? "selected" : null)">@i.FullName</option>
+                    }
+                </select>
+            </form>
+        </div>
+
+        <!-- Live Courses list -->
+        <div style="background:white;border-radius:14px;padding:.85rem 1rem;box-shadow:0 2px 12px rgba(47,50,125,.06);">
+            <div style="font-size:.72rem;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem;">
+                <i class="fas fa-video me-1" style="color:var(--secondary);"></i>Live Courses
+            </div>
+            @foreach (var course in (ViewBag.Courses as List<MLSCore.Models.TbCourse> ?? new()))
+            {
+                <a asp-action="Manage" asp-route-courseId="@course.Id"
+                   style="text-decoration:none;">
+                    <div class="sch-course-card mb-2" style="border-left-color:@(colorMap.ContainsKey(course.Id) ? colorMap[course.Id] : "#5B72EE");">
+                        <div class="sch-course-name">@course.Name</div>
+                        <div class="sch-course-meta">
+                            <i class="fas fa-layer-group me-1"></i>@course.Grade?.Name
+                            &nbsp;·&nbsp;<i class="fas fa-calendar me-1"></i>@course.Term?.Name
+                        </div>
+                    </div>
+                </a>
+            }
+            @if (!(ViewBag.Courses as List<MLSCore.Models.TbCourse> ?? new()).Any())
+            {
+                <div style="text-align:center;color:#9ca3af;font-size:.78rem;padding:1rem 0;">
+                    <i class="fas fa-video-slash d-block mb-1" style="opacity:.25;font-size:1.5rem;"></i>
+                    No live courses yet
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── RIGHT: Timetable ───────────────────────────────────── -->
+    <div class="sch-main">
+        @if (!Model.Any())
+        {
+            <div style="text-align:center;padding:5rem 2rem;background:white;border-radius:18px;box-shadow:0 4px 20px rgba(47,50,125,.07);">
+                <i class="fas fa-calendar-week d-block mb-3" style="font-size:3.5rem;color:rgba(47,50,125,.12);"></i>
+                <h6 style="color:var(--primary);font-weight:700;">No sessions scheduled</h6>
+                <p style="color:#9ca3af;font-size:.85rem;">Select a live course from the left and add sessions.</p>
+            </div>
+        }
+        else
+        {
+            <div class="sch-tbl-hint">
+                <i class="fas fa-arrows-left-right"></i>
+                <span>Scroll sideways to see all days</span>
+            </div>
+            <div class="sch-tbl-scroll">
+            <div style="background:white;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(47,50,125,.07);min-width:700px;">
+                <div class="sch-table">
+
+                    <div class="sch-day-head" style="background:#f8f9ff;"></div>
+                    @{
+                        int todayDow = (int)DateTime.Today.DayOfWeek;
+                        string[] Short = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+                        string[] Full = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+                    }
+                    @for (int d = 0; d < 7; d++)
+                    {
+                        <div class="sch-day-head @(d == todayDow ? "today" : "")">
+                            <div>@Short[d]</div>
+                            <div style="font-size:.65rem;font-weight:400;opacity:.7;">@Full[d]</div>
+                        </div>
+                    }
+
+                    @for (int h = StartHour; h < EndHour; h++)
+                    {
+                        <div class="sch-time-cell">@($"{h:D2}:00")</div>
+
+                        @for (int d = 0; d < 7; d++)
+                        {
+                            var slotSessions = byDay.ContainsKey(d)
+                                ? byDay[d].Where(s =>
+                                    s.StartTime.Hours == h ||
+                                    (s.StartTime.Hours < h && s.EndTime.Hours > h))
+                                    .ToList()
+                                : new();
+
+                            <div class="sch-slot">
+                                @foreach (var s in slotSessions)
+                                {
+                                    if (s.StartTime.Hours == h)
+                                    {
+                                        double totalMin = (s.EndTime - s.StartTime).TotalMinutes;
+                                        double heightPx = totalMin / 60.0 * 48;
+                                        double topPx = s.StartTime.Minutes / 60.0 * 48;
+                                        var col = colorMap.ContainsKey(s.CourseId) ? colorMap[s.CourseId] : "#5B72EE";
+                                        <div class="sch-session-card"
+                                             style="background:@col;height:@(heightPx)px;top:@(topPx)px;"
+                                             title="@s.Course?.Name — @s.StartTime.ToString(@"hh\:mm") to @s.EndTime.ToString(@"hh\:mm")"
+                                             onclick="showSession(@s.Id)">
+                                            <div style="font-weight:700;font-size:.68rem;">@s.Course?.Name</div>
+                                            <div style="opacity:.85;font-size:.62rem;">@s.StartTime.ToString(@"hh\:mm") – @s.EndTime.ToString(@"hh\:mm")</div>
+                                            @if (!string.IsNullOrEmpty(s.Course?.Instructor?.FullName))
+                                            {
+                                                <div style="opacity:.8;font-size:.6rem;"><i class="fas fa-user me-1"></i>@s.Course.Instructor.FullName</div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Session detail modal -->
+<div class="modal fade" id="sessionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div id="sessionModalHeader" style="padding:1.2rem 1.5rem;display:flex;align-items:center;gap:.8rem;">
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-calendar-alt" style="color:white;"></i>
+                </div>
+                <h6 style="color:white;font-weight:700;margin:0;" id="sessionModalTitle">Session Details</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.3rem 1.5rem;" id="sessionModalBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var sessions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.Select(s => new
+                    {
+                            id = s.Id,
+                            courseId = s.CourseId,
+                            courseName = s.Course?.Name ?? "",
+                            grade = s.Course?.Grade?.Name ?? "",
+                            term = s.Course?.Term?.Name ?? "",
+                            subject = s.Course?.SubSubject?.Subject?.Name ?? "",
+                            subSubject = s.Course?.SubSubject?.Name ?? "",
+                            instructor = s.Course?.Instructor?.FullName ?? "",
+                            day = s.DayOfWeek,
+                            start = s.StartTime.ToString(@"hh\:mm"),
+                            end = s.EndTime.ToString(@"hh\:mm"),
+                            meetingLink = s.MeetingLink ?? "",
+                            color = s.Color,
+                            notes = s.Notes ?? "",
+                            manageUrl = Url.Action("Manage", "Schedules", new { area = "Admin", courseId = s.CourseId })
+                    })));
+
+        function showSession(id) {
+            var s = sessions.find(function(x){ return x.id === id; });
+            if (!s) return;
+            document.getElementById('sessionModalHeader').style.background = 'linear-gradient(135deg,' + s.color + 'cc,' + s.color + ')';
+            document.getElementById('sessionModalTitle').textContent = s.courseName;
+            var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            var body =
+                '<div style="font-size:.83rem;line-height:2.1;color:#374151;">' +
+                '<i class="fas fa-calendar me-2" style="color:var(--secondary);width:18px;"></i>' + days[s.day] + ' &nbsp;' + s.start + ' – ' + s.end + '<br/>' +
+                '<i class="fas fa-chalkboard-teacher me-2" style="color:var(--accent-purple);width:18px;"></i>' + (s.instructor||'—') + '<br/>' +
+                '<i class="fas fa-layer-group me-2" style="color:var(--accent-blue);width:18px;"></i>' + (s.grade||'—') + '<br/>' +
+                '<i class="fas fa-book me-2" style="color:var(--accent-pink);width:18px;"></i>' + (s.subSubject||s.subject||'—') + '<br/>' +
+                (s.notes ? '<i class="fas fa-sticky-note me-2" style="color:#9ca3af;width:18px;"></i>' + s.notes + '<br/>' : '') +
+                '</div>' +
+                (s.meetingLink ? '<a href="' + s.meetingLink + '" target="_blank" class="btn w-100 rounded-3 mt-3" style="background:linear-gradient(135deg,var(--secondary),var(--accent-blue));color:white;font-family:Poppins,sans-serif;font-weight:700;"><i class="fas fa-video me-2"></i>Join Session</a>' : '') +
+                '<a href="' + s.manageUrl + '" class="btn w-100 rounded-3 mt-2" style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;font-size:.82rem;"><i class="fas fa-cog me-2"></i>Manage Sessions</a>';
+            document.getElementById('sessionModalBody').innerHTML = body;
+            new bootstrap.Modal(document.getElementById('sessionModal')).show();
+        }
+    </script>
+}

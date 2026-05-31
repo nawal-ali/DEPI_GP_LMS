@@ -177,11 +177,15 @@
                                    asp-route-id="@a.Id" asp-route-role="Admin"
                                    class="sa-btn-icon sa-btn-view" title="View Profile"><i class="fas fa-eye"></i></a>
                                 <a asp-area="SuperAdmin" asp-controller="Users" asp-action="EditAdmin" asp-route-userId="@a.Id" class="sa-btn-icon sa-btn-edit" title="Edit Admin"><i class="fas fa-edit"></i></a>
-                                <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" style="display:inline;" onsubmit="return confirm('Delete @a.Name?')">
+                                <form asp-area="SuperAdmin" asp-controller="Users" asp-action="DeleteUser" method="post" style="display:inline;" id="deleteForm_@a.Id">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@a.Id" />
                                     <input type="hidden" name="role" value="Admin" />
-                                    <button type="submit" class="sa-btn-icon sa-btn-delete"><i class="fas fa-trash"></i></button>
+                                    <button type="button" class="sa-btn-icon sa-btn-delete" title="Delete"
+                                            data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                            data-delete-name="@a.Name" data-form-id="deleteForm_@a.Id">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </form>
                             </div>
                         </td>

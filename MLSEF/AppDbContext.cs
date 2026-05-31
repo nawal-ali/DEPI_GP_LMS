@@ -91,5 +91,6 @@ namespace MLSEF
         public DbSet<TbTicket> Tickets { get; set; }
         public DbSet<MLSCore.Models.TbContactForm> ContactForms { get; set; }
         public DbSet<TbTicketReply> TicketReplies { get; set; }
+        public DbSet<TbUserAnnouncementRead> UserAnnouncementReads { get; set; }
     }
 }

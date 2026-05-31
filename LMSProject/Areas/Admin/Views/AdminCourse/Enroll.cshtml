@@ -69,12 +69,15 @@
                         <td>
                             @if (s.IsEnrolled)
                             {
-                                <form asp-area="Admin" asp-controller="AdminCourse" asp-action="UnenrollStudent" method="post" style="display:inline;"
-                                      onsubmit="return confirm('Unenroll @s.FullName from this course?')">
+                                <form asp-area="Admin" asp-controller="AdminCourse" asp-action="UnenrollStudent" method="post" style="display:inline;" id="unenrollForm_@s.StudentId">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="courseId" value="@Model.CourseId" />
                                     <input type="hidden" name="studentId" value="@s.StudentId" />
-                                    <button type="submit" class="sa-btn-icon sa-btn-delete" title="Unenroll"><i class="fas fa-user-minus"></i></button>
+                                    <button type="button" class="sa-btn-icon sa-btn-delete" title="Unenroll"
+                                            data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                            data-delete-name="@s.FullName" data-form-id="unenrollForm_@s.StudentId">
+                                        <i class="fas fa-user-minus"></i>
+                                    </button>
                                 </form>
                             }
                             else
@@ -97,3 +100,16 @@
         </table>
     </div>
 </div>
+
+@await Html.PartialAsync("_DeleteModal")
+@section Scripts {
+    <script>
+        (function(){var dm=document.getElementById('deleteModal');if(!dm)return;
+        dm.addEventListener('show.bs.modal',function(e){
+          var btn=e.relatedTarget;if(!btn)return;
+          var el=document.getElementById('deleteItemName');if(el)el.textContent=btn.dataset.deleteName||'this student';
+          var cb=document.getElementById('deleteConfirmBtn');
+          if(cb&&btn.dataset.formId){cb.onclick=function(ev){ev.preventDefault();document.getElementById(btn.dataset.formId).submit();};cb.href='#';}
+        });})();
+    </script>
+}

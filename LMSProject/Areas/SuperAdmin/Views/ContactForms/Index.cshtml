@@ -140,11 +140,12 @@ else
                                        style="background:rgba(0,203,184,.12);color:var(--secondary);">
                                         <i class="fas fa-reply"></i>
                                     </a>
-                                    <form asp-action="Delete" method="post" style="display:inline;"
-                                          onsubmit="return confirm('Delete this contact form?')">
+                                    <form asp-action="Delete" method="post" style="display:inline;" id="deleteForm_@f.Id">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@f.Id" />
-                                        <button type="submit" class="sa-btn-icon sa-btn-delete" title="Delete">
+                                        <button type="button" class="sa-btn-icon sa-btn-delete" title="Delete"
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                                data-delete-name="message from @f.FullName" data-form-id="deleteForm_@f.Id">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -225,4 +226,17 @@ else
             </a>
         </div>
     }
+}
+
+@await Html.PartialAsync("_DeleteModal")
+@section Scripts {
+    <script>
+        (function(){var dm=document.getElementById('deleteModal');if(!dm)return;
+        dm.addEventListener('show.bs.modal',function(e){
+          var btn=e.relatedTarget;if(!btn)return;
+          var el=document.getElementById('deleteItemName');if(el)el.textContent=btn.dataset.deleteName||'this item';
+          var cb=document.getElementById('deleteConfirmBtn');
+          if(cb&&btn.dataset.formId){cb.onclick=function(ev){ev.preventDefault();document.getElementById(btn.dataset.formId).submit();};cb.href='#';}
+        });})();
+    </script>
 }

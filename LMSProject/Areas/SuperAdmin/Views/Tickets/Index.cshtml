@@ -121,10 +121,13 @@
                                         data-id="@t.Id" data-subject="@t.Subject" data-requester="@t.RequesterName" data-priority="@t.Priority" data-desc="@t.Description">
                                     <i class="fas fa-reply"></i>
                                 </button>
-                                <form asp-area="SuperAdmin" asp-controller="Tickets" asp-action="Close" method="post" style="display:inline;" onsubmit="return confirm('Close this ticket?')">
+                                <form asp-area="SuperAdmin" asp-controller="Tickets" asp-action="Close" method="post" style="display:inline;" id="closeForm_@t.Id">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@t.Id" />
-                                    <button type="submit" class="sa-btn-icon sa-btn-delete" title="Close"><i class="fas fa-times"></i></button>
+                                    <button type="button" class="sa-btn-icon sa-btn-delete" title="Close"
+                                            onclick="openCloseModal(@t.Id,'@Html.Raw(t.Subject.Replace("'","\\'"  ))')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 </form>
                             </div>
                         </td>
@@ -224,8 +227,42 @@
     </div>
 </div>
 
+<!-- Close Ticket Confirm Modal -->
+<div class="modal fade" id="closeTicketModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#E13468,#c0392b);padding:1.1rem 1.4rem;display:flex;align-items:center;gap:.75rem;">
+                <h6 style="color:white;font-weight:700;margin:0;"><i class="fas fa-times-circle me-2"></i>Close Ticket</h6>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="padding:1.4rem;">
+                <p style="font-size:.9rem;color:#555;margin:0 0 .4rem;">Close ticket: <strong id="closeTicketSubject" style="color:var(--primary);"></strong>?</p>
+                <p style="font-size:.8rem;color:#9ca3af;margin:0 0 1.1rem;"><i class="fas fa-info-circle me-1"></i>This action cannot be undone.</p>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn rounded-3 flex-grow-1" data-bs-dismiss="modal"
+                            style="background:rgba(47,50,125,.07);color:var(--primary);font-family:Poppins,sans-serif;">Cancel</button>
+                    <button type="button" class="btn rounded-3 flex-grow-1" id="closeTicketConfirmBtn"
+                            style="background:#E13468;color:white;font-family:Poppins,sans-serif;">
+                        <i class="fas fa-times me-1"></i>Close Ticket
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
+        var _closeFormId = null;
+        function openCloseModal(id, subject) {
+            _closeFormId = 'closeForm_' + id;
+            document.getElementById('closeTicketSubject').textContent = subject;
+            new bootstrap.Modal(document.getElementById('closeTicketModal')).show();
+        }
+        document.getElementById('closeTicketConfirmBtn').addEventListener('click', function () {
+            if (_closeFormId) document.getElementById(_closeFormId).submit();
+        });
+
         document.getElementById('viewTicketModal').addEventListener('show.bs.modal', function (e) {
             var b = e.relatedTarget;
             document.getElementById('vt-subject').textContent   = b.dataset.subject;

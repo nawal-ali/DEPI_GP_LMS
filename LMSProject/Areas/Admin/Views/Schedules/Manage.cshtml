@@ -1,7 +1,7 @@
-﻿@model MLSCore.Models.TbCourse
+@model MLSCore.Models.TbCourse
 @{
     ViewData["Title"] = "Manage Sessions — " + Model.Name;
-    Layout = "~/Areas/SuperAdmin/Views/Shared/_SuperAdminLayout.cshtml";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     string[] Days = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
     string[] Colors = { "#5B72EE", "#00CBB8", "#E13468", "#F48C06", "#29B9E7", "#9b59b6", "#16a34a", "#2F327D" };
 }
@@ -140,13 +140,11 @@
                                     <div style="font-size:.72rem;color:#9ca3af;margin-top:.15rem;">@s.Notes</div>
                                 }
                             </div>
-                            <!-- Edit -->
                             <button type="button" class="btn btn-sm rounded-3"
                                     style="background:rgba(91,114,238,.1);color:var(--accent-purple);font-size:.72rem;font-family:Poppins,sans-serif;"
                                     onclick="openEdit(@s.Id,@s.DayOfWeek,'@s.StartTime.ToString(@"hh\:mm")','@s.EndTime.ToString(@"hh\:mm")','@Html.Raw((s.MeetingLink ?? string.Empty).Replace("'", "\\'"))','@s.Color','@Html.Raw((s.Notes ?? string.Empty).Replace("'", "\\'"))')">
                                 <i class="fas fa-edit me-1"></i>Edit
                             </button>
-                            <!-- Delete -->
                             <button type="button" class="btn btn-sm rounded-3"
                                     style="background:rgba(225,52,104,.08);color:#E13468;font-size:.72rem;font-family:Poppins,sans-serif;"
                                     onclick="openRemoveModal(@s.Id,'@Days[s.DayOfWeek]')">
@@ -173,7 +171,7 @@
                     Remove the <strong id="removeSessionName" style="color:var(--primary);"></strong> session?
                     <span style="display:block;font-size:.8rem;color:#9ca3af;margin-top:.4rem;"><i class="fas fa-info-circle me-1"></i>This action cannot be undone.</span>
                 </p>
-                <form asp-area="SuperAdmin" asp-controller="Schedules" asp-action="DeleteSession" method="post" id="removeForm">
+                <form asp-area="Admin" asp-controller="Schedules" asp-action="DeleteSession" method="post" id="removeForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" id="removeId" />
                     <div class="d-flex gap-2">
@@ -235,7 +233,6 @@
             el.style.borderColor = '#374151';
             document.getElementById('selectedColorInput').value = color;
         }
-        // Pre-select first color
         document.addEventListener('DOMContentLoaded', function(){
             var first = document.querySelector('.color-swatch');
             if(first) first.style.borderColor='#374151';

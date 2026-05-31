@@ -639,6 +639,29 @@
         </div>
     </div>
 
+    <!-- AI File Delete Confirm Modal -->
+    <div class="modal fade" id="aiDeleteFileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:360px;">
+            <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#E13468,#c0392b);padding:1rem 1.3rem;display:flex;align-items:center;gap:.75rem;">
+                    <h6 style="color:white;font-weight:700;margin:0;font-size:.95rem;"><i class="fas fa-trash me-2"></i>Delete File</h6>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div style="padding:1.3rem;">
+                    <p style="font-size:.88rem;color:#555;margin:0 0 1rem;">Delete this file and all its data?<br><span style="font-size:.78rem;color:#9ca3af;"><i class="fas fa-info-circle me-1"></i>This action cannot be undone.</span></p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn rounded-3 flex-grow-1" data-bs-dismiss="modal"
+                                style="background:rgba(47,50,125,.07);color:#2F327D;font-family:Poppins,sans-serif;font-size:.85rem;">Cancel</button>
+                        <button type="button" class="btn rounded-3 flex-grow-1" id="aiDeleteFileConfirm"
+                                style="background:#E13468;color:white;font-family:Poppins,sans-serif;font-size:.85rem;">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         var AI_SESSION_ID = null;
         var AI_FILES      = [];
@@ -847,13 +870,22 @@
                 }).join('');
         }
 
-        function deleteFile(id) {
-            if (!confirm('Delete this file and all its data?')) return;
+        var _pendingDeleteFileId = null;
+        document.getElementById('aiDeleteFileConfirm').addEventListener('click', function() {
+            if (_pendingDeleteFileId === null) return;
+            var id = _pendingDeleteFileId;
+            _pendingDeleteFileId = null;
+            bootstrap.Modal.getInstance(document.getElementById('aiDeleteFileModal')).hide();
             fetch('/Student/Ai/DeleteFile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fileId: id })
             }).then(function() { loadFiles(); });
+        });
+
+        function deleteFile(id) {
+            _pendingDeleteFileId = id;
+            new bootstrap.Modal(document.getElementById('aiDeleteFileModal')).show();
         }
 
         // ── Tools ─────────────────────────────────────────────────────────────────

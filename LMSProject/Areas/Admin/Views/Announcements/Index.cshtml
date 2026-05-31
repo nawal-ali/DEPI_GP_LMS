@@ -108,11 +108,12 @@
                         <i class="fas fa-thumbtack"></i>
                     </button>
                 </form>
-                <form asp-area="Admin" asp-controller="AdminAnnouncements" asp-action="Delete" method="post" style="display:inline;"
-                      onsubmit="return confirm('Delete this announcement?')">
+                <form asp-area="Admin" asp-controller="AdminAnnouncements" asp-action="Delete" method="post" style="display:inline;" id="deleteForm_@a.Id">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@a.Id" />
-                    <button type="submit" class="sa-btn-icon" style="background:rgba(255,255,255,0.2);color:white;" title="Delete">
+                    <button type="button" class="sa-btn-icon" style="background:rgba(255,255,255,0.2);color:white;" title="Delete"
+                            data-bs-toggle="modal" data-bs-target="#deleteModal"
+                            data-delete-name="this announcement" data-form-id="deleteForm_@a.Id">
                         <i class="fas fa-trash"></i>
                     </button>
                 </form>
@@ -205,3 +206,14 @@
 </div>
 
 @await Html.PartialAsync("_DeleteModal")
+@section Scripts {
+    <script>
+        (function(){var dm=document.getElementById('deleteModal');if(!dm)return;
+        dm.addEventListener('show.bs.modal',function(e){
+          var btn=e.relatedTarget;if(!btn)return;
+          var el=document.getElementById('deleteItemName');if(el)el.textContent=btn.dataset.deleteName||'this item';
+          var cb=document.getElementById('deleteConfirmBtn');
+          if(cb&&btn.dataset.formId){cb.onclick=function(ev){ev.preventDefault();document.getElementById(btn.dataset.formId).submit();};cb.href='#';}
+        });})();
+    </script>
+}
