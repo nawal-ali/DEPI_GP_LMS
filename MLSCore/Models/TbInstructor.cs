@@ -7,9 +7,9 @@ namespace MLSCore.Models
         public int Id { get; set; }
 
        // public string UserId { get; set; } // FK to AspNetUsers
-       public string FullName { get; set; }
-        public string Bio { get; set; }
-        public string Specialization { get; set; }
+       public string FullName { get; set; } = "";
+        public string Bio { get; set; } = "";
+        public string Specialization { get; set; } = "";
         public int ExperienceYears { get; set; }
         public decimal Rating { get; set; } = 0;
         public string? CreatedBy { get; set; } = null!;

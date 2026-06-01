@@ -17,11 +17,14 @@ namespace LMSProject.Areas.Admin.Controllers
     {
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _userMgr;
+        private readonly IWebHostEnvironment _env;
 
-        public UsersController(AppDbContext db, UserManager<ApplicationUser> um) : base(um)
+        public UsersController(AppDbContext db, UserManager<ApplicationUser> um,
+            IWebHostEnvironment env) : base(um)
         {
             _db = db;
             _userMgr = um;
+            _env = env;
         }
 
         // ── Instructors ────────────────────────────────────────────────────
@@ -94,37 +97,55 @@ namespace LMSProject.Areas.Admin.Controllers
         {
             if (!ModelState.IsValid) { ViewData["Title"] = "Edit Instructor"; return View(vm); }
 
-            var instr = await _db.Instructors.Include(x => x.User).FirstOrDefaultAsync(x => x.Id == vm.Id);
+            // Load instructor WITHOUT User nav to avoid EF graph issues with UserManager
+            var instr = await _db.Instructors.FirstOrDefaultAsync(x => x.Id == vm.Id);
             if (instr == null) return NotFound();
 
-            // Update Identity user
-            if (instr.User != null)
+            // Update Identity user separately — load user directly so EF doesn't track instructor→user→instructor cycle
+            var user = await _userMgr.FindByIdAsync(instr.UserId);
+            if (user != null)
             {
-                instr.User.UserName = vm.UserName;
-                instr.User.Email = vm.Email;
-                instr.User.PhoneNumber = vm.PhoneNumber;
-                await _userMgr.UpdateAsync(instr.User);
+                user.UserName    = vm.UserName;
+                user.Email       = vm.Email;
+                user.PhoneNumber = vm.PhoneNumber;
+                await _userMgr.UpdateAsync(user);
+
                 if (!string.IsNullOrEmpty(vm.Password))
                 {
-                    var token = await _userMgr.GeneratePasswordResetTokenAsync(instr.User);
-                    await _userMgr.ResetPasswordAsync(instr.User, token, vm.Password);
+                    var token = await _userMgr.GeneratePasswordResetTokenAsync(user);
+                    await _userMgr.ResetPasswordAsync(user, token, vm.Password);
                 }
             }
 
-            // Update image
-            if (vm.Image != null)
+            // Save new image
+            if (vm.Image != null && vm.Image.Length > 0)
             {
-                Upload.DeletImage(instr.ImageName);
-                instr.ImageName = Upload.UploadImage("Images/images/", vm.Image);
+                // Delete old image
+                if (!string.IsNullOrWhiteSpace(instr.ImageName))
+                {
+                    var oldPath = Path.Combine(_env.WebRootPath, instr.ImageName.TrimStart('/', '\\'));
+                    if (System.IO.File.Exists(oldPath))
+                        System.IO.File.Delete(oldPath);
+                }
+
+                var ext        = Path.GetExtension(Path.GetFileName(vm.Image.FileName));
+                var uniqueName = $"{Guid.NewGuid()}{ext}";
+                var savePath   = Path.Combine(_env.WebRootPath, "Images", "images", uniqueName);
+
+                using (var stream = new FileStream(savePath, FileMode.Create))
+                    await vm.Image.CopyToAsync(stream);
+
+                instr.ImageName = $"Images/images/{uniqueName}";
             }
 
-            instr.FullName = vm.FullName;
-            instr.Bio = vm.Bio;
-            instr.Specialization = vm.Specialization;
+            // Update instructor fields — never write null to NOT NULL columns
+            instr.FullName       = string.IsNullOrWhiteSpace(vm.FullName)       ? instr.FullName       : vm.FullName;
+            instr.Bio            = vm.Bio           ?? instr.Bio;
+            instr.Specialization = vm.Specialization ?? instr.Specialization;
             instr.ExperienceYears = vm.ExperienceYears;
-            instr.ShowInHomePage = vm.ShowInHomePage;
-            instr.UpdatedBy = CurrentUserId;
-            instr.UpdatedDate = DateTime.Now;
+            instr.ShowInHomePage  = vm.ShowInHomePage;
+            instr.UpdatedBy       = CurrentUserId;
+            instr.UpdatedDate     = DateTime.Now;
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "Instructor updated successfully.";

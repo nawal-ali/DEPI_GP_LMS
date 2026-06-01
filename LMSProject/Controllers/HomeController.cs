@@ -21,11 +21,10 @@ namespace LMSProject.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Latest 4 articles for news section
             ViewBag.LatestArticles = await _db.Articles
                 .Where(a => a.CurrentState == 1)
                 .OrderByDescending(a => a.CreatedAt)
-                .Take(4)
+                .Take(3)
                 .ToListAsync();
             return View();
         }

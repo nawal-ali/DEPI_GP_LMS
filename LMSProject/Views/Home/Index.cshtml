@@ -504,81 +504,63 @@
             </p>
         </div>
 
+        @{
+            var latest = ViewBag.LatestArticles as List<MLSCore.Models.TbArticle> ?? new List<MLSCore.Models.TbArticle>();
+            var main   = latest.FirstOrDefault();
+            var others = latest.Skip(1).Take(2).ToList();
+            // CoverImage is stored as "Uploads/Articles/file.jpg" — just prepend ~/
+            string ImgUrl(string? cover, string fallback) =>
+                !string.IsNullOrEmpty(cover) ? Url.Content("~/" + cover) : fallback;
+        }
+
         <div class="row g-5">
             <div class="col-lg-6 reveal-left">
                 <div class="news-card-lg">
-                    <img src="~/Images/images/news1.png" class="img-fluid rounded-4 mb-4" alt="Main News">
-                    <span class="badge rounded-pill bg-teal mb-3" data-i18n="NEWS">NEWS</span>
-                    <h3 class="fw-bold text-navy mb-3"
-                        data-i18n="Class adds $30 million to its balance sheet for a Zoom-friendly edtech solution">
-                        Class adds $30 million to its balance sheet for a Zoom-friendly edtech solution
-                    </h3>
-                    <p class="text-muted mb-4 small"
-                       data-i18n="Class, launched less than a year ago by Blackboard co-founder Michael Chasen, integrates exclusively...">
-                        Class, launched less than a year ago by Blackboard co-founder Michael Chasen, integrates exclusively...
-                    </p>
-                    <a href="#" class="text-muted text-decoration-underline small fw-bold"
-                       data-i18n="Read more">Read more</a>
+                    @if (main != null)
+                    {
+                        <img src="@ImgUrl(main.CoverImage, Url.Content("~/Images/images/news1.png"))"
+                             class="img-fluid rounded-4 mb-4" alt="@main.Title">
+                        <span class="badge rounded-pill bg-teal mb-3">NEWS</span>
+                        <h3 class="fw-bold text-navy mb-3">@main.Title</h3>
+                        <p class="text-muted mb-4 small">
+                            @((!string.IsNullOrEmpty(main.Excerpt)) ? main.Excerpt
+                              : main.Content?.Length > 180 ? main.Content[..180] + "…" : main.Content)
+                        </p>
+                        <a href="/Blog/@main.Id/@Uri.EscapeDataString(main.Title)"
+                           class="text-muted text-decoration-underline small fw-bold">Read more</a>
+                    }
+                    else
+                    {
+                        <img src="@Url.Content("~/Images/images/news1.png")" class="img-fluid rounded-4 mb-4" alt="News">
+                        <span class="badge rounded-pill bg-teal mb-3">NEWS</span>
+                        <h3 class="fw-bold text-navy mb-3">Class adds $30 million to its balance sheet for a Zoom-friendly edtech solution</h3>
+                        <p class="text-muted mb-4 small">Class, launched less than a year ago by Blackboard co-founder Michael Chasen, integrates exclusively…</p>
+                        <a href="#" class="text-muted text-decoration-underline small fw-bold">Read more</a>
+                    }
                 </div>
             </div>
 
             <div class="col-lg-6 reveal-right">
                 <div class="d-flex flex-column gap-4">
-
-                    <div class="row align-items-center g-3">
-                        <div class="col-4 position-relative">
-                            <img src="~/Images/images/news2.png" class="img-fluid rounded-3" alt="News thumb">
-                            <span class="badge rounded-pill bg-teal badge-overlap"
-                                  data-i18n="PRESS RELEASE">PRESS RELEASE</span>
+                    @{string[] fallbacks = { Url.Content("~/Images/images/news2.png"), Url.Content("~/Images/images/news3.png") };}
+                    @for (int i = 0; i < others.Count; i++)
+                    {
+                        var art = others[i];
+                        <div class="row align-items-center g-3">
+                            <div class="col-4 position-relative">
+                                <img src="@ImgUrl(art.CoverImage, fallbacks[i])" class="img-fluid rounded-3" alt="@art.Title">
+                                <span class="badge rounded-pill bg-teal badge-overlap">NEWS</span>
+                            </div>
+                            <div class="col-8">
+                                <h6 class="fw-bold text-navy mb-2 news-title-sm">@art.Title</h6>
+                                <p class="text-muted small mb-0 line-clamp-2">
+                                    @((!string.IsNullOrEmpty(art.Excerpt)) ? art.Excerpt
+                                      : art.Content?.Length > 120 ? art.Content[..120] + "…" : art.Content)
+                                </p>
+                                <a href="/Blog/@art.Id/@Uri.EscapeDataString(art.Title)" class="stretched-link" aria-label="Read article"></a>
+                            </div>
                         </div>
-                        <div class="col-8">
-                            <h6 class="fw-bold text-navy mb-2 news-title-sm"
-                                data-i18n="Class Technologies Inc. Closes $30 Million Series A Financing to Meet High Demand">
-                                Class Technologies Inc. Closes $30 Million Series A Financing to Meet High Demand
-                            </h6>
-                            <p class="text-muted small mb-0 line-clamp-2"
-                               data-i18n="Class Technologies Inc., the company that created Class,...">
-                                Class Technologies Inc., the company that created Class,...
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="row align-items-center g-3">
-                        <div class="col-4 position-relative">
-                            <img src="~/Images/images/news3.png" class="img-fluid rounded-3" alt="News thumb">
-                            <span class="badge rounded-pill bg-teal badge-overlap"
-                                  data-i18n="NEWS">NEWS</span>
-                        </div>
-                        <div class="col-8">
-                            <h6 class="fw-bold text-navy mb-2 news-title-sm"
-                                data-i18n="Zoom's earliest investors are betting millions on a better Zoom for schools">
-                                Zoom's earliest investors are betting millions on a better Zoom for schools
-                            </h6>
-                            <p class="text-muted small mb-0 line-clamp-2"
-                               data-i18n="Zoom was never created to be a consumer product. Nonetheless, the...">
-                                Zoom was never created to be a consumer product. Nonetheless, the...
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="row align-items-center g-3">
-                        <div class="col-4 position-relative">
-                            <img src="~/Images/images/news4.png" class="img-fluid rounded-3" alt="News thumb">
-                            <span class="badge rounded-pill bg-teal badge-overlap"
-                                  data-i18n="NEWS">NEWS</span>
-                        </div>
-                        <div class="col-8">
-                            <h6 class="fw-bold text-navy mb-2 news-title-sm"
-                                data-i18n="Former Blackboard CEO Raises $16M to Bring LMS Features to Zoom Classrooms">
-                                Former Blackboard CEO Raises $16M to Bring LMS Features to Zoom Classrooms
-                            </h6>
-                            <p class="text-muted small mb-0 line-clamp-2"
-                               data-i18n="This year, investors have reaped big financial returns from betting on Zoom...">
-                                This year, investors have reaped big financial returns from betting on Zoom...
-                            </p>
-                        </div>
-                    </div>
-
+                    }
                 </div>
             </div>
         </div>

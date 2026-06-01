@@ -27,26 +27,24 @@ namespace LMSProject.Areas.Admin.ViewModel
     }
     public class InstructorEditVM
     {
-      public int Id { get; set; }
-        public string FullName { get; set; }
+        public int Id { get; set; }
         [Required]
-        public string UserName { get; set; }
+        public string FullName { get; set; } = "";
         [Required]
-        [EmailAddress]
+        public string UserName { get; set; } = "";
+        [Required, EmailAddress]
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
-        
         [DataType(DataType.Password)]
         public string? Password { get; set; }
         public string? ReturnUrl { get; set; }
-        public string Bio { get; set; }
-        public string Specialization { get; set; }
+        public string? Bio { get; set; }
+        public string? Specialization { get; set; }
         public int ExperienceYears { get; set; }
         public bool ShowInHomePage { get; set; }
-        public string? ImageName { get; set; } = null!;
+        public string? ImageName { get; set; }
         public IFormFile? Image { get; set; }
         public string? UpdatedBy { get; set; } = "Admin";
-
     }
 
 
